@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Sparkles, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export function HeroSearch() {
@@ -19,23 +19,29 @@ export function HeroSearch() {
     }
   };
 
-  const handleQuickTag = (tag: string, param: string) => {
-    router.push(`/programs?${param}`);
-  };
+  const quickTags = [
+    { label: 'MBBS', param: 'search=medicine' },
+    { label: 'Computer Science', param: 'search=computer' },
+    { label: 'MBA', param: 'search=business' },
+    { label: 'Engineering', param: 'search=engineering' },
+    { label: 'Low Upfront', param: 'budget=10000' },
+  ];
 
   return (
-    <div className="space-y-4">
-      {/* Animated Glowing Search Container */}
-      <div className={`relative rounded-2xl p-[2px] transition-all duration-300 ${
-        isFocused
-          ? 'bg-gradient-to-r from-[#E8A300] via-[#3A60A1] to-[#E8A300] shadow-[0_0_30px_rgba(232,163,0,0.35)]'
-          : 'bg-white/25 hover:bg-white/35 shadow-2xl'
-      }`}>
+    <div className="space-y-3">
+      {/* Search bar */}
+      <div
+        className={`relative rounded-2xl transition-all duration-300 ${
+          isFocused
+            ? 'shadow-[0_0_0_2px_rgba(232,163,0,0.8),0_20px_60px_rgba(232,163,0,0.2)]'
+            : 'shadow-[0_10px_50px_rgba(0,0,0,0.4)]'
+        }`}
+      >
         <form
           onSubmit={handleSearch}
-          className="flex items-center bg-white rounded-[14px] p-2 transition-all shadow-inner"
+          className="flex items-center bg-white rounded-2xl overflow-hidden"
         >
-          <div className="pl-3 pr-2 text-slate-400">
+          <div className="pl-5 pr-2 text-slate-400 shrink-0">
             <Search className={`w-5 h-5 transition-colors ${isFocused ? 'text-[#3A60A1]' : 'text-slate-400'}`} />
           </div>
           <input
@@ -44,49 +50,31 @@ export function HeroSearch() {
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search programs e.g. Computer Science, MBBS, MBA, AI, Cyber Security..."
-            className="w-full text-slate-900 placeholder-slate-400 text-sm sm:text-base px-2 py-2.5 focus:outline-hidden font-medium"
+            placeholder="Search programs — MBBS, Computer Science, MBA, Engineering..."
+            className="w-full text-slate-900 placeholder-slate-400 text-sm sm:text-base px-3 py-4 focus:outline-none font-medium bg-transparent"
           />
           <button
             type="submit"
-            className="btn-meezab-gold font-bold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all shrink-0 active:scale-95 shadow-md flex items-center gap-1.5 cursor-pointer"
+            className="m-1.5 shrink-0 bg-[#E8A300] hover:bg-[#d49400] text-[#0B2553] font-extrabold text-sm px-7 py-3 rounded-xl transition-all active:scale-95 shadow-md flex items-center gap-2 cursor-pointer"
           >
-            <span>Search Courses</span>
-            <ArrowRight className="w-4 h-4 text-white" />
+            <span className="hidden sm:inline">Search</span>
+            <ArrowRight className="w-4 h-4" />
           </button>
         </form>
       </div>
 
-      {/* Quick Search Preset Filter Pills */}
-      <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs">
-        <span className="text-slate-200 font-medium mr-1 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-[#E8A300]" />
-          <span>Popular Filters:</span>
-        </span>
-        <button
-          onClick={() => handleQuickTag('Low Upfront', 'budget=10000')}
-          className="bg-white/10 hover:bg-[#E8A300] hover:text-slate-950 text-[#FFA300] font-bold px-3 py-1.5 rounded-xl transition-all border border-[#E8A300]/40 hover:scale-105 active:scale-95 flex items-center gap-1 shadow-xs cursor-pointer"
-        >
-          <span>🇵🇰 Low Upfront (&lt;10k RM)</span>
-        </button>
-        <button
-          onClick={() => handleQuickTag('Medicine', 'search=medicine')}
-          className="bg-white/10 hover:bg-white/20 text-slate-200 font-semibold px-3 py-1.5 rounded-xl transition-all border border-white/15 hover:border-white/30 hover:scale-105 active:scale-95 shadow-xs cursor-pointer"
-        >
-          <span>🩺 Medicine &amp; Health</span>
-        </button>
-        <button
-          onClick={() => handleQuickTag('AI & Computing', 'search=computer')}
-          className="bg-white/10 hover:bg-white/20 text-slate-200 font-semibold px-3 py-1.5 rounded-xl transition-all border border-white/15 hover:border-white/30 hover:scale-105 active:scale-95 shadow-xs cursor-pointer"
-        >
-          <span>💻 AI &amp; Software</span>
-        </button>
-        <button
-          onClick={() => handleQuickTag('MBA', 'search=business')}
-          className="bg-white/10 hover:bg-white/20 text-slate-200 font-semibold px-3 py-1.5 rounded-xl transition-all border border-white/15 hover:border-white/30 hover:scale-105 active:scale-95 shadow-xs cursor-pointer"
-        >
-          <span>📈 Business &amp; MBA</span>
-        </button>
+      {/* Quick-pick tags */}
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <span className="text-slate-500 text-xs font-medium">Popular:</span>
+        {quickTags.map((tag) => (
+          <button
+            key={tag.label}
+            onClick={() => router.push(`/programs?${tag.param}`)}
+            className="text-xs text-slate-300 hover:text-[#E8A300] bg-white/8 hover:bg-white/12 border border-white/12 hover:border-[#E8A300]/50 px-3 py-1.5 rounded-full transition-all cursor-pointer font-medium"
+          >
+            {tag.label}
+          </button>
+        ))}
       </div>
     </div>
   );

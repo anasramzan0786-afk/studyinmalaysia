@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { CounselingProvider } from '@/components/CounselingContext';
 import { Footer } from '@/components/layout/Footer';
+import { PageLoader } from '@/components/PageLoader';
 
 export const metadata: Metadata = {
   title: 'Meezab Future Consulting | Study in Malaysia Official Admissions & EMGS Portal',
@@ -30,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body className="min-h-screen flex flex-col bg-[#F9F9F9] text-[#1F2937] antialiased selection:bg-[#0B2553] selection:text-[#E8A300]">
+        <PageLoader />
         <CounselingProvider>
           <main className="flex-1">{children}</main>
         </CounselingProvider>
@@ -38,5 +40,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-
