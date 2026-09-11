@@ -30,8 +30,8 @@ async function main() {
   console.log('🧹 Existing data wiped cleanly.');
 
   // 1.5. Seed Default Users with bcrypt hashed passwords
-  const hashedAdminPassword = await bcrypt.hash('admin123', 10);
-  const hashedCounselorPassword = await bcrypt.hash('counselor123', 10);
+  const hashedAdminPassword = await bcrypt.hash('Meezab@456', 10);
+  const hashedCounselorPassword = await bcrypt.hash('Testcounselor@456', 10);
 
   await prisma.user.createMany({
     data: [
@@ -43,8 +43,8 @@ async function main() {
         active: true,
       },
       {
-        email: 'counselor@meezab.com',
-        name: 'Meezab Admissions Counselor',
+        email: 'testcounselor@meezab.com',
+        name: 'Test Admissions Counselor',
         password: hashedCounselorPassword,
         role: 'COUNSELOR',
         active: true,
