@@ -77,7 +77,7 @@ export function Navbar({ onOpenCounseling }: NavbarProps) {
             <span className="hidden md:inline">🏛️ MOHE &amp; MQA Recognized</span>
             <span className="hidden md:inline">🛂 EMGS STARS Authorized</span>
             <a 
-              href="https://wa.me/601123456789?text=Hello%20Meezab%20Admissions%20Team" 
+              href="https://wa.me/923346596725?text=Hello%20Meezab%20Admissions%20Team" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 transition-colors"

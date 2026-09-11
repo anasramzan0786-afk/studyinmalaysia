@@ -331,12 +331,12 @@ export default async function HomePage() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             <a
-              href="https://wa.me/601123456789?text=Hello%20Meezab%20Admissions%20Desk%2C%20I%20want%20to%20apply%20for%20admission%20in%20Malaysia"
+              href="https://wa.me/923346596725?text=Hello%20Meezab%20Admissions%20Desk%2C%20I%20want%20to%20apply%20for%20admission%20in%20Malaysia"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-3 rounded-xl shadow-md transition-all active:scale-95 text-sm"
             >
-              <span>Connect on WhatsApp Desk (+60 11 2345 6789)</span>
+              <span>Connect on WhatsApp Desk (+92 334 6596725)</span>
             </a>
             <Link
               href="/programs"

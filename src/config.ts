@@ -8,8 +8,8 @@ const env = (import.meta as unknown as { env?: Record<string, string> }).env || 
 
 export const APP_CONFIG = {
   companyName: env.VITE_COMPANY_NAME || 'Meezab Future Consulting',
-  contactEmail: env.VITE_CONTACT_EMAIL || 'admissions@meezabconsulting.com',
-  whatsappNumber: env.VITE_WHATSAPP_NUMBER || '601123456789',
+  contactEmail: env.VITE_CONTACT_EMAIL || 'anas.studyinmalaysiabymeezab@gmail.com',
+  whatsappNumber: env.VITE_WHATSAPP_NUMBER || '923346596725',
   supportHours: 'Monday - Saturday: 9:00 AM - 7:00 PM (MYT / UTC+8)',
   officeLocation: 'Kuala Lumpur, Malaysia & Lahore, Pakistan',
   storageKeys: {

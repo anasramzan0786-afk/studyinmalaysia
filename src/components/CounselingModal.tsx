@@ -68,7 +68,7 @@ export function CounselingModal({
       )}`;
 
       setTimeout(() => {
-        window.open(`https://wa.me/601123456789?text=${message}`, '_blank');
+        window.open(`https://wa.me/923346596725?text=${message}`, '_blank');
       }, 1200);
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : 'Something went wrong.';

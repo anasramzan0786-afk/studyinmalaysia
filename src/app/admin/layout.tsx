@@ -20,10 +20,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const links = [
     { href: '/admin', label: 'Overview', icon: LayoutDashboard },
-    { href: '/admin/programs', label: 'Manage Programs', icon: GraduationCap },
+    { href: '/admin/inquiries', label: '📩 Student Inquiries', icon: Users, highlight: true },
     { href: '/admin/universities', label: 'Manage Universities', icon: Building2 },
-    { href: '/admin/upload', label: 'Bulk Data Importer', icon: UploadCloud, highlight: true },
-    { href: '/admin/inquiries', label: 'Student Leads (CRM)', icon: Users },
+    { href: '/admin/programs', label: 'Manage Programs', icon: GraduationCap },
+    { href: '/admin/upload', label: 'Bulk Data Importer', icon: UploadCloud },
   ];
 
   const isActive = (href: string) => {

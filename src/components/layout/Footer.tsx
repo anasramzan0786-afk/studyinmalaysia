@@ -108,11 +108,11 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
-                <a href="tel:+923001234567" className="hover:text-white">+92 300 1234567</a>
+                <a href="https://wa.me/923346596725" target="_blank" rel="noopener noreferrer" className="hover:text-white">+92 334 6596725</a>
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-amber-400 shrink-0" />
-                <a href="mailto:admissions@meezabconsulting.com" className="hover:text-white">admissions@meezabconsulting.com</a>
+                <a href="mailto:anas.studyinmalaysiabymeezab@gmail.com" className="hover:text-white">anas.studyinmalaysiabymeezab@gmail.com</a>
               </li>
               <li className="pt-2">
                 <Link
