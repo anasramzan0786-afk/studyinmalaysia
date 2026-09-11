@@ -21,6 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const links = [
     { href: '/admin', label: 'Overview', icon: LayoutDashboard },
     { href: '/admin/inquiries', label: '📩 Student Inquiries', icon: Users, highlight: true },
+    { href: '/admin/users', label: '👥 Team Accounts', icon: ShieldCheck },
     { href: '/admin/universities', label: 'Manage Universities', icon: Building2 },
     { href: '/admin/programs', label: 'Manage Programs', icon: GraduationCap },
     { href: '/admin/upload', label: 'Bulk Data Importer', icon: UploadCloud },

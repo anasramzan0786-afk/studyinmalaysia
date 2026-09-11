@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { AUTH_CREDENTIALS, createSessionToken } from '@/lib/auth';
+import bcrypt from 'bcryptjs';
+import { db } from '@/lib/db';
+import { createSessionToken } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
@@ -7,7 +9,7 @@ export async function POST(request: Request) {
 
     if (!username || !password) {
       return NextResponse.json(
-        { error: 'Username/Email and Password are required.' },
+        { error: 'Email / Username and Password are required.' },
         { status: 400 }
       );
     }
@@ -15,48 +17,53 @@ export async function POST(request: Request) {
     const trimmedInput = username.trim().toLowerCase();
     const trimmedPassword = password.trim();
 
-    let matchedRole: 'COUNSELOR' | 'ADMIN' | null = null;
-    let loggedInUsername = '';
+    // Query Supabase User table by email or fallback username matching
+    let user = await db.user.findFirst({
+      where: {
+        OR: [
+          { email: { equals: trimmedInput, mode: 'insensitive' } },
+          // Allow logging in with simple 'admin' or 'counselor' username matching email prefix
+          { email: { startsWith: `${trimmedInput}@`, mode: 'insensitive' } },
+        ],
+      },
+    });
 
-    // Check Counselor Credentials
-    const counselorUser = AUTH_CREDENTIALS.counselor.username.toLowerCase();
-    const counselorEmail = AUTH_CREDENTIALS.counselor.email.toLowerCase();
-    if (
-      (trimmedInput === counselorUser || trimmedInput === counselorEmail) &&
-      trimmedPassword === AUTH_CREDENTIALS.counselor.password
-    ) {
-      matchedRole = 'COUNSELOR';
-      loggedInUsername = 'Meezab Counselor';
-    }
-
-    // Check Admin Credentials
-    const adminUser = AUTH_CREDENTIALS.admin.username.toLowerCase();
-    const adminEmail = AUTH_CREDENTIALS.admin.email.toLowerCase();
-    if (
-      (trimmedInput === adminUser || trimmedInput === adminEmail) &&
-      trimmedPassword === AUTH_CREDENTIALS.admin.password
-    ) {
-      matchedRole = 'ADMIN';
-      loggedInUsername = 'Meezab Administrator';
-    }
-
-    if (!matchedRole) {
+    if (!user) {
       return NextResponse.json(
-        { error: 'Invalid Username/Email or Password. Please try again.' },
+        { error: 'User account not found. Please check your email or username.' },
         { status: 401 }
       );
     }
 
+    if (!user.active) {
+      return NextResponse.json(
+        { error: 'Your account has been deactivated by the Administrator.' },
+        { status: 403 }
+      );
+    }
+
+    // Compare bcrypt password hash
+    const isPasswordValid = await bcrypt.compare(trimmedPassword, user.password);
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { error: 'Invalid password. Please try again.' },
+        { status: 401 }
+      );
+    }
+
+    // Create session token
     const token = await createSessionToken({
-      username: loggedInUsername,
-      role: matchedRole,
+      username: user.name || user.email,
+      role: user.role as 'COUNSELOR' | 'ADMIN',
     });
 
     const response = NextResponse.json({
       success: true,
       user: {
-        username: loggedInUsername,
-        role: matchedRole,
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
       },
     });
 

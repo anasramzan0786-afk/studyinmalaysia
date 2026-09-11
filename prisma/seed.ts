@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 import { UNIVERSITIES_DATA } from '../src/data/universitiesData';
 import { PROGRAMS_DATA } from '../src/data/programsData';
 
@@ -24,8 +25,34 @@ async function main() {
   await prisma.program.deleteMany();
   await prisma.university.deleteMany();
   await prisma.auditLog.deleteMany();
+  await prisma.user.deleteMany();
 
   console.log('🧹 Existing data wiped cleanly.');
+
+  // 1.5. Seed Default Users with bcrypt hashed passwords
+  const hashedAdminPassword = await bcrypt.hash('admin123', 10);
+  const hashedCounselorPassword = await bcrypt.hash('counselor123', 10);
+
+  await prisma.user.createMany({
+    data: [
+      {
+        email: 'admin@meezab.com',
+        name: 'Meezab Administrator',
+        password: hashedAdminPassword,
+        role: 'ADMIN',
+        active: true,
+      },
+      {
+        email: 'counselor@meezab.com',
+        name: 'Meezab Admissions Counselor',
+        password: hashedCounselorPassword,
+        role: 'COUNSELOR',
+        active: true,
+      },
+    ],
+  });
+
+  console.log('🔐 Default Admin & Counselor users seeded into Supabase.');
 
   // 2. Map of original university ID to new DB university ID
   const uniIdMap = new Map<string, string>();
