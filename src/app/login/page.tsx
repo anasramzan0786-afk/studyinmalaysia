@@ -9,11 +9,12 @@ import {
   Eye, 
   EyeOff, 
   ShieldCheck, 
-  KeyRound, 
   AlertCircle,
   ArrowRight,
   Sparkles,
-  Users
+  Users,
+  KeyRound,
+  CheckCircle2
 } from 'lucide-react';
 
 function LoginFormContent() {
@@ -68,52 +69,93 @@ function LoginFormContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
-      {/* Background Decorative Atmosphere */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,58,138,0.25),transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(10,37,64,0.35),transparent_50%)]" />
-      
-      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center">
-        {/* Brand Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-400/20 text-blue-300 text-xs font-semibold mb-6 backdrop-blur-md">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>Meezab Authorized Personnel Only</span>
-        </div>
+    <div className="min-h-screen w-full bg-slate-50 flex flex-col md:flex-row font-sans">
+      {/* LEFT SIDE: Big Brand Logo & Visual Hero Banner */}
+      <div className="w-full md:w-1/2 bg-[#08182b] text-white p-8 lg:p-16 flex flex-col justify-between relative overflow-hidden">
+        {/* Background glow effects */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Logo */}
-        <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0a2540] to-blue-600 border border-blue-400/30 flex items-center justify-center shadow-2xl text-amber-400">
-            <GraduationCap className="w-10 h-10" />
+        {/* Top badge */}
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs font-semibold text-emerald-400">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>Meezab Future Advisory Network</span>
           </div>
         </div>
 
-        <h2 className="text-3xl font-extrabold text-white tracking-tight">
-          Study<span className="text-blue-400">Malaysia</span> Portal
-        </h2>
-        <p className="mt-2 text-sm text-slate-400">
-          Internal Counselor & Advisory Team Authentication Desk
-        </p>
+        {/* Center: BIG LOGO & BRANDING */}
+        <div className="relative z-10 my-12 space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-blue-700 to-indigo-600 border border-blue-400/40 flex items-center justify-center shadow-2xl text-amber-400">
+              <GraduationCap className="w-12 h-12" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-3xl sm:text-4xl tracking-tight text-white">
+                  Study<span className="text-blue-400">Malaysia</span>
+                </span>
+                <span className="bg-blue-900/80 text-blue-200 text-xs font-bold px-2 py-0.5 rounded border border-blue-700">
+                  Portal
+                </span>
+              </div>
+              <p className="text-sm text-slate-300 font-medium mt-1">
+                Meezab Future Education Advisory Desk
+              </p>
+            </div>
+          </div>
+
+          <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-md">
+            Official internal portal for counselors &amp; admissions officers. Access verified Malaysian university tuition fees, semester breakdowns, and EMGS visa tools.
+          </p>
+
+          <div className="pt-4 grid grid-cols-2 gap-3 max-w-md text-xs font-semibold text-slate-300">
+            <div className="flex items-center gap-2 bg-slate-800/60 p-3 rounded-xl border border-slate-700/60">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>MOHE &amp; MQA Recognized</span>
+            </div>
+            <div className="flex items-center gap-2 bg-slate-800/60 p-3 rounded-xl border border-slate-700/60">
+              <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>EMGS Visa Calculator</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Copyright */}
+        <div className="relative z-10 text-xs text-slate-500">
+          &copy; {new Date().getFullYear()} Meezab Future Consulting. All Rights Reserved.
+        </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4">
-        <div className="bg-slate-900/80 backdrop-blur-xl py-8 px-6 shadow-2xl rounded-3xl border border-slate-800/80 sm:px-10">
-          <form className="space-y-6" onSubmit={handleLogin}>
+      {/* RIGHT SIDE: CLEAN MINIMALIST LOGIN FORM */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-6 sm:p-12 lg:p-16 bg-white">
+        <div className="w-full max-w-md space-y-8">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Counselor Sign In
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Please enter your credentials to open the portal.
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-5">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 text-xs text-red-300 flex items-start gap-3 animate-in fade-in duration-200">
-                <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-xs text-red-700 flex items-start gap-3 animate-in fade-in duration-200">
+                <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="font-bold block text-red-200">Access Denied</strong>
+                  <strong className="font-bold block text-red-900">Sign In Failed</strong>
                   <span>{error}</span>
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                Username / Counselor ID
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Username / Email ID
               </label>
-              <div className="relative rounded-2xl shadow-xs">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <User className="h-5 w-5" />
                 </div>
                 <input
@@ -121,18 +163,18 @@ function LoginFormContent() {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g. counselor or admin"
-                  className="block w-full pl-11 pr-4 py-3 bg-slate-950/60 border border-slate-800 rounded-2xl text-slate-100 placeholder-slate-500 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  placeholder="Enter username or email"
+                  className="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 Password
               </label>
-              <div className="relative rounded-2xl shadow-xs">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <Lock className="h-5 w-5" />
                 </div>
                 <input
@@ -141,66 +183,60 @@ function LoginFormContent() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="block w-full pl-11 pr-11 py-3 bg-slate-950/60 border border-slate-800 rounded-2xl text-slate-100 placeholder-slate-500 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  className="block w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 hover:text-slate-300"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600"
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
             </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-2xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg shadow-blue-900/30 transition-all active:scale-98 disabled:opacity-70"
-              >
-                {isLoading ? (
-                  <span>Authenticating Session...</span>
-                ) : (
-                  <>
-                    <span>Unlock Portal Access</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-[#0a2540] hover:bg-[#15385d] focus:outline-hidden focus:ring-2 focus:ring-blue-600 shadow-md transition-all active:scale-98 disabled:opacity-70"
+            >
+              {isLoading ? (
+                <span>Verifying Credentials...</span>
+              ) : (
+                <>
+                  <span>Sign In to Portal</span>
+                  <ArrowRight className="w-4 h-4 text-emerald-400" />
+                </>
+              )}
+            </button>
           </form>
 
-          {/* Quick Presets for Demo / Easy Access */}
-          <div className="mt-8 pt-6 border-t border-slate-800/80">
+          {/* Quick Demo Helper */}
+          <div className="pt-6 border-t border-slate-200">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center mb-3">
-              ⚡ Quick Fill Credentials Demo
+              Quick Fill Demo Credentials
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={fillCounselorPreset}
-                className="flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-950/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+                className="flex items-center justify-center gap-2 py-2.5 px-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl text-xs font-semibold text-blue-900 transition-colors"
               >
-                <Users className="w-3.5 h-3.5 text-blue-400" />
+                <Users className="w-3.5 h-3.5 text-blue-700" />
                 <span>Counselor Desk</span>
               </button>
 
               <button
                 type="button"
                 onClick={fillAdminPreset}
-                className="flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-950/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+                className="flex items-center justify-center gap-2 py-2.5 px-3 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl text-xs font-semibold text-amber-900 transition-colors"
               >
-                <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                <KeyRound className="w-3.5 h-3.5 text-amber-700" />
                 <span>Admin Master</span>
               </button>
             </div>
           </div>
         </div>
-
-        <p className="mt-6 text-center text-xs text-slate-500">
-          Protected by Meezab Future Consulting Security Services &copy; 2026
-        </p>
       </div>
     </div>
   );
@@ -209,7 +245,7 @@ function LoginFormContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white text-sm">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white text-sm">
         Loading Authentication...
       </div>
     }>

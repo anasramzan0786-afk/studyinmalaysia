@@ -23,6 +23,9 @@ interface NavbarProps {
 
 export function Navbar({ onOpenCounseling }: NavbarProps) {
   const pathname = usePathname();
+  if (pathname === '/login') {
+    return null;
+  }
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<{ username: string; role: 'COUNSELOR' | 'ADMIN' } | null>(null);
