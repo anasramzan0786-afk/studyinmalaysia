@@ -99,23 +99,23 @@ export function InteractiveFeeExplorer() {
   });
 
   return (
-    <section className="py-24 bg-gradient-to-b from-slate-900 via-[#0a2038] to-slate-900 text-white px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <section className="py-20 bg-[#0B2553] text-white px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background radial highlight */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-[#3A60A1]/20 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10 space-y-12">
         {/* Section Header */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 bg-blue-500/20 text-sky-300 px-3.5 py-1 rounded-full text-xs font-bold border border-blue-400/30 mb-3">
-              <Calculator className="w-3.5 h-3.5 text-amber-300" />
-              <span>Interactive Upfront Cost Explorer</span>
+            <div className="inline-flex items-center gap-2 bg-[#E8A300]/20 text-[#FFA300] px-3.5 py-1 rounded-full text-xs font-bold border border-[#E8A300]/40 mb-3">
+              <Calculator className="w-3.5 h-3.5 text-[#E8A300]" />
+              <span>Meezab Upfront Cost Explorer</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
               Match Your Budget to Malaysian Campuses
             </h2>
-            <p className="text-slate-300 text-sm mt-1 max-w-xl">
-              Adjust the upfront non-tuition budget below (EMGS + Admin + Security Bond payable upon eVAL) to see verified eligible courses.
+            <p className="text-slate-200 text-sm mt-1 max-w-xl">
+              Adjust the upfront non-tuition budget below (EMGS + Visa Admin + Medical + Security Bond payable upon eVAL) to discover verified eligible degrees.
             </p>
           </div>
 
@@ -123,16 +123,16 @@ export function InteractiveFeeExplorer() {
           <div className="inline-flex items-center bg-white/10 p-1 rounded-xl border border-white/15 text-xs font-bold self-start lg:self-auto">
             <button
               onClick={() => setCurrency('MYR')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                currency === 'MYR' ? 'bg-amber-400 text-slate-950 shadow-md font-extrabold' : 'text-slate-300'
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                currency === 'MYR' ? 'bg-[#E8A300] text-slate-950 shadow-md font-extrabold' : 'text-slate-200 hover:text-white'
               }`}
             >
               🇲🇾 Malaysian Ringgit
             </button>
             <button
               onClick={() => setCurrency('PKR')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                currency === 'PKR' ? 'bg-amber-400 text-slate-950 shadow-md font-extrabold' : 'text-slate-300'
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                currency === 'PKR' ? 'bg-[#E8A300] text-slate-950 shadow-md font-extrabold' : 'text-slate-200 hover:text-white'
               }`}
             >
               🇵🇰 Pakistani Rupee
@@ -145,10 +145,10 @@ export function InteractiveFeeExplorer() {
           {/* Slider */}
           <div className="md:col-span-2 space-y-2">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-300 font-semibold">
+              <span className="text-slate-200 font-semibold">
                 Maximum Initial Non-Tuition Budget (upon eVAL):
               </span>
-              <span className="text-lg font-black text-amber-300">
+              <span className="text-lg font-black text-[#FFA300]">
                 {currency === 'MYR' ? formatMYR(budgetCap) : formatPKR(budgetCap)}
               </span>
             </div>
@@ -159,24 +159,24 @@ export function InteractiveFeeExplorer() {
               step={500}
               value={budgetCap}
               onChange={(e) => setBudgetCap(Number(e.target.value))}
-              className="w-full accent-amber-400 cursor-pointer h-2 bg-white/20 rounded-lg"
+              className="w-full accent-[#E8A300] cursor-pointer h-2 bg-white/20 rounded-lg"
             />
-            <div className="flex justify-between text-[11px] text-slate-400 font-medium">
+            <div className="flex justify-between text-[11px] text-slate-300 font-medium">
               <span>RM 8,000 (~Rs. 500k)</span>
-              <span>RM 11,000 (Avg eVAL)</span>
+              <span>RM 11,000 (Average eVAL Package)</span>
               <span>RM 15,000+</span>
             </div>
           </div>
 
           {/* Level Filter */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-300">
+            <label className="block text-xs font-bold text-slate-200">
               Degree Level:
             </label>
             <select
               value={selectedLevel}
               onChange={(e) => setSelectedLevel(e.target.value)}
-              className="w-full text-xs font-semibold bg-white/15 border border-white/20 text-white rounded-xl px-3 py-2.5 focus:outline-hidden focus:ring-2 focus:ring-amber-400"
+              className="w-full text-xs font-semibold bg-white/15 border border-white/20 text-white rounded-xl px-3 py-2.5 focus:outline-hidden focus:ring-2 focus:ring-[#E8A300]"
             >
               <option value="All" className="text-slate-900">All Levels</option>
               <option value="Bachelor's Degree" className="text-slate-900">Bachelor&apos;s Degrees</option>
@@ -196,42 +196,42 @@ export function InteractiveFeeExplorer() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
-                className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/15 hover:border-amber-400/50 hover:bg-white/[0.13] transition-all duration-300 flex flex-col justify-between group shadow-lg"
+                className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/15 hover:border-[#E8A300] hover:bg-white/[0.14] transition-all duration-300 flex flex-col justify-between group shadow-lg"
               >
                 <div>
                   <div className="flex items-center justify-between text-xs mb-3">
-                    <span className="bg-sky-500/20 text-sky-300 text-[11px] font-bold px-2.5 py-0.5 rounded-md border border-sky-400/30">
+                    <span className="bg-[#3A60A1]/40 text-blue-200 text-[11px] font-bold px-2.5 py-0.5 rounded-md border border-[#3A60A1]/50">
                       {prog.degreeLevel}
                     </span>
-                    <span className="text-slate-400 text-[11px] flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
+                    <span className="text-slate-300 text-[11px] flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-[#E8A300]" />
                       <span>{prog.duration}</span>
                     </span>
                   </div>
 
-                  <h3 className="font-bold text-base text-white group-hover:text-amber-300 transition-colors line-clamp-2">
+                  <h3 className="font-bold text-base text-white group-hover:text-[#FFA300] transition-colors line-clamp-2">
                     {prog.title}
                   </h3>
 
-                  <p className="text-xs text-slate-300 mt-1 flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <p className="text-xs text-slate-200 mt-1 flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-[#E8A300] shrink-0" />
                     <span>{prog.uniName}</span>
                   </p>
 
-                  <div className="mt-4 bg-black/25 p-3.5 rounded-xl border border-white/10 space-y-1.5">
+                  <div className="mt-4 bg-black/30 p-3.5 rounded-xl border border-white/10 space-y-1.5">
                     <div className="flex justify-between items-baseline text-xs">
-                      <span className="text-slate-400">Upfront Package:</span>
-                      <span className="font-extrabold text-emerald-400 text-sm">
+                      <span className="text-slate-300">Upfront Package:</span>
+                      <span className="font-extrabold text-[#FFA300] text-sm">
                         {currency === 'MYR' ? formatMYR(prog.totalInitialMYR) : formatPKR(prog.totalInitialMYR)}
                       </span>
                     </div>
                     <div className="flex justify-between items-baseline text-xs">
-                      <span className="text-slate-400">Total Tuition:</span>
+                      <span className="text-slate-300">Total Tuition:</span>
                       <span className="font-bold text-white">
                         {currency === 'MYR' ? formatMYR(prog.tuitionMYR) : formatPKR(prog.tuitionMYR)}
                       </span>
                     </div>
-                    <div className="text-[10px] text-amber-300/90 pt-1 border-t border-white/10">
+                    <div className="text-[10px] text-amber-200 pt-1 border-t border-white/10 font-medium">
                       ✨ {prog.highlights}
                     </div>
                   </div>
@@ -248,7 +248,7 @@ export function InteractiveFeeExplorer() {
 
                   <button
                     onClick={() => openModal(prog.title, prog.id)}
-                    className="px-3 py-1.5 bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95"
+                    className="btn-meezab-gold px-3.5 py-1.5 font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer"
                   >
                     Apply Now
                   </button>
@@ -262,7 +262,7 @@ export function InteractiveFeeExplorer() {
         <div className="text-center pt-4">
           <Link
             href="/programs"
-            className="inline-flex items-center gap-2 text-sm font-bold text-amber-300 hover:text-amber-200 transition-colors"
+            className="inline-flex items-center gap-2 text-sm font-bold text-[#FFA300] hover:text-[#FFB82E] transition-colors"
           >
             <span>Browse all programs with live filters</span>
             <ArrowRight className="w-4 h-4" />

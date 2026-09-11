@@ -26,17 +26,17 @@ export function HeroSearch() {
   return (
     <div className="space-y-4">
       {/* Animated Glowing Search Container */}
-      <div className={`relative rounded-2xl p-[1.5px] transition-all duration-300 ${
+      <div className={`relative rounded-2xl p-[2px] transition-all duration-300 ${
         isFocused
-          ? 'bg-gradient-to-r from-amber-400 via-sky-400 to-emerald-400 shadow-[0_0_30px_rgba(56,189,248,0.3)]'
-          : 'bg-white/20 hover:bg-white/30 shadow-2xl'
+          ? 'bg-gradient-to-r from-[#E8A300] via-[#3A60A1] to-[#E8A300] shadow-[0_0_30px_rgba(232,163,0,0.35)]'
+          : 'bg-white/25 hover:bg-white/35 shadow-2xl'
       }`}>
         <form
           onSubmit={handleSearch}
-          className="flex items-center bg-white rounded-[15px] p-2 transition-all"
+          className="flex items-center bg-white rounded-[14px] p-2 transition-all shadow-inner"
         >
           <div className="pl-3 pr-2 text-slate-400">
-            <Search className={`w-5 h-5 transition-colors ${isFocused ? 'text-blue-700' : 'text-slate-400'}`} />
+            <Search className={`w-5 h-5 transition-colors ${isFocused ? 'text-[#3A60A1]' : 'text-slate-400'}`} />
           </div>
           <input
             type="text"
@@ -49,41 +49,41 @@ export function HeroSearch() {
           />
           <button
             type="submit"
-            className="bg-[#0a2540] hover:bg-[#16375a] text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all shrink-0 active:scale-95 shadow-md flex items-center gap-1.5"
+            className="btn-meezab-gold font-bold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all shrink-0 active:scale-95 shadow-md flex items-center gap-1.5 cursor-pointer"
           >
-            <span>Explore Courses</span>
-            <ArrowRight className="w-4 h-4 text-amber-400" />
+            <span>Search Courses</span>
+            <ArrowRight className="w-4 h-4 text-white" />
           </button>
         </form>
       </div>
 
-      {/* Quick Search Preset Filter Pills with Micro-Scale on Hover */}
+      {/* Quick Search Preset Filter Pills */}
       <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs">
-        <span className="text-slate-300 font-medium mr-1 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-          <span>Quick Filters:</span>
+        <span className="text-slate-200 font-medium mr-1 flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-[#E8A300]" />
+          <span>Popular Filters:</span>
         </span>
         <button
           onClick={() => handleQuickTag('Low Upfront', 'budget=10000')}
-          className="bg-white/10 hover:bg-white/20 text-amber-300 font-bold px-3 py-1.5 rounded-xl transition-all border border-amber-300/30 hover:scale-105 active:scale-95 flex items-center gap-1 shadow-xs"
+          className="bg-white/10 hover:bg-[#E8A300] hover:text-slate-950 text-[#FFA300] font-bold px-3 py-1.5 rounded-xl transition-all border border-[#E8A300]/40 hover:scale-105 active:scale-95 flex items-center gap-1 shadow-xs cursor-pointer"
         >
           <span>🇵🇰 Low Upfront (&lt;10k RM)</span>
         </button>
         <button
           onClick={() => handleQuickTag('Medicine', 'search=medicine')}
-          className="bg-white/10 hover:bg-white/20 text-slate-200 font-semibold px-3 py-1.5 rounded-xl transition-all border border-white/10 hover:border-white/25 hover:scale-105 active:scale-95 shadow-xs"
+          className="bg-white/10 hover:bg-white/20 text-slate-200 font-semibold px-3 py-1.5 rounded-xl transition-all border border-white/15 hover:border-white/30 hover:scale-105 active:scale-95 shadow-xs cursor-pointer"
         >
           <span>🩺 Medicine &amp; Health</span>
         </button>
         <button
           onClick={() => handleQuickTag('AI & Computing', 'search=computer')}
-          className="bg-white/10 hover:bg-white/20 text-slate-200 font-semibold px-3 py-1.5 rounded-xl transition-all border border-white/10 hover:border-white/25 hover:scale-105 active:scale-95 shadow-xs"
+          className="bg-white/10 hover:bg-white/20 text-slate-200 font-semibold px-3 py-1.5 rounded-xl transition-all border border-white/15 hover:border-white/30 hover:scale-105 active:scale-95 shadow-xs cursor-pointer"
         >
           <span>💻 AI &amp; Software</span>
         </button>
         <button
           onClick={() => handleQuickTag('MBA', 'search=business')}
-          className="bg-white/10 hover:bg-white/20 text-slate-200 font-semibold px-3 py-1.5 rounded-xl transition-all border border-white/10 hover:border-white/25 hover:scale-105 active:scale-95 shadow-xs"
+          className="bg-white/10 hover:bg-white/20 text-slate-200 font-semibold px-3 py-1.5 rounded-xl transition-all border border-white/15 hover:border-white/30 hover:scale-105 active:scale-95 shadow-xs cursor-pointer"
         >
           <span>📈 Business &amp; MBA</span>
         </button>

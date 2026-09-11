@@ -208,9 +208,9 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
                 setDegree(opt);
                 updateURL({ degree: opt });
               }}
-              className={`text-xs px-3.5 py-1.5 rounded-xl font-semibold transition-all ${
+              className={`text-xs px-3.5 py-1.5 rounded-xl font-semibold transition-all cursor-pointer ${
                 degree === opt
-                  ? 'bg-blue-700 text-white shadow-xs'
+                  ? 'bg-[#3A60A1] text-white shadow-xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
@@ -317,23 +317,23 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
           {filteredPrograms.map((program) => (
             <div
               key={program.id}
-              className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between shadow-xs hover:shadow-lg hover:border-blue-300 transition-all duration-200"
+              className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between shadow-xs hover:shadow-xl hover:border-[#3A60A1] transition-all duration-300 group hover:-translate-y-1"
             >
               <div>
                 {/* Header row */}
                 <div className="flex items-start justify-between gap-2 mb-3">
-                  <span className="text-[11px] font-bold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
+                  <span className="text-[11px] font-bold text-[#3A60A1] bg-[#3A60A1]/10 px-2.5 py-1 rounded-md border border-[#3A60A1]/20">
                     {program.degreeLevel}
                   </span>
                   {program.badgeText && (
-                    <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                    <span className="text-[10px] font-bold text-[#B57F00] bg-[#E8A300]/15 px-2 py-0.5 rounded-md border border-[#E8A300]/30">
                       {program.badgeText}
                     </span>
                   )}
                 </div>
 
                 {/* Title */}
-                <h3 className="font-bold text-base text-slate-900 leading-snug line-clamp-2 hover:text-blue-700 transition-colors">
+                <h3 className="font-bold text-base text-[#0B2553] leading-snug line-clamp-2 group-hover:text-[#3A60A1] transition-colors">
                   <Link href={`/programs/${program.slug}`}>
                     {program.title}
                   </Link>
@@ -341,7 +341,7 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
 
                 {/* University Name */}
                 <p className="text-xs font-semibold text-slate-600 mt-1 flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <Building2 className="w-3.5 h-3.5 text-[#E8A300] shrink-0" />
                   <span>{program.university.name}</span>
                 </p>
 
@@ -358,10 +358,10 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
                 </div>
 
                 {/* Pricing Box */}
-                <div className="mt-4 bg-slate-50 rounded-xl p-3.5 border border-slate-200/70 space-y-1.5">
+                <div className="mt-4 bg-[#F9F9F9] rounded-xl p-3.5 border border-slate-200 space-y-1.5">
                   <div className="flex justify-between items-baseline">
                     <span className="text-xs text-slate-500">Full Course Tuition:</span>
-                    <span className="text-base font-extrabold text-slate-900">
+                    <span className="text-base font-extrabold text-[#0B2553]">
                       {formatPrice(program.tuitionMYR)}
                     </span>
                   </div>
@@ -370,13 +370,13 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
                     <span className="text-xs text-slate-500 font-medium">
                       Upfront (eVAL + Admin):
                     </span>
-                    <span className="text-xs font-bold text-emerald-700">
+                    <span className="text-xs font-bold text-[#B57F00]">
                       {formatPrice(program.totalInitialMYR || 9500)}
                     </span>
                   </div>
 
                   {program.scholarship && (
-                    <div className="pt-1.5 border-t border-slate-200/50 text-[11px] text-amber-700 font-medium">
+                    <div className="pt-1.5 border-t border-slate-200/50 text-[11px] text-[#B57F00] font-medium">
                       ✨ {program.scholarship}
                     </div>
                   )}
@@ -393,10 +393,10 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
                 </Link>
                 <button
                   onClick={() => openModal(program.title, program.id)}
-                  className="py-2.5 px-4 bg-[#0a2540] hover:bg-[#163658] text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1"
+                  className="btn-meezab-gold py-2.5 px-4 text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1 cursor-pointer"
                 >
                   <span>Apply Now</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <ChevronRight className="w-3.5 h-3.5 text-white" />
                 </button>
               </div>
             </div>

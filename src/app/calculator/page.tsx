@@ -54,15 +54,15 @@ export default function CalculatorPage() {
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen py-10 px-4 sm:px-6 lg:px-8 print:bg-white print:py-2">
+    <div className="bg-[#F9F9F9] min-h-screen py-10 px-4 sm:px-6 lg:px-8 print:bg-white print:py-2">
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Header */}
         <div className="print:hidden">
-          <div className="inline-flex items-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg mb-2">
-            <ShieldCheck className="w-4 h-4" />
-            <span>Official EMGS Statutory Fee Structure 2026</span>
+          <div className="inline-flex items-center gap-2 text-xs font-bold text-[#3A60A1] bg-[#3A60A1]/10 px-3.5 py-1 rounded-full mb-2 border border-[#3A60A1]/20">
+            <ShieldCheck className="w-4 h-4 text-[#E8A300]" />
+            <span>Meezab Future Consulting • Official EMGS Fee Calculator 2026/2027</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#0B2553] tracking-tight">
             EMGS &amp; Student Visa Cost Calculator
           </h1>
           <p className="text-sm text-slate-600 mt-1 max-w-2xl">
@@ -210,16 +210,16 @@ export default function CalculatorPage() {
             <div className="flex gap-2">
               <button
                 onClick={handlePrint}
-                className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 py-3 rounded-xl font-bold text-xs shadow-xs transition-all"
+                className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 py-3 rounded-xl font-bold text-xs shadow-xs transition-all cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
                 <span>Print Quotation</span>
               </button>
               <button
                 onClick={() => openModal('Visa & EMGS Assistance')}
-                className="flex-1 flex items-center justify-center gap-2 bg-[#0a2540] hover:bg-[#163658] text-white py-3 rounded-xl font-bold text-xs shadow-xs transition-all"
+                className="flex-1 flex items-center justify-center gap-2 btn-meezab-gold py-3 rounded-xl font-bold text-xs shadow-xs transition-all cursor-pointer"
               >
-                <PhoneCall className="w-4 h-4 text-emerald-400" />
+                <PhoneCall className="w-4 h-4 text-white" />
                 <span>Apply with Desk</span>
               </button>
             </div>
@@ -233,27 +233,27 @@ export default function CalculatorPage() {
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                     Statutory Estimation
                   </span>
-                  <h2 className="text-xl font-extrabold text-slate-900">
+                  <h2 className="text-xl font-extrabold text-[#0B2553]">
                     Official Proforma Cost Breakdown
                   </h2>
                 </div>
                 <div className="text-right">
                   <span className="text-xs text-slate-500 block">Total Statutory Charges</span>
-                  <span className="text-2xl sm:text-3xl font-black text-emerald-700">
+                  <span className="text-2xl sm:text-3xl font-black text-[#0B2553]">
                     {formatMYR(totalMYR)}
                   </span>
                 </div>
               </div>
 
               {/* Currency Conversions */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-[#F9F9F9] p-4 rounded-xl border border-slate-200 text-xs">
                 <div>
                   <span className="text-slate-400 block text-[10px]">Malaysian Ringgit:</span>
-                  <span className="font-bold text-slate-900 text-sm">{formatMYR(totalMYR)}</span>
+                  <span className="font-bold text-[#0B2553] text-sm">{formatMYR(totalMYR)}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px]">Approx. in PKR:</span>
-                  <span className="font-extrabold text-blue-900 text-sm">{formatPKR(totalMYR)}</span>
+                  <span className="font-extrabold text-[#B57F00] text-sm">{formatPKR(totalMYR)}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px]">Approx. in USD:</span>

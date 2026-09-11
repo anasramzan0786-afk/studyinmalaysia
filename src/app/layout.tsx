@@ -4,16 +4,21 @@ import { CounselingProvider } from '@/components/CounselingContext';
 import { Footer } from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'Study in Malaysia | Official Degree Admissions & EMGS Visa Calculator',
+  title: 'Meezab Future Consulting | Study in Malaysia Official Admissions & EMGS Portal',
   description:
-    'Comprehensive Malaysian higher education directory, verified university fee structures, upfront payments, and EMGS visa cost calculator for Pakistani students by Meezab Future Consulting.',
+    'Meezab Future Consulting official admissions portal for Malaysian higher education institutions. Compare university fees, upfront EMGS visa costs, and apply directly with zero consultant markup.',
+  icons: {
+    icon: 'https://meezabfuture.com/wp-content/uploads/2025/03/cropped-fav-32x32.png',
+    apple: 'https://meezabfuture.com/wp-content/uploads/2025/03/cropped-fav-192x192.png',
+  },
   keywords: [
-    'Study in Malaysia',
+    'Meezab Future Consulting',
+    'Study in Malaysia Meezab',
+    'Meezab consultancy Lahore Islamabad Karachi',
     'Malaysia University fees for Pakistani students',
     'EMGS visa calculator',
-    'Lincoln University College fee structure',
+    'Lincoln University College admissions',
     'APU Malaysia admissions',
-    'Meezab consultancy',
   ],
 };
 
@@ -24,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth">
-      <body className="min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased selection:bg-blue-900 selection:text-white">
+      <body className="min-h-screen flex flex-col bg-[#F9F9F9] text-[#1F2937] antialiased selection:bg-[#0B2553] selection:text-[#E8A300]">
         <CounselingProvider>
           <main className="flex-1">{children}</main>
         </CounselingProvider>
@@ -33,4 +38,5 @@ export default function RootLayout({
     </html>
   );
 }
+
 

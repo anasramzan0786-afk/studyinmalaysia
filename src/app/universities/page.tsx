@@ -24,18 +24,18 @@ export default async function UniversitiesPage() {
   }
 
   return (
-    <div className="bg-slate-50 min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+    <div className="bg-[#F9F9F9] min-h-screen py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
         <div>
-          <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-lg mb-2">
-            <Building2 className="w-4 h-4" />
-            <span>Accredited Institutions</span>
+          <div className="inline-flex items-center gap-2 text-xs font-bold text-[#3A60A1] bg-[#3A60A1]/10 px-3.5 py-1 rounded-full mb-2 border border-[#3A60A1]/20">
+            <Building2 className="w-4 h-4 text-[#3A60A1]" />
+            <span>Meezab Partner Institutions • Malaysia</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#0B2553] tracking-tight">
             Malaysian Universities Directory
           </h1>
           <p className="text-sm text-slate-600 mt-1 max-w-2xl">
-            Explore premier private universities, research campuses, and top UK/Australian international branch campuses across Kuala Lumpur, Selangor, and Penang.
+            Explore premier private universities, clinical medical faculties, and top UK/Australian international branch campuses across Kuala Lumpur, Selangor, and Penang.
           </p>
         </div>
 
@@ -44,7 +44,7 @@ export default async function UniversitiesPage() {
             <Link
               key={uni.id}
               href={`/universities/${uni.slug}`}
-              className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+              className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-xl hover:border-[#3A60A1] transition-all duration-300 flex flex-col justify-between hover:-translate-y-1"
             >
               <div>
                 <div className="h-44 bg-slate-100 relative overflow-hidden">
@@ -53,14 +53,14 @@ export default async function UniversitiesPage() {
                     alt={uni.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B2553]/85 via-transparent to-transparent" />
                   
                   <span className="absolute bottom-3 left-3 text-xs font-semibold text-white bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-lg border border-white/20">
                     📍 {uni.location}
                   </span>
 
                   {uni.qsRank && (
-                    <span className="absolute top-3 right-3 text-[11px] font-bold text-amber-900 bg-amber-300/90 backdrop-blur-xs px-2.5 py-1 rounded-md">
+                    <span className="absolute top-3 right-3 text-[11px] font-bold text-slate-950 bg-[#FFA300] backdrop-blur-xs px-2.5 py-1 rounded-md shadow-xs">
                       🏆 {uni.qsRank}
                     </span>
                   )}
@@ -68,7 +68,7 @@ export default async function UniversitiesPage() {
 
                 <div className="p-6 space-y-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
+                    <span className="text-[11px] font-bold text-[#3A60A1] bg-[#3A60A1]/10 px-2 py-0.5 rounded-md">
                       {uni.type}
                     </span>
                     <span className="text-[11px] font-semibold text-slate-500">
@@ -76,7 +76,7 @@ export default async function UniversitiesPage() {
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+                  <h3 className="text-lg font-bold text-[#0B2553] group-hover:text-[#3A60A1] transition-colors">
                     {uni.name}
                   </h3>
 
@@ -91,13 +91,13 @@ export default async function UniversitiesPage() {
                   <span className="text-[10px] font-semibold text-slate-400 block uppercase">
                     Initial Upfront Package
                   </span>
-                  <span className="text-sm font-extrabold text-slate-900">
+                  <span className="text-sm font-extrabold text-[#0B2553]">
                     {formatMYR(uni.totalInitialMYR || 11000)}
                   </span>
                 </div>
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 group-hover:translate-x-1 transition-transform">
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-[#3A60A1] group-hover:translate-x-1 transition-transform">
                   <span>View Programs</span>
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-4 h-4 text-[#E8A300]" />
                 </span>
               </div>
             </Link>

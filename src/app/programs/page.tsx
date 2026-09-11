@@ -30,19 +30,19 @@ try {
 }
 
   return (
-    <div className="bg-slate-50 min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+    <div className="bg-[#F9F9F9] min-h-screen py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Page Header */}
         <div>
-          <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-lg mb-2">
-            <GraduationCap className="w-4 h-4" />
-            <span>MQA &amp; MOHE Accredited Directory</span>
+          <div className="inline-flex items-center gap-2 text-xs font-bold text-[#3A60A1] bg-[#3A60A1]/10 px-3.5 py-1 rounded-full mb-2 border border-[#3A60A1]/20">
+            <GraduationCap className="w-4 h-4 text-[#E8A300]" />
+            <span>Meezab Course Directory • MQA &amp; MOHE Accredited</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#0B2553] tracking-tight">
             Explore Higher Education Programs
           </h1>
           <p className="text-sm text-slate-600 mt-1 max-w-2xl">
-            Compare programs across top Malaysian campuses with full fee transparency. All tuition fees and upfront visa packages are verified directly with admissions departments.
+            Compare programs across top Malaysian campuses with full fee transparency. All tuition fees and upfront visa packages are verified directly with university registrars.
           </p>
         </div>
 

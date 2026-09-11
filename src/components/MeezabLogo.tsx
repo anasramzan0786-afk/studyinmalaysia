@@ -1,60 +1,87 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
+import Image from 'next/image';
 
 interface MeezabLogoProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'light' | 'dark' | 'icon-only';
+  showBadge?: boolean;
 }
 
 export const MeezabLogo: React.FC<MeezabLogoProps> = ({
   className = '',
   size = 'md',
-  variant = 'dark'
+  variant = 'dark',
+  showBadge = true,
 }) => {
-  const iconSizes = {
-    sm: 'w-7 h-7',
-    md: 'w-9 h-9',
-    lg: 'w-12 h-12'
-  };
+  const [imgError, setImgError] = useState(false);
+
+  const logoSrc =
+    variant === 'light'
+      ? 'https://meezabfuture.com/wp-content/uploads/2023/11/Total-White.png'
+      : 'https://meezabfuture.com/wp-content/uploads/2023/11/Meezab-Logo-new.png';
+
+  const dimensions = {
+    sm: { height: 28, width: 140, text: 'text-sm' },
+    md: { height: 38, width: 190, text: 'text-base' },
+    lg: { height: 48, width: 230, text: 'text-xl' },
+  }[size];
+
+  if (variant === 'icon-only') {
+    return (
+      <div className={`relative rounded-xl bg-[#0B2553] p-2 flex items-center justify-center shadow-sm shrink-0 ${className}`}>
+        <img
+          src="https://meezabfuture.com/wp-content/uploads/2025/03/cropped-fav-192x192.png"
+          alt="Meezab"
+          className="w-8 h-8 object-contain"
+          onError={(e) => {
+            (e.target as HTMLElement).style.display = 'none';
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
-      {/* Meezab Icon Crest */}
-      <div className={`${iconSizes[size]} relative rounded-lg bg-[#002f6c] p-1.5 flex items-center justify-center shadow-sm shrink-0 overflow-hidden`}>
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-          {/* Graduation Cap Top */}
-          <path d="M50 12 L78 26 L50 40 L22 26 Z" fill="white" />
-          <rect x="48" y="24" width="4" height="6" fill="#f59e0b" />
-          <circle cx="78" cy="27" r="2.5" fill="#f59e0b" />
-          {/* M Lettering with Yellow slash */}
-          <path d="M22 36 L22 84 L36 84 L36 55 L50 69 L64 55 L64 84 L78 84 L78 36 L50 63 Z" fill="white" />
-          {/* Golden accent bar in right valley */}
-          <path d="M50 63 L64 77 L64 64 L50 50 Z" fill="#f59e0b" />
-          <path d="M50 68 L64 82 L78 68 L64 54 Z" fill="#f59e0b" />
-        </svg>
-      </div>
-
-      {variant !== 'icon-only' && (
-        <div className="flex flex-col">
-          <div className="flex items-center gap-1">
-            <span className={`font-bold tracking-tight leading-none font-['Plus_Jakarta_Sans',sans-serif] ${
-              variant === 'light' ? 'text-white' : 'text-[#000f22]'
-            } ${size === 'lg' ? 'text-xl' : size === 'md' ? 'text-base' : 'text-sm'}`}>
-              MEEZAB
-            </span>
-            <span className={`font-medium tracking-wide text-[10px] uppercase px-1.5 py-0.5 rounded ${
-              variant === 'light' ? 'bg-[#f59e0b]/20 text-[#f59e0b]' : 'bg-[#d2e4ff] text-[#001c37]'
-            }`}>
-              Portal
+      {!imgError ? (
+        <div className="flex items-center">
+          <img
+            src={logoSrc}
+            alt="Meezab Future Consulting"
+            style={{ height: `${dimensions.height}px`, width: 'auto' }}
+            className="max-h-full object-contain"
+            onError={() => setImgError(true)}
+          />
+        </div>
+      ) : (
+        /* Crisp typographic fallback if offline */
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-[#0B2553] border border-[#E8A300]/40 flex items-center justify-center font-bold text-white text-sm">
+            M
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <span className={`font-black tracking-tight ${variant === 'light' ? 'text-white' : 'text-[#0B2553]'} ${dimensions.text}`}>
+                MEEZAB
+              </span>
+              <span className="text-[#E8A300] font-bold text-xs">FUTURE</span>
+            </div>
+            <span className={`text-[10px] tracking-wider uppercase font-medium ${variant === 'light' ? 'text-slate-300' : 'text-slate-500'}`}>
+              Consulting Pvt Ltd
             </span>
           </div>
-          <span className={`text-[10px] tracking-wider uppercase font-semibold ${
-            variant === 'light' ? 'text-[#b0c8eb]' : 'text-[#43474d]'
-          }`}>
-            Study Malaysia
-          </span>
         </div>
+      )}
+
+      {showBadge && (
+        <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#E8A300]/15 text-[#B57F00] border border-[#E8A300]/30 tracking-wide uppercase">
+          Study Malaysia
+        </span>
       )}
     </div>
   );
 };
+

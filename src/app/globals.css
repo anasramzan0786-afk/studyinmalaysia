@@ -2,18 +2,69 @@
 
 @layer base {
   :root {
-    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-heading: 'Roboto Slab', serif;
+    --meezab-primary: #3A60A1;
+    --meezab-navy: #0B2553;
+    --meezab-navy-dark: #07172B;
+    --meezab-gold: #E8A300;
+    --meezab-gold-hover: #D99700;
+    --meezab-blue-hover: #006BBB;
+    --meezab-crimson: #BA2E34;
+    --meezab-crimson-dark: #B82E32;
+    --meezab-bg: #F9F9F9;
   }
 
   body {
     font-family: var(--font-sans);
-    letter-spacing: -0.015em;
-    background-color: #f8fafc;
-    color: #0f172a;
+    letter-spacing: -0.01em;
+    background-color: #F9F9F9;
+    color: #1F2937;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
   }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-heading), var(--font-sans);
+  }
+}
+
+/* Meezab Custom Button & Accent Classes */
+.btn-meezab-gold {
+  background-color: #E8A300;
+  color: #FFFFFF;
+  transition: all 0.25s ease-in-out;
+}
+.btn-meezab-gold:hover {
+  background-color: #006BBB;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 107, 187, 0.35);
+}
+
+.btn-meezab-navy {
+  background-color: #0B2553;
+  color: #FFFFFF;
+  transition: all 0.25s ease-in-out;
+}
+.btn-meezab-navy:hover {
+  background-color: #3A60A1;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(58, 96, 161, 0.35);
+}
+
+.badge-meezab-gold {
+  background-color: rgba(232, 163, 0, 0.12);
+  color: #B57F00;
+  border: 1px solid rgba(232, 163, 0, 0.3);
+}
+
+.badge-meezab-navy {
+  background-color: rgba(58, 96, 161, 0.1);
+  color: #3A60A1;
+  border: 1px solid rgba(58, 96, 161, 0.25);
 }
 
 /* Ambient glow animations */
@@ -50,7 +101,7 @@
 }
 
 .shimmer-text {
-  background: linear-gradient(90deg, #f8fafc 0%, #38bdf8 50%, #f8fafc 100%);
+  background: linear-gradient(90deg, #f8fafc 0%, #E8A300 50%, #f8fafc 100%);
   background-size: 200% auto;
   color: transparent;
   -webkit-background-clip: text;
@@ -60,19 +111,19 @@
 
 /* Glassmorphic border reflection */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05), inset 0 1px 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 30px -10px rgba(11, 37, 83, 0.08), inset 0 1px 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .glass-dark {
-  background: rgba(15, 23, 42, 0.75);
+  background: rgba(11, 37, 83, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 /* Custom scrollbars */

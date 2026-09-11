@@ -36,17 +36,18 @@ const TESTIMONIALS = [
 
 export function StudentTestimonials() {
   return (
-    <section className="py-20 bg-slate-100/60 px-4 sm:px-6 lg:px-8 border-b border-slate-200">
+    <section className="py-20 bg-[#F9F9F9] px-4 sm:px-6 lg:px-8 border-b border-slate-200">
       <div className="max-w-7xl mx-auto space-y-12">
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
-            Verified Admissions Track Record
+          <span className="text-xs font-bold uppercase tracking-wider text-[#3A60A1] bg-[#3A60A1]/10 px-3.5 py-1 rounded-full border border-[#3A60A1]/20 inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#E8A300]" />
+            Meezab Student Reviews &amp; Success Stories
           </span>
-          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h2 className="text-3xl font-extrabold text-[#0B2553] tracking-tight">
             Hear from Pakistani Students in Malaysia
           </h2>
           <p className="text-sm text-slate-600">
-            Over 1,400+ Pakistani students successfully guided through EMGS visa processing and university enrollments across Kuala Lumpur and Selangor.
+            Over 1,400+ students successfully enrolled in top Malaysian universities through Meezab Future Consulting with 100% genuine admission &amp; visa guidance.
           </p>
         </div>
 
@@ -54,13 +55,18 @@ export function StudentTestimonials() {
           {TESTIMONIALS.map((t, idx) => (
             <div
               key={idx}
-              className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between space-y-6"
+              className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-xl hover:border-[#E8A300] transition-all duration-300 flex flex-col justify-between space-y-6 group"
             >
               <div className="space-y-4">
-                <div className="flex items-center gap-1 text-amber-400">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-amber-400" />
-                  ))}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-[#E8A300]">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-[#E8A300]" />
+                    ))}
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                    Google Verified
+                  </span>
                 </div>
                 <p className="text-sm text-slate-700 leading-relaxed italic">
                   &ldquo;{t.quote}&rdquo;
@@ -71,15 +77,15 @@ export function StudentTestimonials() {
                 <img
                   src={t.avatar}
                   alt={t.name}
-                  className="w-11 h-11 rounded-full object-cover border border-slate-200"
+                  className="w-11 h-11 rounded-full object-cover border-2 border-[#E8A300]/30"
                 />
                 <div>
-                  <h4 className="text-xs font-extrabold text-slate-900 flex items-center gap-1">
+                  <h4 className="text-xs font-extrabold text-[#0B2553] flex items-center gap-1">
                     <span>{t.name}</span>
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                   </h4>
                   <p className="text-[11px] text-slate-500">{t.from}</p>
-                  <p className="text-[10px] text-blue-700 font-semibold mt-0.5">
+                  <p className="text-[10px] text-[#3A60A1] font-bold mt-0.5">
                     {t.course} • {t.uni}
                   </p>
                 </div>
