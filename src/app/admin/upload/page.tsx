@@ -1,0 +1,466 @@
+'use client';
+
+import React, { useState, useRef } from 'react';
+import Link from 'next/link';
+import Papa from 'papaparse';
+import { 
+  UploadCloud, 
+  Download, 
+  CheckCircle2, 
+  AlertCircle, 
+  FileText, 
+  Trash2, 
+  ArrowRight,
+  Database,
+  Sparkles,
+  RefreshCw
+} from 'lucide-react';
+import { formatMYR } from '@/lib/utils';
+
+interface ParsedRow {
+  title: string;
+  universityName: string;
+  degreeLevel: string;
+  faculty: string;
+  duration: string;
+  intakeMonths: string;
+  tuitionMYR: number;
+  emgsFeeMYR: number;
+  miscFeesMYR: number;
+  totalInitialMYR: number;
+  scholarship?: string;
+  academicReq?: string;
+  englishReq?: string;
+  pakistanNotes?: string;
+}
+
+export default function BulkUploadPage() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [parsedData, setParsedData] = useState<ParsedRow[]>([]);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    success: boolean;
+    count: number;
+    errors: string[];
+  } | null>(null);
+  const [rawText, setRawText] = useState('');
+  const [uploadMode, setUploadMode] = useState<'file' | 'text'>('file');
+
+  // Sample CSV Template for user to download
+  const downloadSampleTemplate = () => {
+    const headers = [
+      'title',
+      'universityName',
+      'degreeLevel',
+      'faculty',
+      'duration',
+      'intakeMonths',
+      'tuitionMYR',
+      'emgsFeeMYR',
+      'miscFeesMYR',
+      'totalInitialMYR',
+      'scholarship',
+      'academicReq',
+      'englishReq',
+      'pakistanNotes',
+    ];
+
+    const sampleRows = [
+      [
+        'Bachelor of Computer Science (Hons) (Cyber Security)',
+        'Lincoln University College (LUC)',
+        "Bachelor's Degree",
+        'Faculty of Computer Science',
+        '3 Years',
+        'January, May, September',
+        '60000',
+        '3500',
+        '7500',
+        '11000',
+        'Merit Discount Available',
+        'FSc (Pre-Eng/ICS) min 50% or C grade in Math',
+        'IELTS 5.5 or English medium letter',
+        'Payable upon eVAL approval: RM 11,000',
+      ],
+      [
+        'Bachelor of Science (Hons) in Artificial Intelligence',
+        'Asia Pacific University (APU)',
+        "Bachelor's Degree",
+        'School of Computing',
+        '3 Years',
+        'February, May, September',
+        '98000',
+        '3500',
+        '6500',
+        '10000',
+        'Dual Degree with De Montfort UK',
+        'FSc with minimum 55% in Mathematics',
+        'IELTS 6.0',
+        'Total initial non-tuition payment is RM 10,000',
+      ],
+      [
+        'Master of Business Administration (Global Healthcare)',
+        'Lincoln University College (LUC)',
+        "Master's (Postgraduate)",
+        'Faculty of Business',
+        '1.5 Years',
+        'January, May, October',
+        '36000',
+        '3500',
+        '7500',
+        '11000',
+        'Executive Weekend Track',
+        'Recognized 16-Year Bachelor degree with min 2.50 CGPA',
+        'IELTS 6.0 or exemption letter',
+        'Fast eVAL approval for postgraduate track',
+      ],
+    ];
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...sampleRows.map((e) => e.map((val) => `"${val}"`).join(','))].join(
+        '\n'
+      );
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'meezab_courses_upload_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Handle CSV File Upload via PapaParse
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setFileName(file.name);
+    setImportResult(null);
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        processParsedRows(results.data);
+      },
+      error: (err) => {
+        alert('Failed to parse CSV file: ' + err.message);
+      },
+    });
+  };
+
+  // Handle Raw Text Paste
+  const handleRawTextParse = () => {
+    if (!rawText.trim()) return;
+    setImportResult(null);
+
+    Papa.parse(rawText, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        setFileName('pasted_data.csv');
+        processParsedRows(results.data);
+      },
+    });
+  };
+
+  const processParsedRows = (rawRows: any[]) => {
+    const cleaned: ParsedRow[] = rawRows
+      .map((row: any) => ({
+        title: String(row.title || row.Title || '').trim(),
+        universityName: String(row.universityName || row.University || row.university || '').trim(),
+        degreeLevel: String(row.degreeLevel || row.Degree || "Bachelor's Degree").trim(),
+        faculty: String(row.faculty || row.Faculty || 'General').trim(),
+        duration: String(row.duration || row.Duration || '3 Years').trim(),
+        intakeMonths: String(row.intakeMonths || row.Intakes || 'January, May, September').trim(),
+        tuitionMYR: Number(row.tuitionMYR || row.Tuition || 0),
+        emgsFeeMYR: Number(row.emgsFeeMYR || row.EMGS || 3500),
+        miscFeesMYR: Number(row.miscFeesMYR || row.AdminFee || 6000),
+        totalInitialMYR: Number(row.totalInitialMYR || row.Upfront || 9500),
+        scholarship: row.scholarship || row.Scholarship,
+        academicReq: row.academicReq || row.Requirements,
+        englishReq: row.englishReq || row.English,
+        pakistanNotes: row.pakistanNotes || row.Notes,
+      }))
+      .filter((r) => r.title.length > 0);
+
+    setParsedData(cleaned);
+  };
+
+  // Commit parsed data into the live database via /api/upload
+  const handleCommitToDatabase = async () => {
+    if (parsedData.length === 0) return;
+    setIsUploading(true);
+    setImportResult(null);
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ programs: parsedData }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to upload data');
+      }
+
+      setImportResult({
+        success: true,
+        count: data.importedCount,
+        errors: data.errors || [],
+      });
+      setParsedData([]);
+      setFileName(null);
+    } catch (err: any) {
+      setImportResult({
+        success: false,
+        count: 0,
+        errors: [err.message || 'Unknown network error'],
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Header & Download Template */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            Bulk Data Importer
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Upload and batch-insert fee structures and degree programs directly into the database.
+          </p>
+        </div>
+
+        <button
+          onClick={downloadSampleTemplate}
+          className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold px-4 py-2.5 rounded-xl text-xs shadow-xs transition-all active:scale-95"
+        >
+          <Download className="w-4 h-4 text-blue-700" />
+          <span>Download Sample CSV Template</span>
+        </button>
+      </div>
+
+      {/* Upload Methods Selector */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
+        <div className="flex items-center gap-2 border-b border-slate-100 pb-4">
+          <button
+            onClick={() => setUploadMode('file')}
+            className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
+              uploadMode === 'file'
+                ? 'bg-blue-700 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            Upload CSV File
+          </button>
+          <button
+            onClick={() => setUploadMode('text')}
+            className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
+              uploadMode === 'text'
+                ? 'bg-blue-700 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            Paste CSV Raw Text
+          </button>
+        </div>
+
+        {uploadMode === 'file' ? (
+          /* File Dropzone */
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-10 text-center cursor-pointer transition-colors bg-slate-50/50 hover:bg-blue-50/20 flex flex-col items-center justify-center space-y-3"
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <div className="w-14 h-14 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center">
+              <UploadCloud className="w-8 h-8" />
+            </div>
+            <div>
+              <p className="font-bold text-slate-800 text-sm">
+                Click to browse or drag &amp; drop your CSV file here
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                Supports standard comma-separated spreadsheets (.csv)
+              </p>
+            </div>
+          </div>
+        ) : (
+          /* Raw Text Area */
+          <div className="space-y-3">
+            <textarea
+              rows={6}
+              value={rawText}
+              onChange={(e) => setRawText(e.target.value)}
+              placeholder="Paste comma-separated CSV rows here (including header line)..."
+              className="w-full text-xs font-mono border border-slate-200 rounded-xl p-3 bg-slate-50 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onClick={handleRawTextParse}
+              className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-xl transition-all"
+            >
+              Parse Pasted Text
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Success / Error Feedback Banner */}
+      {importResult && (
+        <div
+          className={`p-6 rounded-2xl border ${
+            importResult.success
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              : 'bg-red-50 border-red-200 text-red-900'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            {importResult.success ? (
+              <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle className="w-6 h-6 text-red-600 shrink-0 mt-0.5" />
+            )}
+            <div className="space-y-1">
+              <h4 className="font-bold text-base">
+                {importResult.success
+                  ? `Successfully Imported ${importResult.count} Courses to Database!`
+                  : 'Import Failed'}
+              </h4>
+              <p className="text-xs">
+                {importResult.success
+                  ? 'All records have been written to the live database and are now visible on the public website.'
+                  : 'Please check your CSV format and make sure required columns are included.'}
+              </p>
+
+              {importResult.errors.length > 0 && (
+                <div className="mt-3 bg-white/80 p-3 rounded-xl text-xs space-y-1">
+                  <span className="font-bold block text-red-700">Errors encountered:</span>
+                  <ul className="list-disc list-inside space-y-0.5 text-slate-700 text-[11px]">
+                    {importResult.errors.map((err, i) => (
+                      <li key={i}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {importResult.success && (
+                <div className="pt-3">
+                  <Link
+                    href="/programs"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:text-emerald-950 underline"
+                  >
+                    <span>View Newly Added Courses on Public Website</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pre-Import Data Validation Table */}
+      {parsedData.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" />
+                <h3 className="font-bold text-base text-slate-900">
+                  Ready to Import: {parsedData.length} Programs
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Source: <strong className="text-slate-800">{fileName}</strong> • Review the rows below before committing to the database.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  setParsedData([]);
+                  setFileName(null);
+                }}
+                className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition-colors flex items-center gap-1"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Discard</span>
+              </button>
+
+              <button
+                onClick={handleCommitToDatabase}
+                disabled={isUploading}
+                className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
+              >
+                {isUploading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Writing to Database...</span>
+                  </>
+                ) : (
+                  <>
+                    <Database className="w-4 h-4" />
+                    <span>Commit {parsedData.length} Courses to Live DB</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Table Preview */}
+          <div className="overflow-x-auto max-h-96">
+            <table className="w-full text-left text-xs">
+              <thead className="sticky top-0 bg-slate-50 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+                <tr className="border-b border-slate-200">
+                  <th className="py-2.5 px-3">#</th>
+                  <th className="py-2.5 px-3">Program Title</th>
+                  <th className="py-2.5 px-3">University</th>
+                  <th className="py-2.5 px-3">Level</th>
+                  <th className="py-2.5 px-3">Tuition (MYR)</th>
+                  <th className="py-2.5 px-3">Upfront (MYR)</th>
+                  <th className="py-2.5 px-3">Duration</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {parsedData.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-slate-50">
+                    <td className="py-2.5 px-3 text-slate-400 font-mono">{idx + 1}</td>
+                    <td className="py-2.5 px-3 font-semibold text-slate-900">{row.title}</td>
+                    <td className="py-2.5 px-3 text-slate-600">{row.universityName}</td>
+                    <td className="py-2.5 px-3">
+                      <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md text-[10px] font-bold">
+                        {row.degreeLevel}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 font-bold text-slate-900">
+                      {formatMYR(row.tuitionMYR)}
+                    </td>
+                    <td className="py-2.5 px-3 font-bold text-emerald-700">
+                      {formatMYR(row.totalInitialMYR)}
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-500">{row.duration}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

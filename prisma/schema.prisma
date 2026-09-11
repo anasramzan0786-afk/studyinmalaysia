@@ -1,0 +1,115 @@
+// Prisma Schema for Study Malaysia Portal
+// Production ready with SQLite (local development) and 100% compatible with PostgreSQL (Supabase / Neon)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model University {
+  id                    String    @id @default(cuid())
+  slug                  String    @unique
+  name                  String
+  shortName             String
+  type                  String    // 'Public Research' | 'Private Premier' | 'International Branch'
+  qsRank                String?
+  location              String
+  city                  String?
+  state                 String?
+  image                 String?
+  logo                  String?
+  tuitionBachelor       String?
+  tuitionMaster         String?
+  tuitionPhd            String?
+  hostelMonthly         String?
+  emgsYearly            String?
+  avgTuition3Yr         Float?
+  registrationDeposit   Float?
+  livingCostTier        String?   // 'Low-Mod' | 'Moderate' | 'High'
+  livingCostMonthly     Float?
+  description           String?
+  highlights            String?   // JSON array string
+  intakeMonths          String?
+  emgsFeeMYR            Float?
+  miscFeesMYR           Float?
+  totalInitialMYR       Float?
+  initialBreakdownNotes String?
+  websiteUrl            String?
+  featured              Boolean   @default(false)
+  programs              Program[]
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model Program {
+  id                String             @id @default(cuid())
+  slug              String             @unique
+  title             String
+  universityId      String
+  university        University         @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  degreeLevel       String             // 'Foundation / Diploma' | "Bachelor's Degree" | "Master's (Postgraduate)" | "Ph.D & Doctorate"
+  faculty           String
+  badgeType         String?            // 'verified' | 'flagship' | 'australian' | 'qs300' | 'topuk'
+  badgeText         String?
+  duration          String
+  durationYears     Float?
+  intakeMonths      String             // Comma-separated or JSON
+  scholarship       String?
+  tuitionMYR        Float
+  tuitionUSD        Float?
+  emgsFeeMYR        Float?
+  miscFeesMYR       Float?
+  totalInitialMYR   Float?
+  miscBreakdown     String?
+  pakistanNotes     String?
+  description       String?
+  academicReq       String?
+  englishReq        String?
+  minGpa            String?
+  documentsReq      String?            // JSON string array
+  featured          Boolean            @default(false)
+  semesterSchedules SemesterSchedule[]
+  inquiries         Inquiry[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model SemesterSchedule {
+  id         String   @id @default(cuid())
+  programId  String
+  program    Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  semester   String
+  tuitionMYR Float
+  miscMYR    Float
+}
+
+model Inquiry {
+  id              String   @id @default(cuid())
+  studentName     String
+  phone           String
+  email           String?
+  city            String?
+  qualification   String?  // 'Matric' | 'FSc / ICS' | 'A-Levels' | 'Bachelor' | 'Master'
+  programInterest String?
+  programId       String?
+  program         Program? @relation(fields: [programId], references: [id], onDelete: SetNull)
+  status          String   @default("NEW") // 'NEW' | 'CONTACTED' | 'IN_REVIEW' | 'ADMITTED' | 'CLOSED'
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  title     String
+  action    String   // 'CREATE' | 'UPDATE' | 'DELETE' | 'BATCH_IMPORT'
+  target    String
+  user      String   @default("Meezab Admissions Team")
+  details   String?
+  createdAt DateTime @default(now())
+}
+

@@ -1,0 +1,6 @@
+{
+  "name": "Study Malaysia Portal",
+  "description": "Comprehensive Malaysian Higher Education Directory, University Fee Structures, EMGS & Visa Calculator, and Database Management Portal by Meezab Consultancy.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
