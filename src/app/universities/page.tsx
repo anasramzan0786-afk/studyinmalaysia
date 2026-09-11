@@ -13,14 +13,15 @@ export const metadata = {
 export const revalidate = 60;
 
 export default async function UniversitiesPage() {
-  const universities = await db.university.findMany({
-    include: {
-      _count: {
-        select: { programs: true },
-      },
-    },
-    orderBy: { name: 'asc' },
-  });
+  let universities: any[] = [];
+  try {
+    universities = await db.university.findMany({
+      include: { _count: { select: { programs: true } } },
+      orderBy: { name: 'asc' },
+    });
+  } catch (e) {
+    console.warn('Prisma DB not available during build – using fallback universities.', e);
+  }
 
   return (
     <div className="bg-slate-50 min-h-screen py-10 px-4 sm:px-6 lg:px-8">

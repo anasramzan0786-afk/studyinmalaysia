@@ -20,25 +20,36 @@ import { StudentTestimonials } from '@/components/home/StudentTestimonials';
 export const revalidate = 60; // ISR cache for 60 seconds
 
 export default async function HomePage() {
-  const [featuredUniversities, popularPrograms, totalProgramsCount, totalUniCount] = await Promise.all([
-    db.university.findMany({
-      where: { featured: true },
-      take: 6,
-      orderBy: { qsRank: 'asc' },
-    }),
-    db.program.findMany({
-      where: { featured: true },
-      take: 6,
-      include: {
-        university: {
-          select: { name: true, shortName: true, logo: true, location: true },
+  // During static pre‑render we may not have a local SQLite DB (e.g., CI/CD or Vercel preview).
+  // Fall back to empty data so the page can still build.
+  let featuredUniversities: any[] = [];
+  let popularPrograms: any[] = [];
+  let totalProgramsCount = 0;
+  let totalUniCount = 0;
+  try {
+    [featuredUniversities, popularPrograms, totalProgramsCount, totalUniCount] = await Promise.all([
+      db.university.findMany({
+        where: { featured: true },
+        take: 6,
+        orderBy: { qsRank: 'asc' },
+      }),
+      db.program.findMany({
+        where: { featured: true },
+        take: 6,
+        include: {
+          university: {
+            select: { name: true, shortName: true, logo: true, location: true },
+          },
         },
-      },
-      orderBy: { tuitionMYR: 'asc' },
-    }),
-    db.program.count(),
-    db.university.count(),
-  ]);
+        orderBy: { tuitionMYR: 'asc' },
+      }),
+      db.program.count(),
+      db.university.count(),
+    ]);
+  } catch (e) {
+    console.warn('Prisma DB not available during build – using fallback data.', e);
+  }
+// Fallback block ends here
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">

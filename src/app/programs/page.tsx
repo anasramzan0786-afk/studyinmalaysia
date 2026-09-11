@@ -12,30 +12,22 @@ export const metadata = {
 export const revalidate = 60; // 60s cache
 
 export default async function ProgramsPage() {
-  const [programs, universities] = await Promise.all([
+  let programs: any[] = [];
+let universities: any[] = [];
+try {
+  [programs, universities] = await Promise.all([
     db.program.findMany({
-      include: {
-        university: {
-          select: {
-            id: true,
-            name: true,
-            shortName: true,
-            logo: true,
-            location: true,
-          },
-        },
-      },
+      include: { university: { select: { id: true, name: true, shortName: true, logo: true, location: true } } },
       orderBy: { tuitionMYR: 'asc' },
     }),
     db.university.findMany({
-      select: {
-        id: true,
-        name: true,
-        shortName: true,
-      },
+      select: { id: true, name: true, shortName: true },
       orderBy: { name: 'asc' },
     }),
   ]);
+} catch (e) {
+  console.warn('Prisma DB not available during build – using fallback data for programs page.', e);
+}
 
   return (
     <div className="bg-slate-50 min-h-screen py-10 px-4 sm:px-6 lg:px-8">
