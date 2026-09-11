@@ -99,9 +99,19 @@ export function InteractiveFeeExplorer() {
   });
 
   return (
-    <section className="py-20 bg-[#0B2553] text-white px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background radial highlight */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-[#3A60A1]/20 rounded-full blur-[120px] pointer-events-none" />
+    <section className="py-20 text-white px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background: Malaysian university campus */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1600&q=80&auto=format&fit=crop')`,
+        }}
+      />
+      {/* Navy overlay — dark enough to keep text readable */}
+      <div className="absolute inset-0 bg-[#0B2553]/90" />
+      {/* Soft radial glow accent */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-[#3A60A1]/15 rounded-full blur-[120px] pointer-events-none" />
+
 
       <div className="max-w-7xl mx-auto relative z-10 space-y-12">
         {/* Section Header */}

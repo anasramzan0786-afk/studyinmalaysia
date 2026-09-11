@@ -287,7 +287,16 @@ export default async function HomePage() {
       <StudentTestimonials />
 
       {/* 7. VISA & EMGS TRANSPARENCY SECTION */}
-      <section className="py-20 bg-[#0B2553] text-white px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <section className="py-20 text-white px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        {/* Background: KL Skyline / Petronas by night */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=1600&q=80&auto=format&fit=crop')`,
+          }}
+        />
+        {/* Strong dark navy overlay for readability */}
+        <div className="absolute inset-0 bg-[#0B2553]/91" />
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 bg-[#E8A300]/20 text-[#FFA300] px-3.5 py-1.5 rounded-full text-xs font-bold border border-[#E8A300]/40">
@@ -373,7 +382,16 @@ export default async function HomePage() {
       </section>
 
       {/* 8. DIRECT ADMISSION SUPPORT CTA */}
-      <section className="py-16 bg-gradient-to-r from-[#0B2553] via-[#102A56] to-[#0B2553] text-white px-4 sm:px-6 lg:px-8 text-center relative overflow-hidden border-t border-white/10">
+      <section className="py-16 text-white px-4 sm:px-6 lg:px-8 text-center relative overflow-hidden border-t border-white/10">
+        {/* Background: students on Malaysian uni campus */}
+        <div
+          className="absolute inset-0 bg-cover bg-top bg-no-repeat"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1600&q=80&auto=format&fit=crop')`,
+          }}
+        />
+        {/* Dark Meezab navy gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0B2553]/96 via-[#0B2553]/88 to-[#0B2553]/80" />
         <div className="max-w-4xl mx-auto space-y-6 relative z-10">
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
             Ready to Start Your Malaysian Higher Education Journey?
