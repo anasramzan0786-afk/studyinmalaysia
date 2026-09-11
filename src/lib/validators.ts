@@ -54,8 +54,8 @@ export const ProgramSchema = z.object({
 });
 
 export const InquirySchema = z.object({
-  studentName: z.string().min(2, 'Full name is required'),
-  phone: z.string().min(8, 'Valid phone / WhatsApp number is required'),
+  studentName: z.string().min(2, 'Full name must be at least 2 characters'),
+  phone: z.string().min(3, 'WhatsApp / Phone number is required'),
   email: z.string().email().optional().or(z.literal('')),
   city: z.string().optional().nullable(),
   qualification: z.string().optional().nullable(),

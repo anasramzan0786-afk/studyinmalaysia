@@ -50,7 +50,8 @@ export function CounselingModal({
       });
 
       if (!res.ok) {
-        throw new Error('Failed to submit application inquiry.');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to submit application inquiry.');
       }
 
       setIsSuccess(true);

@@ -27,6 +27,20 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validatedData = InquirySchema.parse(body);
 
+    // Verify if programId actually exists in DB to prevent FK constraint failures
+    let validProgramId: string | null = null;
+    if (validatedData.programId) {
+      try {
+        const prog = await db.program.findUnique({
+          where: { id: validatedData.programId },
+          select: { id: true },
+        });
+        if (prog) validProgramId = prog.id;
+      } catch (err) {
+        console.warn('Invalid programId lookup, proceeding without linking programId:', err);
+      }
+    }
+
     const inquiry = await db.inquiry.create({
       data: {
         studentName: validatedData.studentName,
@@ -35,15 +49,19 @@ export async function POST(request: Request) {
         city: validatedData.city || null,
         qualification: validatedData.qualification || null,
         programInterest: validatedData.programInterest || null,
-        programId: validatedData.programId || null,
+        programId: validProgramId,
         notes: validatedData.notes || null,
       },
     });
 
     return NextResponse.json({ success: true, inquiry }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to create inquiry:', error);
-    return NextResponse.json({ error: 'Invalid inquiry data' }, { status: 400 });
+    if (error?.name === 'ZodError' || error?.issues) {
+      const issueMessage = error.issues?.[0]?.message || 'Invalid input data';
+      return NextResponse.json({ error: issueMessage }, { status: 400 });
+    }
+    return NextResponse.json({ error: error.message || 'Failed to submit inquiry' }, { status: 500 });
   }
 }
 
