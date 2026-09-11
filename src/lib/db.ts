@@ -1,8 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 
 if (!process.env.DATABASE_URL) {
-  // Fallback to local SQLite DB for environments without .env (e.g., Vercel preview)
-  process.env.DATABASE_URL = 'file:./prisma/dev.db';
+  // Fallback for build environments before DATABASE_URL environment variable is set
+  process.env.DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/postgres';
 }
 
 // Preserve Prisma client across HMR in development
