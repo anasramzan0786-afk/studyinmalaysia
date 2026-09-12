@@ -77,7 +77,8 @@ export const MeezabLogo: React.FC<MeezabLogoProps> = ({
       )}
 
       {showBadge && (
-        <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#E8A300]/15 text-[#B57F00] border border-[#E8A300]/30 tracking-wide uppercase">
+        <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-gradient-to-r from-amber-500/15 via-[#E8A300]/20 to-amber-500/10 text-[#9E6A00] border border-[#E8A300]/30 shadow-xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#E8A300] animate-pulse" />
           Study Malaysia
         </span>
       )}
