@@ -1,9 +1,12 @@
 @import "tailwindcss";
 
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Jost:wght@400;700&display=swap');
+
 @layer base {
   :root {
-    --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-heading: 'Roboto Slab', serif;
+    --font-body: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-heading: 'Jost', serif;
     --meezab-primary: #3A60A1;
     --meezab-navy: #0B2553;
     --meezab-navy-dark: #07172B;
@@ -13,10 +16,16 @@
     --meezab-crimson: #BA2E34;
     --meezab-crimson-dark: #B82E32;
     --meezab-bg: #F9F9F9;
+
+    --meezab-gold-hover: #D99700;
+    --meezab-blue-hover: #006BBB;
+    --meezab-crimson: #BA2E34;
+    --meezab-crimson-dark: #B82E32;
+    --meezab-bg: #F9F9F9;
   }
 
   body {
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     letter-spacing: -0.01em;
     background-color: #F9F9F9;
     color: #1F2937;
@@ -26,7 +35,8 @@
   }
 
   h1, h2, h3, h4 {
-    font-family: var(--font-heading), var(--font-sans);
+    font-family: var(--font-heading), var(--font-body);
+    font-weight: 700;
   }
 }
 
