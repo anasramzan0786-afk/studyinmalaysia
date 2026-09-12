@@ -1,12 +1,9 @@
 @import "tailwindcss";
 
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Jost:wght@400;700&display=swap');
-
 @layer base {
   :root {
-    --font-body: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-heading: 'Jost', serif;
+    --font-sans: var(--font-montserrat), 'Montserrat', system-ui, sans-serif;
+    --font-heading: var(--font-jost), 'Jost', system-ui, sans-serif;
     --meezab-primary: #3A60A1;
     --meezab-navy: #0B2553;
     --meezab-navy-dark: #07172B;
@@ -16,16 +13,11 @@
     --meezab-crimson: #BA2E34;
     --meezab-crimson-dark: #B82E32;
     --meezab-bg: #F9F9F9;
-
-    --meezab-gold-hover: #D99700;
-    --meezab-blue-hover: #006BBB;
-    --meezab-crimson: #BA2E34;
-    --meezab-crimson-dark: #B82E32;
-    --meezab-bg: #F9F9F9;
   }
 
+  html,
   body {
-    font-family: var(--font-body);
+    font-family: var(--font-sans);
     letter-spacing: -0.01em;
     background-color: #F9F9F9;
     color: #1F2937;
@@ -34,9 +26,14 @@
     overflow-x: hidden;
   }
 
-  h1, h2, h3, h4 {
-    font-family: var(--font-heading), var(--font-body);
-    font-weight: 700;
+  /* Bold taglines and headings with Jost */
+  h1, h2, h3, h4, h5, h6,
+  .font-heading,
+  .tagline,
+  .banner-tagline {
+    font-family: var(--font-heading) !important;
+    font-weight: 800;
+    letter-spacing: -0.025em;
   }
 }
 
