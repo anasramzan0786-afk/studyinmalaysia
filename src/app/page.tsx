@@ -19,9 +19,16 @@ import {
   MapPin,
   HelpCircle,
   ExternalLink,
-  BookOpen
+  BookOpen,
+  BadgeCheck,
+  Compass,
+  Zap,
+  Globe2,
+  Check
 } from 'lucide-react';
 import { ApplyButton } from '@/components/programs/ApplyButton';
+import { QuickIntakeMatcher } from '@/components/home/QuickIntakeMatcher';
+import { UniversityTicker } from '@/components/home/UniversityTicker';
 
 export const revalidate = 60; // ISR cache for 60 seconds
 
@@ -55,249 +62,271 @@ export default async function HomePage() {
     console.warn('Prisma DB not available during build – using fallback data.', e);
   }
 
-  // Categories for fast filtering
+  // Quick category chips
   const categories = [
-    { label: 'Computer Science & AI', icon: '💻', query: 'computer' },
-    { label: 'Business & MBA', icon: '📈', query: 'business' },
-    { label: 'Engineering & Robotics', icon: '⚙️', query: 'engineering' },
-    { label: 'Medicine & Health', icon: '🩺', query: 'health' },
-    { label: 'Hospitality & Tourism', icon: '✈️', query: 'hospitality' },
-    { label: 'Media & Design', icon: '🎨', query: 'design' },
+    { label: 'Computer Science & AI', icon: '💻', query: 'computer', count: '380+' },
+    { label: 'Business & MBA', icon: '📈', query: 'business', count: '410+' },
+    { label: 'Engineering & Robotics', icon: '⚙️', query: 'engineering', count: '290+' },
+    { label: 'Medicine & Health', icon: '🩺', query: 'health', count: '140+' },
+    { label: 'Hospitality & Tourism', icon: '✈️', query: 'hospitality', count: '90+' },
+    { label: 'Media & Visual Design', icon: '🎨', query: 'design', count: '120+' },
   ];
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto">
-      {/* 1. DASHBOARD WELCOME & GLOBAL SEARCH BANNER */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#07172B] via-[#0B2553] to-[#0A3F96] p-6 sm:p-8 lg:p-10 text-white shadow-xl border border-slate-700/50">
-        {/* Ambient decorative glow */}
-        <div className="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-[#3A60A1]/30 blur-[90px] pointer-events-none" />
-        <div className="absolute -left-10 -bottom-10 w-60 h-60 rounded-full bg-[#E8A300]/20 blur-[80px] pointer-events-none" />
+      {/* 1. BESPOKE EXECUTIVE COMMAND HERO (SPLIT 2-COLUMN COCKPIT) */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#060F1E] via-[#0A1933] to-[#040C1A] text-white shadow-2xl border border-white/10 ring-1 ring-amber-400/20">
+        {/* Subtle architectural radial lighting */}
+        <div className="absolute -right-24 -top-24 w-[480px] h-[480px] rounded-full bg-[#0B4FD8]/25 blur-[120px] pointer-events-none" />
+        <div className="absolute -left-20 -bottom-20 w-[400px] h-[400px] rounded-full bg-[#E8A300]/15 blur-[110px] pointer-events-none" />
 
-        <div className="relative z-10 space-y-6 max-w-4xl">
-          {/* Status Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-amber-300 backdrop-blur-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>Official Admissions Portal • 2026/2027 Intakes Active</span>
-          </div>
+        {/* Isometric architectural grid watermark */}
+        <div 
+          className="absolute inset-0 opacity-[0.035] pointer-events-none"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px)`,
+            backgroundSize: '48px 48px',
+          }}
+        />
 
-          {/* Heading */}
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight font-heading leading-tight">
-              Study in Malaysia Admissions Dashboard
-            </h1>
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
-              Compare accredited Malaysian degrees, calculate verified statutory EMGS visa packages, and obtain direct university offer letters with zero consultant charges.
-            </p>
-          </div>
-
-          {/* Global Quick Course Search Form */}
-          <form action="/programs" method="GET" className="flex flex-col sm:flex-row gap-2 max-w-2xl pt-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                type="text"
-                name="search"
-                placeholder="Search by degree name, subject, or university (e.g. Software Engineering, APU)..."
-                className="w-full pl-12 pr-4 py-3 rounded-2xl bg-white text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm font-medium focus:outline-hidden focus:ring-2 focus:ring-[#E8A300] shadow-md"
-              />
+        <div className="relative z-10 p-6 sm:p-8 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+          {/* Left Column: Authoritative Editorial & Instant Command Search (7 Cols) */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* Live Authority Status Pill */}
+            <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/[0.08] border border-white/15 text-xs backdrop-blur-md">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="font-bold text-amber-300 text-[11px] uppercase tracking-wider font-heading">
+                Meezab Official Admissions Portal
+              </span>
+              <span className="text-slate-400 text-[10px]">•</span>
+              <span className="text-slate-300 text-[11px] font-semibold">2026/2027 Intakes Open</span>
             </div>
-            <button
-              type="submit"
-              className="btn-meezab-gold px-6 py-3 rounded-2xl font-extrabold text-xs sm:text-sm whitespace-nowrap cursor-pointer shadow-md flex items-center justify-center gap-2"
-            >
-              <span>Explore Programs</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </form>
 
-          {/* Live Quick Verification Badges */}
-          <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-300 pt-1">
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              100% MOHE &amp; MQA Accredited
-            </span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              Direct University Registrars
-            </span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              Zero Consultant Markup
-            </span>
+            {/* Editorial Title */}
+            <div className="space-y-2.5">
+              <h1 className="text-2xl sm:text-4xl lg:text-[42px] font-black text-white tracking-tight font-heading leading-[1.15]">
+                Your Verified Gateway to Higher Education in{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-amber-200 to-[#E8A300]">
+                  Malaysia.
+                </span>
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-xl">
+                Compare MOHE &amp; MQA accredited Malaysian universities, review authentic itemized EMGS statutory upfront packages for Pakistani students, and obtain direct university offer letters with <strong>zero consultant markup</strong>.
+              </p>
+            </div>
+
+            {/* Interactive Search Command Hub */}
+            <form action="/programs" method="GET" className="space-y-3 pt-1">
+              <div className="relative flex items-center bg-white/95 rounded-2xl p-1.5 shadow-xl border border-white/20 focus-within:ring-2 focus-within:ring-[#E8A300] transition-all">
+                <Search className="w-5 h-5 text-slate-400 ml-3 shrink-0" />
+                <input
+                  type="text"
+                  name="search"
+                  placeholder="Search 1,200+ degrees, subjects, or campuses (e.g. Software, MBBS, APU, Lincoln)..."
+                  className="w-full px-3 py-2.5 bg-transparent text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm font-medium focus:outline-hidden"
+                />
+                <button
+                  type="submit"
+                  className="btn-meezab-gold px-5 py-3 rounded-xl font-black text-xs whitespace-nowrap cursor-pointer flex items-center gap-1.5 shrink-0 shadow-md"
+                >
+                  <span>Explore Courses</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Fast Category Filter Chips */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+                  Fast Filters:
+                </span>
+                <Link
+                  href="/programs?search=medicine"
+                  className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-semibold text-slate-200 hover:text-white transition-all flex items-center gap-1"
+                >
+                  <span>🩺 MBBS / Health</span>
+                </Link>
+                <Link
+                  href="/programs?search=computer"
+                  className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-semibold text-slate-200 hover:text-white transition-all flex items-center gap-1"
+                >
+                  <span>💻 AI &amp; Software</span>
+                </Link>
+                <Link
+                  href="/programs?search=business"
+                  className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-semibold text-slate-200 hover:text-white transition-all flex items-center gap-1"
+                >
+                  <span>📈 MBA &amp; Business</span>
+                </Link>
+                <Link
+                  href="/programs?search=engineering"
+                  className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-semibold text-slate-200 hover:text-white transition-all flex items-center gap-1"
+                >
+                  <span>⚙️ Engineering</span>
+                </Link>
+                <Link
+                  href="/calculator"
+                  className="px-2.5 py-1 rounded-lg bg-[#E8A300]/20 hover:bg-[#E8A300]/30 border border-[#E8A300]/40 text-[11px] font-bold text-amber-300 transition-all flex items-center gap-1"
+                >
+                  <Calculator className="w-3 h-3 text-[#E8A300]" />
+                  <span>EMGS Calculator</span>
+                </Link>
+              </div>
+            </form>
+
+            {/* Verification Credentials Strip */}
+            <div className="pt-2 border-t border-white/10 flex flex-wrap items-center gap-5 text-xs text-slate-300">
+              <span className="flex items-center gap-1.5 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>100% MOHE &amp; MQA Accredited</span>
+              </span>
+              <span className="flex items-center gap-1.5 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Direct University Invoicing</span>
+              </span>
+              <span className="flex items-center gap-1.5 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Zero Consultant Markup</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Right Column: Interactive Direct Admissions Assistant (5 Cols) */}
+          <div className="lg:col-span-5">
+            <QuickIntakeMatcher />
           </div>
         </div>
       </div>
 
-      {/* 2. PORTAL STATS & KPI METRICS GRID */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1 */}
-        <Link 
-          href="/programs" 
-          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md hover:border-[#3A60A1] transition-all group"
+      {/* 2. OFFICIAL PARTNER CAMPUSES TICKER */}
+      <UniversityTicker />
+
+      {/* 3. ASYMMETRIC COMMAND BENTO HORIZON GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Bento Box 1: Verified Catalog */}
+        <Link
+          href="/programs"
+          className="group relative bg-white p-6 rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-[#3A60A1] transition-all duration-300 flex flex-col justify-between overflow-hidden"
         >
-          <div className="flex items-center justify-between mb-3">
-            <span className="p-2.5 rounded-xl bg-blue-50 text-[#3A60A1] group-hover:bg-[#3A60A1] group-hover:text-white transition-colors">
-              <GraduationCap className="w-5 h-5" />
-            </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
-              Live Catalog
-            </span>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-[#0B2553] font-heading">
-            {totalProgramsCount > 0 ? `${totalProgramsCount}+` : '1,200+'}
-          </div>
-          <p className="text-xs text-slate-500 font-semibold mt-0.5">Accredited Degree Programs</p>
-          <p className="text-[11px] text-[#3A60A1] font-bold mt-2 flex items-center gap-1">
-            <span>Browse degrees</span>
-            <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-          </p>
-        </Link>
-
-        {/* Metric 2 */}
-        <Link 
-          href="/universities" 
-          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md hover:border-[#3A60A1] transition-all group"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="p-2.5 rounded-xl bg-amber-50 text-[#E8A300] group-hover:bg-[#E8A300] group-hover:text-white transition-colors">
-              <Building2 className="w-5 h-5" />
-            </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#B57F00] bg-[#E8A300]/15 px-2 py-0.5 rounded-md">
-              Top Ranked
-            </span>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-[#0B2553] font-heading">
-            {totalUniCount > 0 ? `${totalUniCount}` : '24+'}
-          </div>
-          <p className="text-xs text-slate-500 font-semibold mt-0.5">Partner Malaysian Campuses</p>
-          <p className="text-[11px] text-[#3A60A1] font-bold mt-2 flex items-center gap-1">
-            <span>View campuses</span>
-            <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-          </p>
-        </Link>
-
-        {/* Metric 3 */}
-        <Link 
-          href="/calculator" 
-          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md hover:border-[#3A60A1] transition-all group"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="p-2.5 rounded-xl bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-              <Clock className="w-5 h-5" />
-            </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">
-              EMGS Standard
-            </span>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-[#0B2553] font-heading">
-            14–21 Days
-          </div>
-          <p className="text-xs text-slate-500 font-semibold mt-0.5">Average eVAL Visa Approval</p>
-          <p className="text-[11px] text-[#3A60A1] font-bold mt-2 flex items-center gap-1">
-            <span>Visa breakdown</span>
-            <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-          </p>
-        </Link>
-
-        {/* Metric 4 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between mb-3">
-            <span className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600">
-              <ShieldCheck className="w-5 h-5" />
-            </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
-              Meezab Guarantee
-            </span>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-emerald-600 font-heading">
-            0% Markup
-          </div>
-          <p className="text-xs text-slate-500 font-semibold mt-0.5">Direct University Fee Invoicing</p>
-          <p className="text-[11px] text-slate-400 font-medium mt-2">
-            No hidden agent fee charged
-          </p>
-        </div>
-      </div>
-
-      {/* 3. QUICK ACTION DASHBOARD UTILITIES (3 HUBS) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Hub 1: EMGS Fee Calculator */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs hover:border-[#E8A300] hover:shadow-md transition-all flex flex-col justify-between group">
-          <div className="space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-[#E8A300]">
-              <Calculator className="w-5 h-5" />
+          <div className="absolute top-0 right-0 w-28 h-28 bg-blue-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#3A60A1] group-hover:bg-[#3A60A1] group-hover:text-white transition-colors">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
+                Live 2026/2027
+              </span>
             </div>
-            <h2 className="text-lg font-bold text-[#0B2553] font-heading">
-              EMGS Statutory Fee Calculator
-            </h2>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Calculate exact upfront immigration costs, student visa processing fees, Malaysian health insurance, and personal bond fees in MYR, PKR &amp; USD.
+            <div className="text-3xl font-black text-[#0B2553] font-heading tracking-tight">
+              {totalProgramsCount > 0 ? `${totalProgramsCount}+` : '1,200+'}
+            </div>
+            <p className="text-xs font-bold text-slate-700 mt-1">Accredited Degree Pathways</p>
+            <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+              Foundation, Bachelor, Master &amp; PhD degrees with published tuition fees.
             </p>
           </div>
-          <Link
-            href="/calculator"
-            className="mt-5 btn-meezab-gold text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-between shadow-xs"
-          >
-            <span>Launch Visa Calculator</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#3A60A1]">
+            <span>Explore Degree Catalog</span>
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
 
-        {/* Hub 2: Top Universities Directory */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs hover:border-[#3A60A1] hover:shadow-md transition-all flex flex-col justify-between group">
-          <div className="space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200/60 flex items-center justify-center text-[#3A60A1]">
-              <Building2 className="w-5 h-5" />
+        {/* Bento Box 2: Campuses Directory */}
+        <Link
+          href="/universities"
+          className="group relative bg-white p-6 rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-[#E8A300] transition-all duration-300 flex flex-col justify-between overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-28 h-28 bg-amber-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-[#E8A300] group-hover:bg-[#E8A300] group-hover:text-white transition-colors">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#9E6A00] bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/60">
+                QS Ranked
+              </span>
             </div>
-            <h2 className="text-lg font-bold text-[#0B2553] font-heading">
-              Accredited Campuses Directory
-            </h2>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Browse world-ranked Malaysian institutions including Lincoln, APU, Sunway, MAHSA, and UK/Australia branch campuses with QS ratings.
+            <div className="text-3xl font-black text-[#0B2553] font-heading tracking-tight">
+              {totalUniCount > 0 ? `${totalUniCount}` : '24+'}
+            </div>
+            <p className="text-xs font-bold text-slate-700 mt-1">Partner University Campuses</p>
+            <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+              Direct registrar links with Lincoln, APU, Sunway, MAHSA, Cyberjaya &amp; UK branches.
             </p>
           </div>
-          <Link
-            href="/universities"
-            className="mt-5 bg-slate-900 hover:bg-[#0B2553] text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-between transition-colors shadow-xs"
-          >
-            <span>Browse Campuses</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#9E6A00]">
+            <span>View University Profiles</span>
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
 
-        {/* Hub 3: Free Student Profile Evaluation */}
-        <div className="bg-gradient-to-br from-blue-50/70 to-indigo-50/40 p-6 rounded-2xl border border-blue-200/70 shadow-xs flex flex-col justify-between">
-          <div className="space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-[#3A60A1] text-white flex items-center justify-center shadow-xs">
-              <Award className="w-5 h-5" />
+        {/* Bento Box 3: EMGS Visa Velocity */}
+        <Link
+          href="/calculator"
+          className="group relative bg-white p-6 rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-purple-400 transition-all duration-300 flex flex-col justify-between overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-28 h-28 bg-purple-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-11 h-11 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                <Clock className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200/60">
+                Fast eVAL Track
+              </span>
             </div>
-            <h2 className="text-lg font-bold text-[#0B2553] font-heading">
-              Free 1-on-1 Profile Assessment
-            </h2>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Not sure which degree or intake matches your marks? Talk to our certified Malaysian education counselors for an instant academic evaluation.
+            <div className="text-3xl font-black text-[#0B2553] font-heading tracking-tight">
+              14–21 Days
+            </div>
+            <p className="text-xs font-bold text-slate-700 mt-1">Average eVAL Visa Approval</p>
+            <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+              Official statutory EMGS timeline for Pakistani students with fast-track green lane.
             </p>
           </div>
-          <a
-            href="https://wa.me/923346596725?text=Hello%20Meezab%20Counselor%2C%20I%20want%20a%20free%20admission%20assessment"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-between transition-colors shadow-xs"
-          >
-            <span>Chat with Senior Advisor</span>
-            <ExternalLink className="w-4 h-4" />
-          </a>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-purple-700">
+            <span>Calculate EMGS Costs</span>
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
+
+        {/* Bento Box 4: Meezab Zero Markup Guarantee */}
+        <div className="relative bg-gradient-to-br from-emerald-50/90 to-teal-50/50 p-6 rounded-3xl border border-emerald-200/80 shadow-sm flex flex-col justify-between overflow-hidden">
+          <div className="absolute top-0 right-0 w-28 h-28 bg-emerald-500/10 rounded-bl-full pointer-events-none" />
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-300">
+                Guaranteed
+              </span>
+            </div>
+            <div className="text-3xl font-black text-emerald-700 font-heading tracking-tight">
+              0% Markup
+            </div>
+            <p className="text-xs font-bold text-slate-800 mt-1">Direct University Invoicing</p>
+            <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+              Students pay directly to university registrar accounts via Flywire / Convera bank transfer.
+            </p>
+          </div>
+          <div className="mt-4 pt-3 border-t border-emerald-200/60 flex items-center gap-1.5 text-xs font-bold text-emerald-800">
+            <Check className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Official Admissions Partner</span>
+          </div>
         </div>
       </div>
 
       {/* 4. FAST DEGREE CATEGORY EXPLORER */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-extrabold text-[#0B2553] font-heading">
+            <h2 className="text-xl font-black text-[#0B2553] font-heading">
               Explore Popular Disciplines
             </h2>
-            <p className="text-xs text-slate-500">Quickly filter 1,200+ programs by high-demand Malaysian career tracks</p>
+            <p className="text-xs text-slate-500">Filter degrees by high-demand Malaysian career tracks</p>
           </div>
           <Link href="/programs" className="text-xs font-bold text-[#3A60A1] hover:underline flex items-center gap-1">
             <span>View All Programs</span>
@@ -305,16 +334,19 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
           {categories.map((cat) => (
             <Link
               key={cat.label}
               href={`/programs?search=${encodeURIComponent(cat.query)}`}
-              className="bg-white p-3.5 rounded-xl border border-slate-200 hover:border-[#3A60A1] hover:bg-blue-50/40 text-center transition-all shadow-2xs group flex flex-col items-center gap-1.5"
+              className="bg-white p-4 rounded-2xl border border-slate-200/80 hover:border-[#3A60A1] hover:bg-blue-50/30 text-center transition-all shadow-xs hover:shadow-md group flex flex-col items-center gap-2"
             >
-              <span className="text-2xl group-hover:scale-110 transition-transform">{cat.icon}</span>
+              <span className="text-3xl group-hover:scale-110 transition-transform">{cat.icon}</span>
               <span className="text-xs font-bold text-slate-800 group-hover:text-[#0B2553] leading-tight">
                 {cat.label}
+              </span>
+              <span className="text-[10px] font-bold text-[#3A60A1] bg-blue-50 px-2 py-0.5 rounded-md">
+                {cat.count}
               </span>
             </Link>
           ))}
@@ -325,7 +357,7 @@ export default async function HomePage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-extrabold text-[#0B2553] font-heading">
+            <h2 className="text-xl font-black text-[#0B2553] font-heading">
               Featured Partner Universities
             </h2>
             <p className="text-xs text-slate-500">Direct admission partnerships with full fee transparency</p>
@@ -340,11 +372,11 @@ export default async function HomePage() {
           {featuredUniversities.map((uni) => (
             <div
               key={uni.id}
-              className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-[#3A60A1] transition-all flex flex-col justify-between group"
+              className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs hover:shadow-xl hover:border-[#3A60A1] transition-all flex flex-col justify-between group"
             >
               <div>
                 <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="w-14 h-14 rounded-xl border border-slate-100 p-2 bg-slate-50 flex items-center justify-center shrink-0">
+                  <div className="w-14 h-14 rounded-2xl border border-slate-200/80 p-2 bg-slate-50 flex items-center justify-center shrink-0 shadow-2xs">
                     {uni.logo ? (
                       <img src={uni.logo} alt={uni.name} className="max-h-full object-contain" />
                     ) : (
@@ -352,8 +384,8 @@ export default async function HomePage() {
                     )}
                   </div>
                   {uni.qsRank && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#E8A300]/15 text-[#9E6A00] border border-[#E8A300]/30">
-                      QS Rank #{uni.qsRank}
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-extrabold bg-amber-50 text-[#9E6A00] border border-amber-200">
+                      🏆 {uni.qsRank}
                     </span>
                   )}
                 </div>
@@ -367,14 +399,18 @@ export default async function HomePage() {
                 </p>
               </div>
 
-              <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  MQA Verified
-                </span>
+              <div className="pt-4 mt-5 border-t border-slate-100 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-semibold text-slate-400 block uppercase">
+                    Upfront eVAL Package
+                  </span>
+                  <span className="text-xs font-black text-emerald-700">
+                    {formatMYR(uni.totalInitialMYR || 11000)}
+                  </span>
+                </div>
                 <Link
                   href={`/universities/${uni.id}`}
-                  className="text-xs font-bold text-[#3A60A1] hover:text-[#0B2553] flex items-center gap-1"
+                  className="text-xs font-bold text-[#3A60A1] hover:text-[#0B2553] flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors"
                 >
                   <span>View Campus</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -389,7 +425,7 @@ export default async function HomePage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-extrabold text-[#0B2553] font-heading">
+            <h2 className="text-xl font-black text-[#0B2553] font-heading">
               Popular Degree Programs
             </h2>
             <p className="text-xs text-slate-500">Verified official tuition with zero consultant addition</p>
@@ -404,11 +440,11 @@ export default async function HomePage() {
           {popularPrograms.map((prog) => (
             <div
               key={prog.id}
-              className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-[#E8A300] transition-all flex flex-col justify-between group"
+              className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs hover:shadow-xl hover:border-[#E8A300] transition-all flex flex-col justify-between group"
             >
               <div>
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-blue-50 text-[#3A60A1] border border-blue-200/60 uppercase">
+                <div className="flex items-center justify-between gap-2 mb-2.5">
+                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-md bg-blue-50 text-[#3A60A1] border border-blue-200/60 uppercase font-heading">
                     {prog.level}
                   </span>
                   <span className="text-[10px] font-bold text-slate-500">
@@ -424,7 +460,7 @@ export default async function HomePage() {
                 </p>
               </div>
 
-              <div className="pt-4 mt-4 border-t border-slate-100">
+              <div className="pt-4 mt-5 border-t border-slate-100">
                 <div className="flex items-baseline justify-between mb-3">
                   <span className="text-xs text-slate-500">Official Tuition:</span>
                   <div className="text-right">
@@ -440,14 +476,14 @@ export default async function HomePage() {
                 <div className="flex gap-2">
                   <Link
                     href={`/programs/${prog.id}`}
-                    className="flex-1 text-center py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all"
+                    className="flex-1 text-center py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all"
                   >
                     Details
                   </Link>
                   <ApplyButton
                     programTitle={prog.name}
                     programId={prog.id}
-                    className="flex-1 py-2 px-3 btn-meezab-gold text-xs font-bold rounded-xl shadow-xs"
+                    className="flex-1 py-2.5 px-3 btn-meezab-gold text-xs font-bold rounded-xl shadow-xs"
                   />
                 </div>
               </div>
@@ -457,7 +493,7 @@ export default async function HomePage() {
       </div>
 
       {/* 7. 4-STEP DIRECT ADMISSION & EMGS VISA WORKFLOW */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xs space-y-6">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-6">
         <div className="max-w-2xl">
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#3A60A1] bg-[#3A60A1]/10 px-3 py-1 rounded-full border border-[#3A60A1]/20 inline-block mb-2 font-heading">
             Official Roadmap
@@ -471,7 +507,7 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-slate-200/80 space-y-2">
+          <div className="p-5 rounded-2xl bg-[#F8FAFC] border border-slate-200/80 space-y-2 relative">
             <span className="text-2xl font-black text-[#E8A300] font-heading">01</span>
             <h3 className="font-extrabold text-sm text-[#0B2553]">Profile Evaluation</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
@@ -479,7 +515,7 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-slate-200/80 space-y-2">
+          <div className="p-5 rounded-2xl bg-[#F8FAFC] border border-slate-200/80 space-y-2">
             <span className="text-2xl font-black text-[#3A60A1] font-heading">02</span>
             <h3 className="font-extrabold text-sm text-[#0B2553]">Direct Offer Letter</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
@@ -487,7 +523,7 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-slate-200/80 space-y-2">
+          <div className="p-5 rounded-2xl bg-[#F8FAFC] border border-slate-200/80 space-y-2">
             <span className="text-2xl font-black text-[#E8A300] font-heading">03</span>
             <h3 className="font-extrabold text-sm text-[#0B2553]">EMGS Visa eVAL</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
@@ -495,7 +531,7 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-slate-200/80 space-y-2">
+          <div className="p-5 rounded-2xl bg-[#F8FAFC] border border-slate-200/80 space-y-2">
             <span className="text-2xl font-black text-emerald-600 font-heading">04</span>
             <h3 className="font-extrabold text-sm text-[#0B2553]">Arrival &amp; Enrollment</h3>
             <p className="text-xs text-slate-600 leading-relaxed">

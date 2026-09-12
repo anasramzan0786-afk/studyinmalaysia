@@ -21,7 +21,9 @@ import {
   Sparkles,
   Phone,
   Search,
-  CheckCircle2
+  CheckCircle2,
+  TrendingUp,
+  Coins
 } from 'lucide-react';
 import { useCounseling } from '@/components/CounselingContext';
 import { Footer } from './Footer';
@@ -69,10 +71,10 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
   }
 
   const navLinks = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-    { href: '/programs', label: 'Explore Degrees', icon: GraduationCap, badge: '1,200+' },
-    { href: '/universities', label: 'Top Universities', icon: Building2 },
-    { href: '/calculator', label: 'EMGS Calculator', icon: Calculator },
+    { href: '/', label: 'Command Dashboard', icon: LayoutDashboard, exact: true },
+    { href: '/programs', label: 'Degree Catalog', icon: GraduationCap, badge: '1,200+' },
+    { href: '/universities', label: 'Top Universities', icon: Building2, badge: '20+' },
+    { href: '/calculator', label: 'EMGS Calculator', icon: Calculator, badge: 'Statutory' },
   ];
 
   const isActive = (href: string, exact = false) => {
@@ -82,23 +84,23 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex bg-[#F8FAFC]">
-      {/* 1. DESKTOP PERMANENT SIDEBAR */}
-      <aside className="hidden lg:flex flex-col w-64 fixed inset-y-0 left-0 z-30 bg-[#07172B] border-r border-slate-800 text-slate-200">
+      {/* 1. DESKTOP PERMANENT BESPOKE SIDEBAR */}
+      <aside className="hidden lg:flex flex-col w-64 fixed inset-y-0 left-0 z-30 bg-gradient-to-b from-[#050D1A] via-[#08152B] to-[#040A14] border-r border-slate-800/80 text-slate-200 shadow-2xl">
         {/* Brand Header */}
         <div className="p-5 border-b border-slate-800/80">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl overflow-hidden border border-[#E8A300]/60 shadow-[0_0_12px_rgba(232,163,0,0.25)] shrink-0 bg-[#0B4FD8]">
+            <div className="w-10 h-10 rounded-xl overflow-hidden border border-[#E8A300]/80 shadow-[0_0_15px_rgba(232,163,0,0.35)] shrink-0 bg-[#0B4FD8] p-0.5">
               <img
                 src="/meezab-square-logo.jpg"
                 alt="Meezab Logo"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover rounded-lg"
               />
             </div>
             <div className="flex flex-col">
-              <span className="text-white font-extrabold text-sm tracking-tight font-heading group-hover:text-[#E8A300] transition-colors">
+              <span className="text-white font-black text-sm tracking-tight font-heading group-hover:text-[#E8A300] transition-colors">
                 MEEZAB PORTAL
               </span>
-              <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
+              <span className="text-[10px] text-amber-400 font-extrabold uppercase tracking-wider font-heading">
                 Study in Malaysia
               </span>
             </div>
@@ -112,10 +114,10 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Sidebar Nav Links */}
-        <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-6">
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin">
           {/* Main Portal Section */}
           <div>
-            <span className="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-2 font-heading">
+            <span className="px-3 text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2 font-heading">
               Admissions Portal
             </span>
             <div className="space-y-1">
@@ -126,19 +128,19 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
+                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
                       active
-                        ? 'bg-gradient-to-r from-[#3A60A1] to-[#0B4FD8] text-white shadow-md shadow-blue-900/30'
-                        : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                        ? 'bg-gradient-to-r from-blue-600/25 via-blue-500/15 to-transparent border-l-[3px] border-[#E8A300] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border-l-[3px] border-transparent'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5">
                       <Icon className={`w-4 h-4 ${active ? 'text-amber-300' : 'text-slate-400'}`} />
                       <span>{link.label}</span>
                     </div>
                     {link.badge && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${
-                        active ? 'bg-black/30 text-amber-300' : 'bg-slate-800 text-slate-400'
+                      <span className={`text-[10px] px-2 py-0.5 rounded-md font-extrabold ${
+                        active ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' : 'bg-slate-800 text-slate-400'
                       }`}>
                         {link.badge}
                       </span>
@@ -151,15 +153,15 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
 
           {/* Quick Desk Section */}
           <div>
-            <span className="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-2 font-heading">
-              Support &amp; Desk
+            <span className="px-3 text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2 font-heading">
+              Advising &amp; Liaison Desk
             </span>
             <div className="space-y-1">
               <button
                 onClick={() => openModal()}
-                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors text-left cursor-pointer group"
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors text-left cursor-pointer group"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <PhoneCall className="w-4 h-4 text-[#E8A300] group-hover:scale-110 transition-transform" />
                   <span>Free Counseling</span>
                 </div>
@@ -170,15 +172,33 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
                 href="https://wa.me/923346596725?text=Hello%20Meezab%20Admissions%20Portal"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <MessageCircle className="w-4 h-4 text-emerald-400" />
-                  <span>WhatsApp Desk</span>
+                  <span>WhatsApp Liaison</span>
                 </div>
                 <ExternalLink className="w-3 h-3 text-slate-500" />
               </a>
             </div>
+          </div>
+
+          {/* Live Currency Benchmark Card for Pakistani Students */}
+          <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 space-y-1.5">
+            <div className="flex items-center justify-between text-[10px] font-bold text-amber-300 uppercase tracking-wider">
+              <span className="flex items-center gap-1">
+                <Coins className="w-3 h-3 text-[#E8A300]" />
+                Live Forex Rate
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            </div>
+            <div className="flex items-baseline justify-between text-xs pt-0.5">
+              <span className="text-slate-300 font-semibold">1 MYR (Ringgit)</span>
+              <span className="font-extrabold text-white">≈ 65.8 PKR</span>
+            </div>
+            <p className="text-[9px] text-slate-400 leading-tight">
+              Direct TT to University via Flywire / Convera bank transfer.
+            </p>
           </div>
 
           {/* Admin Management (If logged in as admin) */}
@@ -190,7 +210,7 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
               <div className="space-y-1">
                 <Link
                   href="/admin"
-                  className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-colors"
                 >
                   <SlidersHorizontal className="w-4 h-4" />
                   <span>Admin Console</span>
@@ -201,7 +221,7 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Sidebar Footer / User Status */}
-        <div className="p-3.5 border-t border-slate-800 bg-[#051121]">
+        <div className="p-3.5 border-t border-slate-800 bg-[#040A14]">
           {user ? (
             <div className="flex items-center justify-between p-2 rounded-xl bg-slate-800/60 border border-slate-700/60">
               <div className="flex items-center gap-2.5 min-w-0">
@@ -342,17 +362,17 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
               <span className="text-[#3A60A1] font-bold">Meezab Admissions</span>
               <span>/</span>
               <span className="text-slate-800 capitalize font-bold">
-                {pathname === '/' ? 'Dashboard' : pathname.replace('/', '')}
+                {pathname === '/' ? 'Command Dashboard' : pathname.replace('/', '')}
               </span>
             </div>
           </div>
 
           {/* Right Topbar Actions */}
           <div className="flex items-center gap-3">
-            {/* Live Intakes Indicator */}
-            <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-              Malaysia 2026/2027 Intakes Open
+            {/* Live Counselor Status Chip */}
+            <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              <span>Advisors Online (Lahore &amp; KL)</span>
             </span>
 
             {/* Quick WhatsApp Desk */}
@@ -360,7 +380,7 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
               href="https://wa.me/923346596725?text=Hello%20Meezab%20Admissions"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#25D366] hover:bg-[#20ba57] shadow-xs transition-all active:scale-95"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#25D366] hover:bg-[#20ba57] shadow-xs transition-all active:scale-95"
             >
               <MessageCircle className="w-3.5 h-3.5" />
               <span>WhatsApp</span>
@@ -369,7 +389,7 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
             {/* Free Counseling CTA */}
             <button
               onClick={() => openModal()}
-              className="btn-meezab-gold inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold shadow-sm active:scale-95 cursor-pointer"
+              className="btn-meezab-gold inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black shadow-sm active:scale-95 cursor-pointer"
             >
               <PhoneCall className="w-3.5 h-3.5 text-white animate-pulse" />
               <span>Free Counseling</span>
