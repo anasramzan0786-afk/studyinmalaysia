@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Montserrat, Jost } from 'next/font/google';
 import './globals.css';
 import { CounselingProvider } from '@/components/CounselingContext';
-import { Footer } from '@/components/layout/Footer';
 import { PageLoader } from '@/components/PageLoader';
 
 const montserrat = Montserrat({
@@ -48,9 +47,8 @@ export default function RootLayout({
       <body className={`${montserrat.className} min-h-screen flex flex-col bg-[#F9F9F9] text-[#1F2937] antialiased selection:bg-[#0B2553] selection:text-[#E8A300]`}>
         <PageLoader />
         <CounselingProvider>
-          <main className="flex-1">{children}</main>
+          {children}
         </CounselingProvider>
-        <Footer />
       </body>
     </html>
   );

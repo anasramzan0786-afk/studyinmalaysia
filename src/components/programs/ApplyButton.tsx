@@ -9,6 +9,7 @@ interface ApplyButtonProps {
   programId: string;
   label?: string;
   variant?: 'primary' | 'secondary' | 'whatsapp';
+  className?: string;
 }
 
 export function ApplyButton({
@@ -16,6 +17,7 @@ export function ApplyButton({
   programId,
   label = 'Apply for Next Intake',
   variant = 'primary',
+  className = '',
 }: ApplyButtonProps) {
   const { openModal } = useCounseling();
 
@@ -38,7 +40,7 @@ export function ApplyButton({
   return (
     <button
       onClick={() => openModal(programTitle, programId)}
-      className="w-full inline-flex items-center justify-center gap-2 bg-[#E8A300] hover:bg-[#d49400] text-[#0B2553] font-extrabold py-3 px-6 rounded-xl transition-all shadow-md active:scale-95 text-sm"
+      className={`inline-flex items-center justify-center gap-2 bg-[#E8A300] hover:bg-[#d49400] text-[#0B2553] font-extrabold py-3 px-6 rounded-xl transition-all shadow-md active:scale-95 text-sm ${className}`}
     >
       <PhoneCall className="w-4 h-4 text-[#0B2553]" />
       <span>{label}</span>

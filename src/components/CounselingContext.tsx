@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Navbar } from './layout/Navbar';
+import { PortalLayout } from './layout/PortalLayout';
 import { CounselingModal } from './CounselingModal';
 
 interface CounselingContextType {
@@ -28,8 +28,9 @@ export function CounselingProvider({ children }: { children: ReactNode }) {
 
   return (
     <CounselingContext.Provider value={{ openModal, closeModal }}>
-      <Navbar onOpenCounseling={() => openModal()} />
-      {children}
+      <PortalLayout>
+        {children}
+      </PortalLayout>
       <CounselingModal
         isOpen={isOpen}
         onClose={closeModal}
@@ -47,4 +48,3 @@ export function useCounseling() {
   }
   return context;
 }
-
