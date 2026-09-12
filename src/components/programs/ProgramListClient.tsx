@@ -35,6 +35,8 @@ interface ProgramWithUniversity {
   academicReq: string | null;
   badgeText: string | null;
   pakistanNotes: string | null;
+  durationYears?: number | null;
+  semesterSchedules?: { semester: string; tuitionMYR: number; miscMYR: number }[];
   university: {
     id: string;
     name: string;
@@ -43,6 +45,43 @@ interface ProgramWithUniversity {
     location: string;
   };
 }
+
+function getFirstYearTuition(program: ProgramWithUniversity): number {
+  if (program.semesterSchedules && program.semesterSchedules.length > 0) {
+    const year1 = program.semesterSchedules.find((s) =>
+      s.semester.toLowerCase().includes('year 1') ||
+      s.semester.toLowerCase().includes('sem 1')
+    );
+    if (year1 && year1.tuitionMYR > 0) {
+      if (year1.semester.toLowerCase().includes('sem 1')) {
+        const sem2 = program.semesterSchedules.find((s) => s.semester.toLowerCase().includes('sem 2'));
+        return year1.tuitionMYR + (sem2 ? sem2.tuitionMYR : year1.tuitionMYR);
+      }
+      return year1.tuitionMYR;
+    }
+  }
+
+  // Parse duration in years
+  let years = program.durationYears;
+  if (!years && program.duration) {
+    const match = program.duration.match(/([\d.]+)\s*(?:year|yr)/i);
+    if (match) {
+      years = parseFloat(match[1]);
+    }
+  }
+
+  if (!years || years <= 0) {
+    const level = (program.degreeLevel || '').toLowerCase();
+    if (level.includes('master')) years = 1.5;
+    else if (level.includes('phd') || level.includes('doctorate')) years = 3;
+    else if (level.includes('bachelor')) years = 3;
+    else if (level.includes('diploma') || level.includes('foundation')) years = 2;
+    else years = 3;
+  }
+
+  return Math.round(program.tuitionMYR / years);
+}
+
 
 interface ProgramListClientProps {
   initialPrograms: ProgramWithUniversity[];
@@ -360,17 +399,24 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
                 {/* Pricing Box */}
                 <div className="mt-4 bg-[#F9F9F9] rounded-xl p-3.5 border border-slate-200 space-y-1.5">
                   <div className="flex justify-between items-baseline">
-                    <span className="text-xs text-slate-500">Full Course Tuition:</span>
+                    <span className="text-xs text-slate-500">Total Course Tuition:</span>
                     <span className="text-base font-extrabold text-[#0B2553]">
                       {formatPrice(program.tuitionMYR)}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-baseline">
-                    <span className="text-xs text-slate-500 font-medium">
+                    <span className="text-xs text-slate-600 font-medium">First Year Tuition:</span>
+                    <span className="text-xs font-black text-[#0B2553]">
+                      {formatPrice(getFirstYearTuition(program))}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-xs text-slate-600 font-medium">
                       Upfront (eVAL + Admin):
                     </span>
-                    <span className="text-xs font-bold text-[#B57F00]">
+                    <span className="text-xs font-bold text-[#BA2E34]">
                       {formatPrice(program.totalInitialMYR || 9500)}
                     </span>
                   </div>

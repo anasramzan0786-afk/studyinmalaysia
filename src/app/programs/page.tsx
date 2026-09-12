@@ -17,7 +17,10 @@ let universities: any[] = [];
 try {
   [programs, universities] = await Promise.all([
     db.program.findMany({
-      include: { university: { select: { id: true, name: true, shortName: true, logo: true, location: true } } },
+      include: { 
+        university: { select: { id: true, name: true, shortName: true, logo: true, location: true } },
+        semesterSchedules: true,
+      },
       orderBy: { tuitionMYR: 'asc' },
     }),
     db.university.findMany({

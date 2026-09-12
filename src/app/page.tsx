@@ -23,6 +23,38 @@ import { UNIVERSITIES_DATA } from '@/data/universitiesData';
 
 export const revalidate = 60; // ISR cache for 60 seconds
 
+function getFirstYearTuition(prog: any): number {
+  if (prog.semesterSchedules && prog.semesterSchedules.length > 0) {
+    const year1 = prog.semesterSchedules.find((s: any) =>
+      s.semester.toLowerCase().includes('year 1') ||
+      s.semester.toLowerCase().includes('sem 1')
+    );
+    if (year1 && year1.tuitionMYR > 0) {
+      if (year1.semester.toLowerCase().includes('sem 1')) {
+        const sem2 = prog.semesterSchedules.find((s: any) => s.semester.toLowerCase().includes('sem 2'));
+        return year1.tuitionMYR + (sem2 ? sem2.tuitionMYR : year1.tuitionMYR);
+      }
+      return year1.tuitionMYR;
+    }
+  }
+
+  let years = prog.durationYears;
+  if (!years && prog.duration) {
+    const match = prog.duration.match(/([\d.]+)\s*(?:year|yr)/i);
+    if (match) years = parseFloat(match[1]);
+  }
+
+  if (!years || years <= 0) {
+    const level = (prog.level || '').toLowerCase();
+    if (level.includes('master')) years = 1.5;
+    else if (level.includes('phd')) years = 3;
+    else if (level.includes('bachelor')) years = 3;
+    else years = 3;
+  }
+
+  return Math.round(prog.tuitionMYR / years);
+}
+
 export default async function HomePage() {
   let featuredUniversities: any[] = [];
   let popularPrograms: any[] = [];
@@ -43,6 +75,7 @@ export default async function HomePage() {
           university: {
             select: { name: true, shortName: true, logo: true, location: true },
           },
+          semesterSchedules: true,
         },
         orderBy: { tuitionMYR: 'asc' },
       }),
@@ -480,20 +513,29 @@ export default async function HomePage() {
                 </p>
               </div>
 
-              <div className="pt-4 mt-4 border-t border-slate-100">
-                <div className="flex items-baseline justify-between mb-3">
-                  <span className="text-xs text-slate-500">Official Tuition:</span>
-                  <div className="text-right">
-                    <span className="text-sm font-extrabold text-[#0B2553]">
-                      {formatMYR(prog.tuitionMYR)}
-                    </span>
-                    <span className="block text-[10px] text-amber-700 font-bold">
-                      approx. {formatPKR(prog.tuitionMYR)}
-                    </span>
-                  </div>
+              <div className="pt-3 mt-3 border-t border-slate-100 space-y-1.5">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-xs text-slate-500">Total Course Tuition:</span>
+                  <span className="text-sm font-extrabold text-[#0B2553]">
+                    {formatMYR(prog.tuitionMYR)}
+                  </span>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-xs text-slate-600 font-medium">First Year Tuition:</span>
+                  <span className="text-xs font-black text-[#0B2553]">
+                    {formatMYR(getFirstYearTuition(prog))}
+                  </span>
+                </div>
+
+                <div className="flex items-baseline justify-between">
+                  <span className="text-xs text-slate-600 font-medium">Upfront (eVAL + Admin):</span>
+                  <span className="text-xs font-bold text-[#BA2E34]">
+                    {formatMYR(prog.totalInitialMYR || 9500)}
+                  </span>
+                </div>
+
+                <div className="flex gap-2 pt-2 border-t border-slate-100">
                   <Link
                     href={`/programs/${prog.id}`}
                     className="flex-1 text-center py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all"
