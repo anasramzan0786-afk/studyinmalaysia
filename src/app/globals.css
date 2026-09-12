@@ -84,6 +84,30 @@
   border: 1px solid rgba(58, 96, 161, 0.25);
 }
 
+.badge-meezab-red {
+  background-color: #FEF2F2;
+  color: #BA2E34;
+  border: 1px solid #FECACA;
+}
+
+.btn-meezab-red {
+  background: #BA2E34;
+  color: #FFFFFF;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(186, 46, 52, 0.2);
+  transition: all 0.2s ease;
+}
+.btn-meezab-red:hover {
+  background: #9E2228;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(186, 46, 52, 0.3);
+}
+.btn-meezab-red:active {
+  transform: translateY(0);
+}
+
+
 /* Ambient glow animations */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
