@@ -699,10 +699,10 @@ export const PROGRAMS_DATA: Program[] = [
       { semester: 'Year 5', tuitionMYR: 75930, miscMYR: 1500 }
     ],
     emgsFeeMYR: 3500,
-    miscFeesMYR: 3500,
-    totalInitialMYR: 7000,
-    miscBreakdown: 'EMGS & Visa Processing: RM 3,500 | Registration Fee: RM 1,500 | Resource Fee & Admin: RM 2,000',
-    pakistanNotes: 'Initial visa & admin package: RM 7,000. Non-refundable RM 10,000 commitment fee is offset against tuition.'
+    miscFeesMYR: 10500,
+    totalInitialMYR: 14000,
+    miscBreakdown: 'EMGS & Visa Processing: RM 3,500 | Registration & Admin: RM 3,500 | Security Bond: RM 1,500 | Sem 1 Tuition Deposit: RM 5,500',
+    pakistanNotes: 'Total initial payable upon eVAL: RM 14,000 (Includes EMGS, Registration, Refundable Personal Bond, and Semester 1 Tuition Commitment Deposit).'
   },
 
   // ==================== UNISHAMS ====================

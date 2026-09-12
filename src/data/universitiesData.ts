@@ -309,9 +309,9 @@ export const UNIVERSITIES_DATA: University[] = [
     highlights: ['MBBS & Pharmacy Fee Waivers Included', 'Cyberjaya High-Tech Corridor', 'Strong Healthcare Clinical Network', 'Modern Hostel Accommodation'],
     intakeMonths: 'January, April, July, September',
     emgsFeeMYR: 3500,
-    miscFeesMYR: 3500,
-    totalInitialMYR: 7000,
-    initialBreakdownNotes: 'EMGS & Visa Fee: RM 3,500 + Registration Fee: RM 1,500 + Resource Fee: RM 1,000 + Admin: RM 1,000 = Total Initial: RM 7,000'
+    miscFeesMYR: 10500,
+    totalInitialMYR: 14000,
+    initialBreakdownNotes: 'EMGS & Visa Fee: RM 3,500 + Registration & Admin: RM 3,500 + Refundable Security Bond: RM 1,500 + Sem 1 Tuition Deposit: RM 5,500 = Total Initial: RM 14,000'
   },
   {
     id: 'unishams',
