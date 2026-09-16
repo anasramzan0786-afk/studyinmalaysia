@@ -11,40 +11,41 @@ const LOADING_STEPS = [
 ];
 
 export function PageLoader() {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
-  const [progress, setProgress] = useState(12);
+  const [progress, setProgress] = useState(25);
   const [stepIndex, setStepIndex] = useState(0);
 
   useEffect(() => {
-    // Ultra-smooth dynamic progress simulation
+    // Only display splash loader once per browser session to maintain ultra-fast navigation
+    const hasLoaded = sessionStorage.getItem('meezab_portal_loaded');
+    if (hasLoaded) {
+      return;
+    }
+
+    setVisible(true);
+
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           return 100;
         }
-        const step = Math.floor(Math.random() * 11) + 8;
-        const next = Math.min(prev + step, 100);
-
-        if (next < 28) setStepIndex(0);
-        else if (next < 56) setStepIndex(1);
-        else if (next < 82) setStepIndex(2);
-        else if (next < 97) setStepIndex(3);
-        else setStepIndex(4);
-
+        const next = Math.min(prev + 35, 100);
+        if (next > 70) setStepIndex(4);
+        else if (next > 40) setStepIndex(2);
         return next;
       });
-    }, 180);
+    }, 90);
 
-    // Smooth fade out after loading completes
     const fadeTimer = setTimeout(() => {
       setFadeOut(true);
-    }, 2400);
+      sessionStorage.setItem('meezab_portal_loaded', 'true');
+    }, 450);
 
     const removeTimer = setTimeout(() => {
       setVisible(false);
-    }, 3100);
+    }, 750);
 
     return () => {
       clearInterval(interval);

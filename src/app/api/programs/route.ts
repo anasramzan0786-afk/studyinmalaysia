@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ProgramSchema } from '@/lib/validators';
 import { slugify } from '@/lib/utils';
+import { getAuthSession } from '@/lib/auth';
 
 export async function GET(request: Request) {
   try {
@@ -17,9 +18,9 @@ export async function GET(request: Request) {
         ...(search
           ? {
               OR: [
-                { title: { contains: search } },
-                { faculty: { contains: search } },
-                { university: { name: { contains: search } } },
+                { title: { contains: search, mode: 'insensitive' } },
+                { faculty: { contains: search, mode: 'insensitive' } },
+                { university: { name: { contains: search, mode: 'insensitive' } } },
               ],
             }
           : {}),
@@ -48,6 +49,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const session = await getAuthSession();
+    if (!session || session.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Admin access required to create programs' }, { status: 403 });
+    }
+
     const body = await request.json();
     const validated = ProgramSchema.parse(body);
 
@@ -101,6 +107,11 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const session = await getAuthSession();
+    if (!session || session.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Admin access required to update programs' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { id, ...data } = body;
 
@@ -146,6 +157,11 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const session = await getAuthSession();
+    if (!session || session.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Admin access required to delete programs' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

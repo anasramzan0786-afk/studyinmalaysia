@@ -15,9 +15,9 @@ export async function GET(request: Request) {
         ...(search
           ? {
               OR: [
-                { name: { contains: search } },
-                { shortName: { contains: search } },
-                { location: { contains: search } },
+                { name: { contains: search, mode: 'insensitive' } },
+                { shortName: { contains: search, mode: 'insensitive' } },
+                { location: { contains: search, mode: 'insensitive' } },
               ],
             }
           : {}),
@@ -40,8 +40,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await getAuthSession();
-    // Allow if authenticated (or if session check passes)
-    const userName = session?.username || 'Meezab Admin';
+    if (!session || session.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Admin access required to create universities' }, { status: 403 });
+    }
+    const userName = session.username || 'Meezab Admin';
 
     const body = await request.json();
     const {
@@ -158,7 +160,10 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const session = await getAuthSession();
-    const userName = session?.username || 'Meezab Admin';
+    if (!session || session.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Admin access required to update universities' }, { status: 403 });
+    }
+    const userName = session.username || 'Meezab Admin';
 
     const body = await request.json();
     const { id, ...data } = body;
@@ -242,7 +247,10 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const session = await getAuthSession();
-    const userName = session?.username || 'Meezab Admin';
+    if (!session || session.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Admin access required to delete universities' }, { status: 403 });
+    }
+    const userName = session.username || 'Meezab Admin';
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

@@ -43,6 +43,7 @@ export interface Program {
 
 export interface University {
   id: string;
+  slug?: string;
   name: string;
   shortName: string;
   type: UniversityType;

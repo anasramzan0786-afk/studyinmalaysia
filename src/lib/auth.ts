@@ -8,6 +8,10 @@ export interface AuthUser {
 const JWT_SECRET = process.env.JWT_SECRET || 'meezab-malaysia-portal-secret-key-2026';
 const COOKIE_NAME = 'meezab_session';
 
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  console.warn('⚠️ SECURITY WARNING: JWT_SECRET is not set in environment variables. Using fallback key. Set JWT_SECRET in your production settings.');
+}
+
 // Helper to generate HMAC SHA-256 signature using Web Crypto API (Edge & Node.js compatible)
 async function getCryptoKey() {
   const enc = new TextEncoder();

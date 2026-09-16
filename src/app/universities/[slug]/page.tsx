@@ -22,8 +22,13 @@ interface UniversityDetailPageProps {
 
 export async function generateMetadata({ params }: UniversityDetailPageProps) {
   const { slug } = await params;
-  const uni = await db.university.findUnique({
-    where: { slug },
+  const uni = await db.university.findFirst({
+    where: {
+      OR: [
+        { slug },
+        { id: slug },
+      ],
+    },
   });
 
   if (!uni) return { title: 'University Not Found' };
@@ -31,13 +36,23 @@ export async function generateMetadata({ params }: UniversityDetailPageProps) {
   return {
     title: `${uni.name} | Fee Structure, Courses & Admission Guidance`,
     description: `Complete admissions guide for ${uni.name}, Malaysia. Fees for Pakistani students, EMGS packages, hostel costs and accredited programs.`,
+    openGraph: {
+      title: `${uni.name} | Malaysia Admissions`,
+      description: `Explore accredited courses, upfront visa package, and campus details for ${uni.name}.`,
+      images: uni.image ? [uni.image] : [],
+    },
   };
 }
 
 export default async function UniversityDetailPage({ params }: UniversityDetailPageProps) {
   const { slug } = await params;
-  const university = await db.university.findUnique({
-    where: { slug },
+  const university = await db.university.findFirst({
+    where: {
+      OR: [
+        { slug },
+        { id: slug },
+      ],
+    },
     include: {
       programs: {
         orderBy: { tuitionMYR: 'asc' },
@@ -48,6 +63,22 @@ export default async function UniversityDetailPage({ params }: UniversityDetailP
   if (!university) {
     notFound();
   }
+
+  const jsonLdUniversity = {
+    '@context': 'https://schema.org',
+    '@type': 'CollegeOrUniversity',
+    name: university.name,
+    alternateName: university.shortName,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: university.location,
+      addressCountry: 'Malaysia',
+    },
+    url: university.websiteUrl || undefined,
+    logo: university.logo || undefined,
+    image: university.image || undefined,
+    description: university.description || `${university.name} higher education programs in Malaysia.`,
+  };
 
   let highlights: string[] = ['5-Star SETARA Rated', 'Direct Admissions Support', 'MQA Accredited'];
   if (university.highlights) {
@@ -61,6 +92,10 @@ export default async function UniversityDetailPage({ params }: UniversityDetailP
 
   return (
     <div className="bg-slate-50 min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdUniversity) }}
+      />
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Breadcrumb */}
         <div>

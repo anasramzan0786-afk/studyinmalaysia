@@ -92,11 +92,11 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
               />
             </div>
             <div className="flex flex-col">
-              <span className="text-white font-black text-sm tracking-tight font-heading">
-                MEEZAB PORTAL
+              <span className="text-white font-black text-sm tracking-tight font-heading leading-tight">
+                Study In Malaysia
               </span>
-              <span className="text-[10px] text-amber-300 font-bold uppercase tracking-wider">
-                Study in Malaysia
+              <span className="text-[10px] text-amber-300 font-extrabold uppercase tracking-wider">
+                By Meezab
               </span>
             </div>
           </Link>
@@ -248,8 +248,8 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
               <img src="/meezab-square-logo.jpg" alt="Meezab" className="w-full h-full object-contain" />
             </div>
             <div>
-              <span className="text-white font-extrabold text-sm font-heading">MEEZAB PORTAL</span>
-              <p className="text-[10px] text-amber-300 font-bold">Study in Malaysia</p>
+              <span className="text-white font-extrabold text-sm font-heading block leading-tight">Study In Malaysia</span>
+              <p className="text-[10px] text-amber-300 font-extrabold uppercase tracking-wider">By Meezab</p>
             </div>
           </div>
           <button
@@ -329,16 +329,16 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
             </button>
 
             <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-500">
-              <span className="text-[#0B2553] font-bold">Meezab Admissions</span>
+              <span className="text-[#0B2553] font-bold">Study In Malaysia By Meezab</span>
               <span>/</span>
               <span className="text-slate-800 capitalize font-bold">
-                {pathname === '/' ? 'Dashboard' : pathname.replace('/', '')}
+                {pathname === '/' ? 'Admissions' : pathname.replace('/', '')}
               </span>
             </div>
           </div>
 
           {/* Right Topbar Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Minimal Intake Pill */}
             <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FEF2F2] text-[#BA2E34] border border-[#FECACA]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#BA2E34]" />
@@ -350,16 +350,17 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
               href="https://wa.me/923346596725?text=Hello%20Meezab%20Admissions"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#25D366] hover:bg-[#20ba57] shadow-xs transition-colors"
+              aria-label="Contact Meezab on WhatsApp"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#25D366] hover:bg-[#20ba57] shadow-xs transition-all shrink-0"
             >
               <MessageCircle className="w-3.5 h-3.5" />
-              <span>WhatsApp</span>
+              <span className="hidden sm:inline">WhatsApp</span>
             </a>
 
             {/* Free Counseling CTA in Meezab Red */}
             <button
               onClick={() => openModal()}
-              className="btn-meezab-red inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer"
+              className="btn-meezab-red inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold cursor-pointer shrink-0"
             >
               <PhoneCall className="w-3.5 h-3.5 text-white" />
               <span>Free Counseling</span>

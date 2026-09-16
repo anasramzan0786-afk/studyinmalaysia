@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/utils';
+import { getAuthSession } from '@/lib/auth';
 
 interface BulkProgramInput {
   title: string;
@@ -21,6 +22,11 @@ interface BulkProgramInput {
 
 export async function POST(request: Request) {
   try {
+    const session = await getAuthSession();
+    if (!session || session.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Admin access required for bulk upload' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { programs } = body as { programs: BulkProgramInput[] };
 

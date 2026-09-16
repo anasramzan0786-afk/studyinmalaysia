@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { InquirySchema } from '@/lib/validators';
+import { getAuthSession } from '@/lib/auth';
 
 export async function GET() {
   try {
+    const session = await getAuthSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Authentication required to view student inquiries' }, { status: 401 });
+    }
+
     const inquiries = await db.inquiry.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
@@ -67,6 +73,11 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const session = await getAuthSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Authentication required to update inquiry' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { id, status, notes } = body;
 

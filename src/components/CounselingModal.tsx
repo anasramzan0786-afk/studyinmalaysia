@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, Send, PhoneCall, CheckCircle2, MessageSquare, AlertCircle } from 'lucide-react';
+import { APP_CONFIG } from '@/config';
 
 interface CounselingModalProps {
   isOpen: boolean;
@@ -68,7 +69,7 @@ export function CounselingModal({
       )}`;
 
       setTimeout(() => {
-        window.open(`https://wa.me/923346596725?text=${message}`, '_blank');
+        window.open(`https://wa.me/${APP_CONFIG.whatsappNumber}?text=${message}`, '_blank');
       }, 1200);
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : 'Something went wrong.';

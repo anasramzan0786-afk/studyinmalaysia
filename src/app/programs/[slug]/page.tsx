@@ -25,8 +25,13 @@ interface ProgramDetailPageProps {
 
 export async function generateMetadata({ params }: ProgramDetailPageProps) {
   const { slug } = await params;
-  const program = await db.program.findUnique({
-    where: { slug },
+  const program = await db.program.findFirst({
+    where: {
+      OR: [
+        { slug },
+        { id: slug },
+      ],
+    },
     include: { university: true },
   });
 
@@ -37,13 +42,22 @@ export async function generateMetadata({ params }: ProgramDetailPageProps) {
   return {
     title: `${program.title} at ${program.university.name} | Fee Structure & Requirements`,
     description: `Official fee structure, EMGS upfront costs, entry criteria and admission dates for ${program.title} at ${program.university.name}, Malaysia.`,
+    openGraph: {
+      title: `${program.title} | ${program.university.name}`,
+      description: `Official tuition fee: RM ${program.tuitionMYR.toLocaleString()}. Verified upfront EMGS package and intake details.`,
+    },
   };
 }
 
 export default async function ProgramDetailPage({ params }: ProgramDetailPageProps) {
   const { slug } = await params;
-  const program = await db.program.findUnique({
-    where: { slug },
+  const program = await db.program.findFirst({
+    where: {
+      OR: [
+        { slug },
+        { id: slug },
+      ],
+    },
     include: {
       university: true,
       semesterSchedules: true,
@@ -53,6 +67,25 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
   if (!program) {
     notFound();
   }
+
+  const jsonLdProgram = {
+    '@context': 'https://schema.org',
+    '@type': 'EducationalOccupationalProgram',
+    name: program.title,
+    description: program.description || `${program.title} at ${program.university.name}`,
+    provider: {
+      '@type': 'CollegeOrUniversity',
+      name: program.university.name,
+      address: program.university.location,
+    },
+    educationalProgramMode: 'full-time',
+    programPrerequisites: program.academicReq || 'High School / FSc / A-Levels Certificate',
+    offers: {
+      '@type': 'Offer',
+      price: program.tuitionMYR,
+      priceCurrency: 'MYR',
+    },
+  };
 
   const documents = program.documentsReq
     ? JSON.parse(program.documentsReq)
@@ -65,6 +98,10 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
 
   return (
     <div className="bg-slate-50 min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdProgram) }}
+      />
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Back Link & Breadcrumb */}
         <div className="flex items-center justify-between text-xs text-slate-500">

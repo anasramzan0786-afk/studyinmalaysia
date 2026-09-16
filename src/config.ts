@@ -1,21 +1,22 @@
 /**
  * Meezab Portal Configuration
  * Safely accesses client environment variables with intelligent fallbacks.
- * These can be configured in Netlify's Environment Variables panel.
+ * In Next.js, public client environment variables are prefixed with NEXT_PUBLIC_.
  */
 
-const env = (import.meta as unknown as { env?: Record<string, string> }).env || {};
-
 export const APP_CONFIG = {
-  companyName: env.VITE_COMPANY_NAME || 'Meezab Future Consulting',
-  contactEmail: env.VITE_CONTACT_EMAIL || 'anas.studyinmalaysiabymeezab@gmail.com',
-  whatsappNumber: env.VITE_WHATSAPP_NUMBER || '923346596725',
+  companyName: process.env.NEXT_PUBLIC_COMPANY_NAME || 'Meezab Future Consulting',
+  portalName: process.env.NEXT_PUBLIC_PORTAL_NAME || 'Study In Malaysia By Meezab',
+  contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'anas.studyinmalaysiabymeezab@gmail.com',
+  whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '923346596725',
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.studyinmalaysia.vercel.app',
   supportHours: 'Monday - Saturday: 9:00 AM - 7:00 PM (MYT / UTC+8)',
   officeLocation: 'Kuala Lumpur, Malaysia & Lahore, Pakistan',
   storageKeys: {
     programs: 'meezab_programs_v1',
     auditLogs: 'meezab_audit_logs_v1',
     visaSettings: 'meezab_visa_settings_v1',
-    currency: 'meezab_currency_preference'
-  }
+    currency: 'meezab_currency_preference',
+  },
 } as const;
+

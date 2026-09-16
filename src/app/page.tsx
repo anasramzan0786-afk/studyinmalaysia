@@ -45,10 +45,11 @@ function getFirstYearTuition(prog: any): number {
   }
 
   if (!years || years <= 0) {
-    const level = (prog.level || '').toLowerCase();
+    const level = (prog.degreeLevel || prog.level || '').toLowerCase();
     if (level.includes('master')) years = 1.5;
-    else if (level.includes('phd')) years = 3;
+    else if (level.includes('phd') || level.includes('doctorate')) years = 3;
     else if (level.includes('bachelor')) years = 3;
+    else if (level.includes('diploma') || level.includes('foundation')) years = 2;
     else years = 3;
   }
 
@@ -119,10 +120,10 @@ export default async function HomePage() {
         {/* Main Title & Natural Description */}
         <div className="space-y-3 max-w-3xl">
           <h1 className="text-2xl sm:text-4xl font-extrabold text-[#0B2553] tracking-tight font-heading leading-tight">
-            Study in Malaysia Admissions &amp; Verified EMGS Cost Portal
+            Study In Malaysia By Meezab
           </h1>
           <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
-            Explore 1,200+ accredited degrees across top Malaysian campuses. Review authentic upfront EMGS statutory fees, university registration packages, and obtain direct offer letters with <strong className="text-[#BA2E34] font-bold">zero consultant markup</strong>.
+            Official higher education admissions and verified EMGS fee portal by <strong className="text-[#0B2553] font-bold">Meezab Future Consulting</strong>. Explore 1,200+ accredited degrees across premier Malaysian campuses with authentic upfront statutory visa packages and <strong className="text-[#BA2E34] font-bold">zero consultant markup</strong>.
           </p>
         </div>
 
@@ -204,7 +205,7 @@ export default async function HomePage() {
           {UNIVERSITIES_DATA.slice(0, 8).map((uni) => (
             <Link
               key={uni.id}
-              href={`/universities/${uni.id}`}
+              href={`/universities/${uni.slug || uni.id}`}
               className="shrink-0 flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition-all min-w-[200px]"
             >
               <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 p-0.5 flex items-center justify-center shrink-0">
@@ -462,7 +463,7 @@ export default async function HomePage() {
                   </span>
                 </div>
                 <Link
-                  href={`/universities/${uni.id}`}
+                  href={`/universities/${uni.slug || uni.id}`}
                   className="text-xs font-bold text-[#0B2553] hover:text-[#BA2E34] flex items-center gap-1"
                 >
                   <span>View Campus</span>
@@ -498,7 +499,7 @@ export default async function HomePage() {
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-[#0B2553] border border-blue-100 uppercase">
-                    {prog.level}
+                    {prog.degreeLevel || prog.level || 'Degree'}
                   </span>
                   <span className="text-[10px] font-semibold text-slate-500">
                     {prog.durationYears ? `${prog.durationYears} Years` : 'Full-time'}
@@ -506,7 +507,7 @@ export default async function HomePage() {
                 </div>
 
                 <h3 className="font-extrabold text-sm text-[#0B2553] leading-snug line-clamp-2">
-                  {prog.name}
+                  {prog.title || prog.name}
                 </h3>
                 <p className="text-xs text-slate-600 mt-1 font-medium">
                   {prog.university?.name}
@@ -537,13 +538,13 @@ export default async function HomePage() {
 
                 <div className="flex gap-2 pt-2 border-t border-slate-100">
                   <Link
-                    href={`/programs/${prog.id}`}
+                    href={`/programs/${prog.slug || prog.id}`}
                     className="flex-1 text-center py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all"
                   >
                     Details
                   </Link>
                   <ApplyButton
-                    programTitle={prog.name}
+                    programTitle={prog.title || prog.name}
                     programId={prog.id}
                     className="flex-1 py-2 px-3 btn-meezab-red text-xs font-bold rounded-xl shadow-xs text-center"
                   />
