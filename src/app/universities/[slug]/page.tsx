@@ -49,9 +49,15 @@ export default async function UniversityDetailPage({ params }: UniversityDetailP
     notFound();
   }
 
-  const highlights: string[] = university.highlights
-    ? JSON.parse(university.highlights)
-    : ['5-Star SETARA Rated', 'Direct Admissions Support', 'MQA Accredited'];
+  let highlights: string[] = ['5-Star SETARA Rated', 'Direct Admissions Support', 'MQA Accredited'];
+  if (university.highlights) {
+    try {
+      const parsed = JSON.parse(university.highlights);
+      if (Array.isArray(parsed)) highlights = parsed;
+    } catch {
+      highlights = university.highlights.split('\n').filter(Boolean);
+    }
+  }
 
   return (
     <div className="bg-slate-50 min-h-screen py-10 px-4 sm:px-6 lg:px-8">
