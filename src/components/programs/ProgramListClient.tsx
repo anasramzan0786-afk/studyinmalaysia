@@ -28,6 +28,10 @@ interface ProgramWithUniversity {
   duration: string;
   intakeMonths: string;
   tuitionMYR: number;
+  firstYearFeeMYR?: number | null;
+  secondYearFeeMYR?: number | null;
+  thirdYearFeeMYR?: number | null;
+  fourthYearFeeMYR?: number | null;
   emgsFeeMYR: number | null;
   miscFeesMYR: number | null;
   totalInitialMYR: number | null;
@@ -47,6 +51,10 @@ interface ProgramWithUniversity {
 }
 
 function getFirstYearTuition(program: ProgramWithUniversity): number {
+  if (program.firstYearFeeMYR && Number(program.firstYearFeeMYR) > 0) {
+    return Number(program.firstYearFeeMYR);
+  }
+
   if (program.semesterSchedules && program.semesterSchedules.length > 0) {
     const year1 = program.semesterSchedules.find((s) =>
       s.semester.toLowerCase().includes('year 1') ||

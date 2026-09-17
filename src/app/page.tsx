@@ -24,6 +24,10 @@ import { UNIVERSITIES_DATA } from '@/data/universitiesData';
 export const revalidate = 60; // ISR cache for 60 seconds
 
 function getFirstYearTuition(prog: any): number {
+  if (prog.firstYearFeeMYR && Number(prog.firstYearFeeMYR) > 0) {
+    return Number(prog.firstYearFeeMYR);
+  }
+
   if (prog.semesterSchedules && prog.semesterSchedules.length > 0) {
     const year1 = prog.semesterSchedules.find((s: any) =>
       s.semester.toLowerCase().includes('year 1') ||

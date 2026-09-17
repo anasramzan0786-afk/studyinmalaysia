@@ -25,6 +25,10 @@ interface ProgramItem {
   duration: string;
   intakeMonths: string;
   tuitionMYR: number;
+  firstYearFeeMYR?: number | null;
+  secondYearFeeMYR?: number | null;
+  thirdYearFeeMYR?: number | null;
+  fourthYearFeeMYR?: number | null;
   emgsFeeMYR: number | null;
   miscFeesMYR: number | null;
   totalInitialMYR: number | null;
@@ -63,6 +67,10 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
   const [duration, setDuration] = useState('3 Years');
   const [intakeMonths, setIntakeMonths] = useState('January, May, September');
   const [tuitionMYR, setTuitionMYR] = useState(60000);
+  const [firstYearFeeMYR, setFirstYearFeeMYR] = useState<number | ''>('');
+  const [secondYearFeeMYR, setSecondYearFeeMYR] = useState<number | ''>('');
+  const [thirdYearFeeMYR, setThirdYearFeeMYR] = useState<number | ''>('');
+  const [fourthYearFeeMYR, setFourthYearFeeMYR] = useState<number | ''>('');
   const [emgsFeeMYR, setEmgsFeeMYR] = useState(3500);
   const [miscFeesMYR, setMiscFeesMYR] = useState(6000);
   const [scholarship, setScholarship] = useState('');
@@ -93,6 +101,10 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
     setDuration('3 Years');
     setIntakeMonths('January, May, September');
     setTuitionMYR(60000);
+    setFirstYearFeeMYR('');
+    setSecondYearFeeMYR('');
+    setThirdYearFeeMYR('');
+    setFourthYearFeeMYR('');
     setEmgsFeeMYR(3500);
     setMiscFeesMYR(6000);
     setScholarship('');
@@ -110,6 +122,10 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
     setDuration(prog.duration);
     setIntakeMonths(prog.intakeMonths);
     setTuitionMYR(prog.tuitionMYR);
+    setFirstYearFeeMYR(prog.firstYearFeeMYR || '');
+    setSecondYearFeeMYR(prog.secondYearFeeMYR || '');
+    setThirdYearFeeMYR(prog.thirdYearFeeMYR || '');
+    setFourthYearFeeMYR(prog.fourthYearFeeMYR || '');
     setEmgsFeeMYR(prog.emgsFeeMYR || 3500);
     setMiscFeesMYR(prog.miscFeesMYR || 6000);
     setScholarship(prog.scholarship || '');
@@ -132,6 +148,22 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
     }
   };
 
+  const handleClearAllPrograms = async () => {
+    if (!confirm('⚠️ Are you sure you want to remove ALL programs from the database? This action cannot be undone!')) return;
+
+    try {
+      const res = await fetch('/api/programs?all=true', { method: 'DELETE' });
+      if (res.ok) {
+        setPrograms([]);
+        showNotification('All programs removed successfully from database.');
+      } else {
+        alert('Failed to clear programs');
+      }
+    } catch (err) {
+      alert('Failed to clear programs');
+    }
+  };
+
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -144,6 +176,10 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
       duration,
       intakeMonths,
       tuitionMYR: Number(tuitionMYR),
+      firstYearFeeMYR: firstYearFeeMYR !== '' ? Number(firstYearFeeMYR) : undefined,
+      secondYearFeeMYR: secondYearFeeMYR !== '' ? Number(secondYearFeeMYR) : undefined,
+      thirdYearFeeMYR: thirdYearFeeMYR !== '' ? Number(thirdYearFeeMYR) : undefined,
+      fourthYearFeeMYR: fourthYearFeeMYR !== '' ? Number(fourthYearFeeMYR) : undefined,
       emgsFeeMYR: Number(emgsFeeMYR),
       miscFeesMYR: Number(miscFeesMYR),
       scholarship: scholarship || undefined,
@@ -206,13 +242,25 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
           </p>
         </div>
 
-        <button
-          onClick={handleOpenAddModal}
-          className="inline-flex items-center gap-2 bg-[#0a2540] hover:bg-[#163658] text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-xs transition-all active:scale-95"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add New Course</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {programs.length > 0 && (
+            <button
+              onClick={handleClearAllPrograms}
+              className="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold px-3.5 py-2.5 rounded-xl text-xs shadow-xs transition-all active:scale-95"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Clear All Courses</span>
+            </button>
+          )}
+
+          <button
+            onClick={handleOpenAddModal}
+            className="inline-flex items-center gap-2 bg-[#0a2540] hover:bg-[#163658] text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-xs transition-all active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New Course</span>
+          </button>
+        </div>
       </div>
 
       {/* Notification */}
@@ -427,6 +475,63 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
                     onChange={(e) => setMiscFeesMYR(Number(e.target.value))}
                     className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
                   />
+                </div>
+              </div>
+
+              {/* Yearly Tuition Breakdown */}
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
+                <span className="text-[11px] font-bold text-slate-700 block">
+                  Yearly Fee Breakdown (ensures authentic 1st year fee without automated estimation):
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      1st Year Fee (MYR)
+                    </label>
+                    <input
+                      type="number"
+                      value={firstYearFeeMYR}
+                      onChange={(e) => setFirstYearFeeMYR(e.target.value === '' ? '' : Number(e.target.value))}
+                      placeholder="e.g. 20000"
+                      className="w-full text-xs border border-slate-200 bg-white rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      2nd Year Fee (MYR)
+                    </label>
+                    <input
+                      type="number"
+                      value={secondYearFeeMYR}
+                      onChange={(e) => setSecondYearFeeMYR(e.target.value === '' ? '' : Number(e.target.value))}
+                      placeholder="e.g. 20000"
+                      className="w-full text-xs border border-slate-200 bg-white rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      3rd Year Fee (MYR)
+                    </label>
+                    <input
+                      type="number"
+                      value={thirdYearFeeMYR}
+                      onChange={(e) => setThirdYearFeeMYR(e.target.value === '' ? '' : Number(e.target.value))}
+                      placeholder="e.g. 20000"
+                      className="w-full text-xs border border-slate-200 bg-white rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      4th Year Fee (MYR)
+                    </label>
+                    <input
+                      type="number"
+                      value={fourthYearFeeMYR}
+                      onChange={(e) => setFourthYearFeeMYR(e.target.value === '' ? '' : Number(e.target.value))}
+                      placeholder="Optional"
+                      className="w-full text-xs border border-slate-200 bg-white rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                    />
+                  </div>
                 </div>
               </div>
 

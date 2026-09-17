@@ -72,6 +72,10 @@ model Program {
   intakeMonths      String             // Comma-separated or JSON
   scholarship       String?
   tuitionMYR        Float
+  firstYearFeeMYR   Float?
+  secondYearFeeMYR  Float?
+  thirdYearFeeMYR   Float?
+  fourthYearFeeMYR  Float?
   tuitionUSD        Float?
   emgsFeeMYR        Float?
   miscFeesMYR       Float?

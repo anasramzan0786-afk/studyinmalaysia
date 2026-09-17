@@ -25,6 +25,10 @@ interface ParsedRow {
   duration: string;
   intakeMonths: string;
   tuitionMYR: number;
+  firstYearFeeMYR?: number;
+  secondYearFeeMYR?: number;
+  thirdYearFeeMYR?: number;
+  fourthYearFeeMYR?: number;
   emgsFeeMYR: number;
   miscFeesMYR: number;
   totalInitialMYR: number;
@@ -57,6 +61,10 @@ export default function BulkUploadPage() {
       'duration',
       'intakeMonths',
       'tuitionMYR',
+      'firstYearFeeMYR',
+      'secondYearFeeMYR',
+      'thirdYearFeeMYR',
+      'fourthYearFeeMYR',
       'emgsFeeMYR',
       'miscFeesMYR',
       'totalInitialMYR',
@@ -75,6 +83,10 @@ export default function BulkUploadPage() {
         '3 Years',
         'January, May, September',
         '60000',
+        '20000',
+        '20000',
+        '20000',
+        '0',
         '3500',
         '7500',
         '11000',
@@ -91,6 +103,10 @@ export default function BulkUploadPage() {
         '3 Years',
         'February, May, September',
         '98000',
+        '32000',
+        '33000',
+        '33000',
+        '0',
         '3500',
         '6500',
         '10000',
@@ -107,6 +123,10 @@ export default function BulkUploadPage() {
         '1.5 Years',
         'January, May, October',
         '36000',
+        '24000',
+        '12000',
+        '0',
+        '0',
         '3500',
         '7500',
         '11000',
@@ -167,24 +187,116 @@ export default function BulkUploadPage() {
     });
   };
 
+  const parseNumberField = (row: any, keys: string[]): number | undefined => {
+    for (const k of keys) {
+      if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') {
+        const cleaned = String(row[k]).replace(/[^0-9.]/g, '');
+        const n = parseFloat(cleaned);
+        if (!isNaN(n)) return n;
+      }
+    }
+    return undefined;
+  };
+
   const processParsedRows = (rawRows: any[]) => {
     const cleaned: ParsedRow[] = rawRows
-      .map((row: any) => ({
-        title: String(row.title || row.Title || '').trim(),
-        universityName: String(row.universityName || row.University || row.university || '').trim(),
-        degreeLevel: String(row.degreeLevel || row.Degree || "Bachelor's Degree").trim(),
-        faculty: String(row.faculty || row.Faculty || 'General').trim(),
-        duration: String(row.duration || row.Duration || '3 Years').trim(),
-        intakeMonths: String(row.intakeMonths || row.Intakes || 'January, May, September').trim(),
-        tuitionMYR: Number(row.tuitionMYR || row.Tuition || 0),
-        emgsFeeMYR: Number(row.emgsFeeMYR || row.EMGS || 3500),
-        miscFeesMYR: Number(row.miscFeesMYR || row.AdminFee || 6000),
-        totalInitialMYR: Number(row.totalInitialMYR || row.Upfront || 9500),
-        scholarship: row.scholarship || row.Scholarship,
-        academicReq: row.academicReq || row.Requirements,
-        englishReq: row.englishReq || row.English,
-        pakistanNotes: row.pakistanNotes || row.Notes,
-      }))
+      .map((row: any) => {
+        const y1 = parseNumberField(row, [
+          'firstYearFeeMYR',
+          'firstYearFee',
+          '1stYearFee',
+          '1st Year Fee',
+          '1st year fee',
+          '1st Year',
+          'Year 1 Fee',
+          'year1FeeMYR',
+          'year1Fee',
+          'year1TuitionMYR',
+          'Year 1 Tuition',
+          'Year 1',
+        ]);
+        const y2 = parseNumberField(row, [
+          'secondYearFeeMYR',
+          'secondYearFee',
+          '2ndYearFee',
+          '2nd Year Fee',
+          '2nd year fee',
+          '2nd Year',
+          'Year 2 Fee',
+          'year2FeeMYR',
+          'year2Fee',
+          'year2TuitionMYR',
+          'Year 2 Tuition',
+          'Year 2',
+        ]);
+        const y3 = parseNumberField(row, [
+          'thirdYearFeeMYR',
+          'thirdYearFee',
+          '3rdYearFee',
+          '3rd Year Fee',
+          '3rd year fee',
+          '3rd Year',
+          'Year 3 Fee',
+          'year3FeeMYR',
+          'year3Fee',
+          'year3TuitionMYR',
+          'Year 3 Tuition',
+          'Year 3',
+        ]);
+        const y4 = parseNumberField(row, [
+          'fourthYearFeeMYR',
+          'fourthYearFee',
+          '4thYearFee',
+          '4th Year Fee',
+          '4th year fee',
+          '4th Year',
+          'Year 4 Fee',
+          'year4FeeMYR',
+          'year4Fee',
+          'year4TuitionMYR',
+          'Year 4 Tuition',
+          'Year 4',
+        ]);
+
+        let tuition = parseNumberField(row, [
+          'tuitionMYR',
+          'Tuition',
+          'tuition',
+          'Total Tuition',
+          'totalTuitionMYR',
+          'TotalTuition',
+        ]) || 0;
+
+        // If overall tuition is not specified or 0, calculate sum of yearly fees
+        if (tuition === 0 && (y1 || y2 || y3 || y4)) {
+          tuition = (y1 || 0) + (y2 || 0) + (y3 || 0) + (y4 || 0);
+        }
+
+        const emgs = parseNumberField(row, ['emgsFeeMYR', 'EMGS', 'emgs', 'EMGSFee']) || 3500;
+        const misc = parseNumberField(row, ['miscFeesMYR', 'AdminFee', 'misc', 'MiscFees']) || 6000;
+        const initial = parseNumberField(row, ['totalInitialMYR', 'Upfront', 'initial', 'TotalInitial']) || (emgs + misc);
+
+        return {
+          title: String(row.title || row.Title || '').trim(),
+          universityName: String(row.universityName || row.University || row.university || '').trim(),
+          degreeLevel: String(row.degreeLevel || row.Degree || "Bachelor's Degree").trim(),
+          faculty: String(row.faculty || row.Faculty || 'General').trim(),
+          duration: String(row.duration || row.Duration || '3 Years').trim(),
+          intakeMonths: String(row.intakeMonths || row.Intakes || 'January, May, September').trim(),
+          tuitionMYR: tuition,
+          firstYearFeeMYR: y1,
+          secondYearFeeMYR: y2,
+          thirdYearFeeMYR: y3,
+          fourthYearFeeMYR: y4,
+          emgsFeeMYR: emgs,
+          miscFeesMYR: misc,
+          totalInitialMYR: initial,
+          scholarship: row.scholarship || row.Scholarship,
+          academicReq: row.academicReq || row.Requirements,
+          englishReq: row.englishReq || row.English,
+          pakistanNotes: row.pakistanNotes || row.Notes,
+        };
+      })
       .filter((r) => r.title.length > 0);
 
     setParsedData(cleaned);
@@ -247,6 +359,20 @@ export default function BulkUploadPage() {
           <Download className="w-4 h-4 text-blue-700" />
           <span>Download Sample CSV Template</span>
         </button>
+      </div>
+
+      {/* Notice about 1st/2nd/3rd year fee columns */}
+      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-start gap-3 text-xs text-blue-900">
+        <Sparkles className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+        <div>
+          <span className="font-bold block text-sm text-blue-950">
+            Updated CSV Template with Exact Yearly Fees
+          </span>
+          <p className="mt-0.5 text-blue-800 leading-relaxed">
+            The template now includes dedicated columns for <strong>firstYearFeeMYR</strong>, <strong>secondYearFeeMYR</strong>, <strong>thirdYearFeeMYR</strong>, and <strong>fourthYearFeeMYR</strong>.
+            Providing these columns ensures the authentic 1st Year Tuition displays on the website without automated estimation.
+          </p>
+        </div>
       </div>
 
       {/* Upload Methods Selector */}
@@ -430,7 +556,10 @@ export default function BulkUploadPage() {
                   <th className="py-2.5 px-3">Program Title</th>
                   <th className="py-2.5 px-3">University</th>
                   <th className="py-2.5 px-3">Level</th>
-                  <th className="py-2.5 px-3">Tuition (MYR)</th>
+                  <th className="py-2.5 px-3">Total Tuition</th>
+                  <th className="py-2.5 px-3 text-blue-700 font-extrabold">1st Year Fee</th>
+                  <th className="py-2.5 px-3">2nd Year Fee</th>
+                  <th className="py-2.5 px-3">3rd Year Fee</th>
                   <th className="py-2.5 px-3">Upfront (MYR)</th>
                   <th className="py-2.5 px-3">Duration</th>
                 </tr>
@@ -448,6 +577,15 @@ export default function BulkUploadPage() {
                     </td>
                     <td className="py-2.5 px-3 font-bold text-slate-900">
                       {formatMYR(row.tuitionMYR)}
+                    </td>
+                    <td className="py-2.5 px-3 font-extrabold text-blue-700 bg-blue-50/40">
+                      {row.firstYearFeeMYR ? formatMYR(row.firstYearFeeMYR) : 'Auto'}
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-700">
+                      {row.secondYearFeeMYR ? formatMYR(row.secondYearFeeMYR) : '-'}
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-700">
+                      {row.thirdYearFeeMYR ? formatMYR(row.thirdYearFeeMYR) : '-'}
                     </td>
                     <td className="py-2.5 px-3 font-bold text-emerald-700">
                       {formatMYR(row.totalInitialMYR)}

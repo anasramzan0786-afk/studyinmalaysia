@@ -11,6 +11,10 @@ interface BulkProgramInput {
   duration?: string;
   intakeMonths?: string;
   tuitionMYR: number;
+  firstYearFeeMYR?: number;
+  secondYearFeeMYR?: number;
+  thirdYearFeeMYR?: number;
+  fourthYearFeeMYR?: number;
   emgsFeeMYR?: number;
   miscFeesMYR?: number;
   totalInitialMYR?: number;
@@ -71,10 +75,43 @@ export async function POST(request: Request) {
         matchedUni = defaultUni;
       }
 
-      const tuition = Number(item.tuitionMYR) || 0;
+      const y1 = item.firstYearFeeMYR ? Number(item.firstYearFeeMYR) : undefined;
+      const y2 = item.secondYearFeeMYR ? Number(item.secondYearFeeMYR) : undefined;
+      const y3 = item.thirdYearFeeMYR ? Number(item.thirdYearFeeMYR) : undefined;
+      const y4 = item.fourthYearFeeMYR ? Number(item.fourthYearFeeMYR) : undefined;
+
+      let tuition = Number(item.tuitionMYR) || 0;
+      if (tuition === 0 && (y1 || y2 || y3)) {
+        tuition = (y1 || 0) + (y2 || 0) + (y3 || 0) + (y4 || 0);
+      }
+
       const emgs = Number(item.emgsFeeMYR) || 3500;
       const misc = Number(item.miscFeesMYR) || 6000;
       const initial = Number(item.totalInitialMYR) || (emgs + misc);
+
+      // Parse duration in years
+      let parsedYears = 3;
+      if (item.duration) {
+        const match = item.duration.match(/([\d.]+)\s*(?:year|yr)/i);
+        if (match) {
+          parsedYears = parseFloat(match[1]);
+        }
+      }
+
+      // Prepare semester/year schedules if yearly fee breakdown exists
+      const scheduleList: { semester: string; tuitionMYR: number; miscMYR: number }[] = [];
+      if (y1 && y1 > 0) {
+        scheduleList.push({ semester: 'Year 1', tuitionMYR: y1, miscMYR: misc });
+      }
+      if (y2 && y2 > 0) {
+        scheduleList.push({ semester: 'Year 2', tuitionMYR: y2, miscMYR: 1600 });
+      }
+      if (y3 && y3 > 0) {
+        scheduleList.push({ semester: 'Year 3', tuitionMYR: y3, miscMYR: 1600 });
+      }
+      if (y4 && y4 > 0) {
+        scheduleList.push({ semester: 'Year 4', tuitionMYR: y4, miscMYR: 1600 });
+      }
 
       const uniqueSlug = `${slugify(item.title)}-${Date.now().toString().slice(-4)}-${i}`;
 
@@ -87,10 +124,14 @@ export async function POST(request: Request) {
             degreeLevel: item.degreeLevel.trim(),
             faculty: item.faculty || 'General Studies',
             duration: item.duration || '3 Years (Full-time)',
-            durationYears: 3,
+            durationYears: parsedYears,
             intakeMonths: item.intakeMonths || 'January, May, September',
             scholarship: item.scholarship || 'Standard Pricing',
             tuitionMYR: tuition,
+            firstYearFeeMYR: y1 || null,
+            secondYearFeeMYR: y2 || null,
+            thirdYearFeeMYR: y3 || null,
+            fourthYearFeeMYR: y4 || null,
             tuitionUSD: Math.round(tuition / 4.45),
             emgsFeeMYR: emgs,
             miscFeesMYR: misc,
@@ -98,6 +139,13 @@ export async function POST(request: Request) {
             academicReq: item.academicReq || 'Standard academic entry requirements apply.',
             englishReq: item.englishReq || 'IELTS 5.5 - 6.0 or English placement certificate.',
             pakistanNotes: item.pakistanNotes || `Upfront initial package: RM ${initial.toLocaleString()}.`,
+            ...(scheduleList.length > 0
+              ? {
+                  semesterSchedules: {
+                    create: scheduleList,
+                  },
+                }
+              : {}),
           },
         });
         insertedPrograms.push(created);

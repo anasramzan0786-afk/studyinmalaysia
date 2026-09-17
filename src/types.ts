@@ -18,6 +18,10 @@ export interface Program {
   intakeMonths: string[];
   scholarship: string;
   tuitionMYR: number;
+  firstYearFeeMYR?: number;
+  secondYearFeeMYR?: number;
+  thirdYearFeeMYR?: number;
+  fourthYearFeeMYR?: number;
   tuitionUSD: number;
   faculty: string;
   description: string;

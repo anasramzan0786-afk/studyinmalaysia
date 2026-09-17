@@ -246,31 +246,76 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
               )}
             </div>
 
-            {/* Semester Fee Schedule */}
-            {program.semesterSchedules && program.semesterSchedules.length > 0 && (
+            {/* Semester / Yearly Fee Schedule */}
+            {((program.semesterSchedules && program.semesterSchedules.length > 0) || program.firstYearFeeMYR) && (
               <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-                <h2 className="text-lg font-bold text-slate-900">Semester-by-Semester Fee Schedule</h2>
+                <h2 className="text-lg font-bold text-slate-900">Yearly &amp; Semester Fee Schedule</h2>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="border-b border-slate-200 bg-slate-50 text-slate-700 font-bold">
-                        <th className="py-2.5 px-3">Semester</th>
+                        <th className="py-2.5 px-3">Year / Semester</th>
                         <th className="py-2.5 px-3">Tuition Fee</th>
                         <th className="py-2.5 px-3">Admin / Visa Renewal</th>
                         <th className="py-2.5 px-3 text-right">Total Payable</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {program.semesterSchedules.map((sem, idx) => (
-                        <tr key={sem.id || idx} className="hover:bg-slate-50">
-                          <td className="py-3 px-3 font-semibold text-slate-800">{sem.semester}</td>
-                          <td className="py-3 px-3 text-slate-600">{formatMYR(sem.tuitionMYR)}</td>
-                          <td className="py-3 px-3 text-slate-600">{formatMYR(sem.miscMYR)}</td>
-                          <td className="py-3 px-3 font-bold text-slate-900 text-right">
-                            {formatMYR(sem.tuitionMYR + sem.miscMYR)}
-                          </td>
-                        </tr>
-                      ))}
+                      {program.semesterSchedules && program.semesterSchedules.length > 0 ? (
+                        program.semesterSchedules.map((sem, idx) => (
+                          <tr key={sem.id || idx} className="hover:bg-slate-50">
+                            <td className="py-3 px-3 font-semibold text-slate-800">{sem.semester}</td>
+                            <td className="py-3 px-3 text-slate-600">{formatMYR(sem.tuitionMYR)}</td>
+                            <td className="py-3 px-3 text-slate-600">{formatMYR(sem.miscMYR)}</td>
+                            <td className="py-3 px-3 font-bold text-slate-900 text-right">
+                              {formatMYR(sem.tuitionMYR + sem.miscMYR)}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <>
+                          {program.firstYearFeeMYR && (
+                            <tr className="hover:bg-slate-50">
+                              <td className="py-3 px-3 font-semibold text-slate-800">Year 1</td>
+                              <td className="py-3 px-3 text-slate-600">{formatMYR(program.firstYearFeeMYR)}</td>
+                              <td className="py-3 px-3 text-slate-600">{formatMYR(program.miscFeesMYR || 6000)}</td>
+                              <td className="py-3 px-3 font-bold text-slate-900 text-right">
+                                {formatMYR(program.firstYearFeeMYR + (program.miscFeesMYR || 6000))}
+                              </td>
+                            </tr>
+                          )}
+                          {program.secondYearFeeMYR && (
+                            <tr className="hover:bg-slate-50">
+                              <td className="py-3 px-3 font-semibold text-slate-800">Year 2</td>
+                              <td className="py-3 px-3 text-slate-600">{formatMYR(program.secondYearFeeMYR)}</td>
+                              <td className="py-3 px-3 text-slate-600">{formatMYR(1600)}</td>
+                              <td className="py-3 px-3 font-bold text-slate-900 text-right">
+                                {formatMYR(program.secondYearFeeMYR + 1600)}
+                              </td>
+                            </tr>
+                          )}
+                          {program.thirdYearFeeMYR && (
+                            <tr className="hover:bg-slate-50">
+                              <td className="py-3 px-3 font-semibold text-slate-800">Year 3</td>
+                              <td className="py-3 px-3 text-slate-600">{formatMYR(program.thirdYearFeeMYR)}</td>
+                              <td className="py-3 px-3 text-slate-600">{formatMYR(1600)}</td>
+                              <td className="py-3 px-3 font-bold text-slate-900 text-right">
+                                {formatMYR(program.thirdYearFeeMYR + 1600)}
+                              </td>
+                            </tr>
+                          )}
+                          {program.fourthYearFeeMYR && (
+                            <tr className="hover:bg-slate-50">
+                              <td className="py-3 px-3 font-semibold text-slate-800">Year 4</td>
+                              <td className="py-3 px-3 text-slate-600">{formatMYR(program.fourthYearFeeMYR)}</td>
+                              <td className="py-3 px-3 text-slate-600">{formatMYR(1600)}</td>
+                              <td className="py-3 px-3 font-bold text-slate-900 text-right">
+                                {formatMYR(program.fourthYearFeeMYR + 1600)}
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      )}
                     </tbody>
                   </table>
                 </div>

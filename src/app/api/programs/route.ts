@@ -73,6 +73,10 @@ export async function POST(request: Request) {
         intakeMonths: validated.intakeMonths,
         scholarship: validated.scholarship || null,
         tuitionMYR: validated.tuitionMYR,
+        firstYearFeeMYR: validated.firstYearFeeMYR || null,
+        secondYearFeeMYR: validated.secondYearFeeMYR || null,
+        thirdYearFeeMYR: validated.thirdYearFeeMYR || null,
+        fourthYearFeeMYR: validated.fourthYearFeeMYR || null,
         tuitionUSD: Math.round(validated.tuitionMYR / 4.45),
         emgsFeeMYR: validated.emgsFeeMYR || 3500,
         miscFeesMYR: validated.miscFeesMYR || 6000,
@@ -84,6 +88,18 @@ export async function POST(request: Request) {
         englishReq: validated.englishReq || null,
         minGpa: validated.minGpa || null,
         documentsReq: validated.documentsReq ? JSON.stringify(validated.documentsReq) : null,
+        ...(validated.firstYearFeeMYR
+          ? {
+              semesterSchedules: {
+                create: [
+                  { semester: 'Year 1', tuitionMYR: validated.firstYearFeeMYR, miscMYR: validated.miscFeesMYR || 6000 },
+                  ...(validated.secondYearFeeMYR ? [{ semester: 'Year 2', tuitionMYR: validated.secondYearFeeMYR, miscMYR: 1600 }] : []),
+                  ...(validated.thirdYearFeeMYR ? [{ semester: 'Year 3', tuitionMYR: validated.thirdYearFeeMYR, miscMYR: 1600 }] : []),
+                  ...(validated.fourthYearFeeMYR ? [{ semester: 'Year 4', tuitionMYR: validated.fourthYearFeeMYR, miscMYR: 1600 }] : []),
+                ],
+              },
+            }
+          : {}),
       },
       include: { university: true },
     });
@@ -119,6 +135,11 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Program ID is required' }, { status: 400 });
     }
 
+    const y1 = data.firstYearFeeMYR !== undefined ? (Number(data.firstYearFeeMYR) || null) : undefined;
+    const y2 = data.secondYearFeeMYR !== undefined ? (Number(data.secondYearFeeMYR) || null) : undefined;
+    const y3 = data.thirdYearFeeMYR !== undefined ? (Number(data.thirdYearFeeMYR) || null) : undefined;
+    const y4 = data.fourthYearFeeMYR !== undefined ? (Number(data.fourthYearFeeMYR) || null) : undefined;
+
     const updated = await db.program.update({
       where: { id },
       data: {
@@ -128,6 +149,10 @@ export async function PUT(request: Request) {
         duration: data.duration,
         intakeMonths: data.intakeMonths,
         tuitionMYR: data.tuitionMYR,
+        firstYearFeeMYR: y1,
+        secondYearFeeMYR: y2,
+        thirdYearFeeMYR: y3,
+        fourthYearFeeMYR: y4,
         emgsFeeMYR: data.emgsFeeMYR,
         miscFeesMYR: data.miscFeesMYR,
         totalInitialMYR: (data.emgsFeeMYR || 3500) + (data.miscFeesMYR || 6000),
@@ -164,6 +189,23 @@ export async function DELETE(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+    const all = searchParams.get('all');
+
+    if (all === 'true' || id === 'all') {
+      await db.semesterSchedule.deleteMany({});
+      const result = await db.program.deleteMany({});
+
+      await db.auditLog.create({
+        data: {
+          title: `Cleared All Courses (${result.count})`,
+          action: 'DELETE',
+          target: 'All Programs',
+          details: `Removed all ${result.count} programs from catalog.`,
+        },
+      });
+
+      return NextResponse.json({ success: true, count: result.count });
+    }
 
     if (!id) {
       return NextResponse.json({ error: 'Program ID required' }, { status: 400 });
