@@ -52,41 +52,22 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method;
 
-  // 1. Always allow static files, Next.js assets, and SEO files
+  // 1. Allow static assets and login page without authentication
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/auth') ||
     pathname === '/login' ||
     pathname === '/favicon.ico' ||
-    pathname === '/sitemap.xml' ||
-    pathname === '/robots.txt' ||
     pathname.includes('.')
   ) {
     return NextResponse.next();
   }
 
-  // 2. Allow public consumer pages
-  const isPublicPage =
-    pathname === '/' ||
-    pathname.startsWith('/programs') ||
-    pathname.startsWith('/universities') ||
-    pathname.startsWith('/calculator');
-
-  // 3. Allow public API operations
-  const isPublicApi =
-    (pathname === '/api/inquiries' && method === 'POST') ||
-    (pathname === '/api/programs' && method === 'GET') ||
-    (pathname === '/api/universities' && method === 'GET');
-
-  if (isPublicPage || isPublicApi) {
-    return NextResponse.next();
-  }
-
-  // 4. Check user session for protected routes (Admin console, internal APIs, and mutations)
+  // 2. Retrieve session for protected routes
   const sessionCookie = request.cookies.get(COOKIE_NAME)?.value;
   const user = sessionCookie ? await verifyToken(sessionCookie) : null;
 
-  // 4a. Unauthenticated access handling
+  // 3. If not authenticated, redirect to login (or return 401 for API)
   if (!user) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
@@ -96,24 +77,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 4b. Protected admin pages & admin APIs require ADMIN role
-  const isAdminPath =
-    pathname.startsWith('/admin') ||
-    pathname.startsWith('/api/admin') ||
-    pathname.startsWith('/api/upload') ||
-    ((pathname === '/api/programs' || pathname === '/api/universities') && method !== 'GET');
-
-  if (isAdminPath && user.role !== 'ADMIN') {
+  // 4. Only allow ADMIN or COUNSELOR roles
+  if (user.role !== 'ADMIN' && user.role !== 'COUNSELOR') {
     if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
     const homeUrl = new URL('/', request.url);
-    homeUrl.searchParams.set('error', 'admin_access_denied');
+    homeUrl.searchParams.set('error', 'access_denied');
     return NextResponse.redirect(homeUrl);
   }
 
+  // 5. Authenticated and authorized – allow request to proceed
   return NextResponse.next();
 }
+
 
 export const config = {
   matcher: [
