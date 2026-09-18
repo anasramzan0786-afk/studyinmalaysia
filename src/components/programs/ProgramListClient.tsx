@@ -96,6 +96,26 @@ interface ProgramListClientProps {
   universities: { id: string; name: string; shortName: string }[];
 }
 
+// Maps each UI filter button to the DB degreeLevel keywords it should match.
+// The DB has many variations (e.g. "PhD", "Doctorate (Postgraduate)", "Diploma", "Foundation")
+// that don't exactly match the button labels, so we use keyword-based inclusion matching.
+const DEGREE_KEYWORD_MAP: Record<string, string[]> = {
+  "Bachelor's Degree": ['bachelor'],
+  "Master's (Postgraduate)": ['master', 'postgraduate diploma', 'postgraduate certificate'],
+  "Ph.D & Doctorate": ['phd', 'ph.d', 'doctorate'],
+  'Foundation / Diploma': [
+    'foundation',
+    'diploma',
+    'certificate',
+    'pre-university',
+    'a level',
+    'english language',
+    'professional preparatory',
+    'advanced diploma',
+    'post basic',
+  ],
+};
+
 export function ProgramListClient({ initialPrograms, universities }: ProgramListClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -146,6 +166,7 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
     router.push('/programs');
   };
 
+
   const filteredPrograms = useMemo(() => {
     return initialPrograms.filter((p) => {
       // Search
@@ -157,8 +178,18 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
         if (!matchTitle && !matchUni && !matchFaculty) return false;
       }
 
-      // Degree
-      if (degree !== 'All' && p.degreeLevel !== degree) return false;
+      // Degree filter — use keyword matching to handle all DB value variations
+      if (degree !== 'All') {
+        const keywords = DEGREE_KEYWORD_MAP[degree];
+        if (keywords) {
+          const level = p.degreeLevel.toLowerCase();
+          const matched = keywords.some((kw) => level.includes(kw));
+          if (!matched) return false;
+        } else {
+          // Fallback: exact match for any unknown filter value
+          if (p.degreeLevel !== degree) return false;
+        }
+      }
 
       // University
       if (selectedUni !== 'All') {
