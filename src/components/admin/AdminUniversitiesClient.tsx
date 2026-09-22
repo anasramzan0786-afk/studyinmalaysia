@@ -176,12 +176,15 @@ export function AdminUniversitiesClient({
     }
 
     try {
-      const res = await fetch(`/api/universities?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/universities?id=${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-confirm': 'true' },
+      });
       if (res.ok) {
         setUniversities((prev) => prev.filter((u) => u.id !== id));
         showNotification(`"${uniName}" deleted successfully.`);
       } else {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         alert(data.error || 'Failed to delete university');
       }
     } catch {

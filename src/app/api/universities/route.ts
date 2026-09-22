@@ -250,6 +250,12 @@ export async function DELETE(request: Request) {
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Admin access required to delete universities' }, { status: 403 });
     }
+
+    const adminConfirmed = request.headers.get('x-admin-confirm') === 'true';
+    if (!adminConfirmed) {
+      return NextResponse.json({ error: 'Admin confirmation required for destructive actions.' }, { status: 400 });
+    }
+
     const userName = session.username || 'Meezab Admin';
 
     const { searchParams } = new URL(request.url);

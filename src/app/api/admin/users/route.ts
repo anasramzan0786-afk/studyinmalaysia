@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 import { getAuthSession } from '@/lib/auth';
+import { normalizeRole, validateUserPayload } from '@/lib/validators';
 
 export async function GET() {
   try {
@@ -36,15 +37,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const { name, email, password, role } = await request.json();
+    const body = await request.json();
 
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: 'Name, Email, and Password are required.' },
-        { status: 400 }
-      );
+    let validatedUser;
+    try {
+      validatedUser = validateUserPayload(body);
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message || 'Invalid user payload.' }, { status: 400 });
     }
 
+    const { name, email, password, role } = validatedUser;
     const normalizedEmail = email.trim().toLowerCase();
 
     // Check if user already exists
@@ -59,7 +61,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(password.trim(), 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await db.user.create({
       data: {
@@ -101,6 +103,11 @@ export async function DELETE(request: Request) {
     const session = await getAuthSession();
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    }
+
+    const adminConfirmed = request.headers.get('x-admin-confirm') === 'true';
+    if (!adminConfirmed) {
+      return NextResponse.json({ error: 'Admin confirmation required for destructive actions.' }, { status: 400 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -146,8 +153,22 @@ export async function PATCH(request: Request) {
 
     const updateData: any = {};
     if (typeof active === 'boolean') updateData.active = active;
-    if (role) updateData.role = role;
-    if (password) updateData.password = await bcrypt.hash(password.trim(), 10);
+
+    const normalizedRole = normalizeRole(role);
+    if (role !== undefined && normalizedRole === null) {
+      return NextResponse.json({ error: 'Role must be ADMIN or COUNSELOR.' }, { status: 400 });
+    }
+    if (normalizedRole) {
+      updateData.role = normalizedRole;
+    }
+
+    if (password !== undefined) {
+      const trimmedPassword = String(password).trim();
+      if (trimmedPassword.length < 8) {
+        return NextResponse.json({ error: 'Password must be at least 8 characters long.' }, { status: 400 });
+      }
+      updateData.password = await bcrypt.hash(trimmedPassword, 10);
+    }
 
     const updatedUser = await db.user.update({
       where: { id },

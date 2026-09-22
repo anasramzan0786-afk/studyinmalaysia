@@ -1,16 +1,13 @@
 import { cookies } from 'next/headers';
+import { getAuthCredentialValue, getJwtSecret } from '@/lib/runtime-config';
 
 export interface AuthUser {
   username: string;
   role: 'COUNSELOR' | 'ADMIN';
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'meezab-malaysia-portal-secret-key-2026';
+const JWT_SECRET = getJwtSecret();
 const COOKIE_NAME = 'meezab_session';
-
-if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
-  console.warn('⚠️ SECURITY WARNING: JWT_SECRET is not set in environment variables. Using fallback key. Set JWT_SECRET in your production settings.');
-}
 
 // Helper to generate HMAC SHA-256 signature using Web Crypto API (Edge & Node.js compatible)
 async function getCryptoKey() {
@@ -94,15 +91,15 @@ export async function getAuthSession(): Promise<AuthUser | null> {
 
 export const AUTH_CREDENTIALS = {
   counselor: {
-    username: process.env.COUNSELOR_USERNAME || 'counselor',
-    email: process.env.COUNSELOR_EMAIL || 'counselor@meezab.com',
-    password: process.env.COUNSELOR_PASSWORD || 'counselor123',
+    username: getAuthCredentialValue('COUNSELOR_USERNAME', 'counselor'),
+    email: getAuthCredentialValue('COUNSELOR_EMAIL', 'counselor@meezab.com'),
+    password: getAuthCredentialValue('COUNSELOR_PASSWORD', 'counselor123'),
     role: 'COUNSELOR' as const,
   },
   admin: {
-    username: process.env.ADMIN_USERNAME || 'admin',
-    email: process.env.ADMIN_EMAIL || 'admin@meezab.com',
-    password: process.env.ADMIN_PASSWORD || 'admin123',
+    username: getAuthCredentialValue('ADMIN_USERNAME', 'admin'),
+    email: getAuthCredentialValue('ADMIN_EMAIL', 'admin@meezab.com'),
+    password: getAuthCredentialValue('ADMIN_PASSWORD', 'admin123'),
     role: 'ADMIN' as const,
   },
 };

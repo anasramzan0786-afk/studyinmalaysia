@@ -38,6 +38,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No programs provided for upload' }, { status: 400 });
     }
 
+    if (programs.length > 500) {
+      return NextResponse.json({ error: 'Bulk upload supports up to 500 program rows per request.' }, { status: 400 });
+    }
+
+    const duplicateNames = programs
+      .map((item) => item.title?.trim().toLowerCase())
+      .filter((value): value is string => Boolean(value));
+
+    const hasDuplicateRowTitle = duplicateNames.length !== new Set(duplicateNames).size;
+    if (hasDuplicateRowTitle) {
+      return NextResponse.json({ error: 'Duplicate program titles were detected in the upload. Please remove duplicates and retry.' }, { status: 400 });
+    }
+
     // 1. Fetch all existing universities for fuzzy matching
     const existingUniversities = await db.university.findMany({
       select: { id: true, name: true, shortName: true },

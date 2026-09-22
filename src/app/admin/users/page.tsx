@@ -108,6 +108,7 @@ export default function AdminUsersPage() {
     try {
       await fetch(`/api/admin/users?id=${id}`, {
         method: 'DELETE',
+        headers: { 'x-admin-confirm': 'true' },
       });
       fetchUsers();
     } catch (err) {

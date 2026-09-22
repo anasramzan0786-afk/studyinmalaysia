@@ -138,10 +138,16 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
     if (!confirm(`Are you sure you want to delete "${programTitle}"?`)) return;
 
     try {
-      const res = await fetch(`/api/programs?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/programs?id=${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-confirm': 'true' },
+      });
       if (res.ok) {
         setPrograms((prev) => prev.filter((p) => p.id !== id));
         showNotification(`Deleted "${programTitle}" successfully.`);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Failed to delete program');
       }
     } catch (err) {
       alert('Failed to delete program');
@@ -152,12 +158,16 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
     if (!confirm('⚠️ Are you sure you want to remove ALL programs from the database? This action cannot be undone!')) return;
 
     try {
-      const res = await fetch('/api/programs?all=true', { method: 'DELETE' });
+      const res = await fetch('/api/programs?all=true', {
+        method: 'DELETE',
+        headers: { 'x-admin-confirm': 'true' },
+      });
       if (res.ok) {
         setPrograms([]);
         showNotification('All programs removed successfully from database.');
       } else {
-        alert('Failed to clear programs');
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Failed to clear programs');
       }
     } catch (err) {
       alert('Failed to clear programs');

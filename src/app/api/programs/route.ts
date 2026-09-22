@@ -187,6 +187,11 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Admin access required to delete programs' }, { status: 403 });
     }
 
+    const adminConfirmed = request.headers.get('x-admin-confirm') === 'true';
+    if (!adminConfirmed) {
+      return NextResponse.json({ error: 'Admin confirmation required for destructive actions.' }, { status: 400 });
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const all = searchParams.get('all');

@@ -1,8 +1,13 @@
 import { PrismaClient } from '@prisma/client';
+import { getRequiredEnv } from '@/lib/runtime-config';
 
 if (!process.env.DATABASE_URL) {
-  // Fallback for build environments before DATABASE_URL environment variable is set
-  process.env.DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/postgres';
+  const envValue = getRequiredEnv('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/postgres');
+  process.env.DATABASE_URL = envValue;
+}
+
+if (!process.env.DIRECT_URL && process.env.NODE_ENV !== 'production') {
+  process.env.DIRECT_URL = process.env.DATABASE_URL;
 }
 
 // Preserve Prisma client across HMR in development

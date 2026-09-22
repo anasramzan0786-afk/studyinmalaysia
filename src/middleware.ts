@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getJwtSecret } from '@/lib/runtime-config';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'meezab-malaysia-portal-secret-key-2026';
+const JWT_SECRET = getJwtSecret();
 const COOKIE_NAME = 'meezab_session';
 
 function base64UrlDecode(str: string): string {

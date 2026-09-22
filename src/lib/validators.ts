@@ -68,6 +68,47 @@ export const InquirySchema = z.object({
   notes: z.string().optional().nullable(),
 });
 
+export type UserRole = 'ADMIN' | 'COUNSELOR';
+
+export function normalizeRole(value: unknown): UserRole | null {
+  if (value === 'ADMIN' || value === 'COUNSELOR') {
+    return value;
+  }
+
+  return null;
+}
+
+export function validateUserPayload(payload: {
+  name?: unknown;
+  email?: unknown;
+  password?: unknown;
+  role?: unknown;
+}) {
+  const name = typeof payload.name === 'string' ? payload.name.trim() : '';
+  const email = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
+  const password = typeof payload.password === 'string' ? payload.password.trim() : '';
+  const normalizedRole = normalizeRole(payload.role) ?? 'COUNSELOR';
+
+  if (name.length < 2) {
+    throw new Error('User name must be at least 2 characters long.');
+  }
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error('A valid email address is required.');
+  }
+
+  if (password.length < 8) {
+    throw new Error('Password must be at least 8 characters long.');
+  }
+
+  return {
+    name,
+    email,
+    password,
+    role: normalizedRole,
+  };
+}
+
 export const BulkProgramRowSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   universityName: z.string().min(1, 'University Name is required'),
