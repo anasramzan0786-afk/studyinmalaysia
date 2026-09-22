@@ -12,11 +12,15 @@ import {
   ShieldCheck, 
   ArrowLeft,
   SlidersHorizontal,
-  ExternalLink
+  ExternalLink,
+  History,
+  Menu,
+  X,
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [isMobileOpen, setIsMobileOpen] = React.useState(false);
 
   const links = [
     { href: '/admin', label: 'Overview', icon: LayoutDashboard },
@@ -25,6 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/universities', label: 'Manage Universities', icon: Building2 },
     { href: '/admin/programs', label: 'Manage Programs', icon: GraduationCap },
     { href: '/admin/upload', label: 'Bulk Data Importer', icon: UploadCloud },
+    { href: '/admin/audit', label: 'Audit Activity', icon: History },
   ];
 
   const isActive = (href: string) => {
@@ -33,10 +38,60 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return false;
   };
 
+  React.useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row">
+      <header className="md:hidden sticky top-0 z-30 bg-[#08182b] text-white px-4 py-3 flex items-center justify-between shadow-md">
+        <div>
+          <p className="text-[10px] uppercase tracking-wider font-bold text-amber-400">Portal Management</p>
+          <h1 className="text-base font-extrabold">Meezab Admin</h1>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsMobileOpen((open) => !open)}
+          aria-label={isMobileOpen ? 'Close admin navigation' : 'Open admin navigation'}
+          aria-expanded={isMobileOpen}
+          className="p-2 rounded-lg text-slate-200 hover:bg-white/10"
+        >
+          {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </header>
+
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-slate-950/50 md:hidden"
+          onClick={() => setIsMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside className={`fixed inset-x-0 top-[58px] z-30 md:hidden bg-[#08182b] px-4 py-4 shadow-xl transition-transform ${isMobileOpen ? 'translate-y-0' : '-translate-y-[calc(100%+58px)]'}`}>
+        <nav className="space-y-1.5" aria-label="Admin navigation">
+          {links.map((link) => {
+            const active = isActive(link.href);
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsMobileOpen(false)}
+                className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-bold ${
+                  active ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span>{link.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+
       {/* Admin Sidebar */}
-      <aside className="w-full md:w-64 bg-[#08182b] text-white p-6 shrink-0 flex flex-col justify-between border-r border-slate-800">
+      <aside className="hidden md:flex w-64 bg-[#08182b] text-white p-6 shrink-0 flex-col justify-between border-r border-slate-800">
         <div className="space-y-6">
           {/* Logo & Header */}
           <div>

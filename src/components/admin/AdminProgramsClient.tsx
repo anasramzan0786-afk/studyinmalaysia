@@ -56,6 +56,7 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
   const [programs, setPrograms] = useState<ProgramItem[]>(initialPrograms);
   const [search, setSearch] = useState('');
   const [selectedUni, setSelectedUni] = useState('All');
+  const [qualityFilter, setQualityFilter] = useState('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProgram, setEditingProgram] = useState<ProgramItem | null>(null);
 
@@ -78,9 +79,16 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
   const [englishReq, setEnglishReq] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const filtered = programs.filter((p) => {
     if (selectedUni !== 'All' && p.universityId !== selectedUni) return false;
+    if (qualityFilter === 'MISSING_FEES' && (!p.firstYearFeeMYR || p.firstYearFeeMYR <= 0)) return false;
+    if (
+      qualityFilter === 'MISSING_REQUIREMENTS' &&
+      p.academicReq &&
+      p.englishReq
+    ) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
       return (
@@ -94,6 +102,7 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
 
   const handleOpenAddModal = () => {
     setEditingProgram(null);
+    setFormError(null);
     setTitle('');
     setUniversityId(universities[0]?.id || '');
     setDegreeLevel("Bachelor's Degree");
@@ -115,6 +124,7 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
 
   const handleOpenEditModal = (prog: ProgramItem) => {
     setEditingProgram(prog);
+    setFormError(null);
     setTitle(prog.title);
     setUniversityId(prog.universityId);
     setDegreeLevel(prog.degreeLevel);
@@ -177,6 +187,7 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setFormError(null);
 
     const payload = {
       title,
@@ -212,6 +223,8 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
           );
           setIsModalOpen(false);
           showNotification(`Updated "${title}" successfully.`);
+        } else {
+          setFormError(data.error || 'Failed to update program. Please review the fee and requirement fields.');
         }
       } else {
         // Create
@@ -226,11 +239,11 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
           setIsModalOpen(false);
           showNotification(`Added new course "${title}" to database.`);
         } else {
-          alert(data.error || 'Failed to add program');
+          setFormError(data.error || 'Failed to add program. Please review the fee and requirement fields.');
         }
       }
     } catch (err: any) {
-      alert('Error saving program: ' + err.message);
+      setFormError(err.message || 'Error saving program. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -307,6 +320,19 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
                 {u.name}
               </option>
             ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <span className="text-xs text-slate-500 font-semibold shrink-0">Data quality:</span>
+          <select
+            value={qualityFilter}
+            onChange={(e) => setQualityFilter(e.target.value)}
+            className="text-xs border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:outline-hidden"
+          >
+            <option value="ALL">All records</option>
+            <option value="MISSING_FEES">Missing 1st-year fee</option>
+            <option value="MISSING_REQUIREMENTS">Missing requirements</option>
           </select>
         </div>
       </div>
@@ -400,6 +426,13 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
             </div>
 
             <form onSubmit={handleSubmitForm} className="p-6 space-y-4 overflow-y-auto flex-1">
+              {formError && (
+                <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-800" role="alert">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{formError}</span>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   Program Title *

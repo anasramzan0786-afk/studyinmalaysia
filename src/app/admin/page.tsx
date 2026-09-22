@@ -16,11 +16,43 @@ import { formatMYR } from '@/lib/utils';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboardPage() {
-  const [programsCount, universitiesCount, inquiriesCount, recentLogs, recentInquiries] =
-    await Promise.all([
+  const [
+    programsCount,
+    universitiesCount,
+    inquiriesCount,
+    programsMissingFees,
+    programsMissingRequirements,
+    universitiesMissingFees,
+    recentLogs,
+    recentInquiries,
+  ] = await Promise.all([
       db.program.count(),
       db.university.count(),
       db.inquiry.count(),
+      db.program.count({
+        where: {
+          OR: [{ firstYearFeeMYR: null }, { firstYearFeeMYR: 0 }],
+        },
+      }),
+      db.program.count({
+        where: {
+          OR: [
+            { academicReq: null },
+            { academicReq: '' },
+            { englishReq: null },
+            { englishReq: '' },
+          ],
+        },
+      }),
+      db.university.count({
+        where: {
+          OR: [
+            { emgsFeeMYR: null },
+            { miscFeesMYR: null },
+            { totalInitialMYR: null },
+          ],
+        },
+      }),
       db.auditLog.findMany({
         take: 5,
         orderBy: { createdAt: 'desc' },
@@ -108,6 +140,40 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Data quality queue */}
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="font-bold text-base text-slate-900">Data quality checks</h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Review incomplete records before counselors rely on them.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1">
+            <AlertCircle className="w-3.5 h-3.5" />
+            Needs attention
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Link href="/admin/programs" className="rounded-xl border border-slate-200 p-4 hover:border-blue-300 hover:bg-blue-50/40 transition-colors">
+            <span className="text-2xl font-extrabold text-slate-900">{programsMissingFees}</span>
+            <span className="block text-xs font-bold text-slate-700 mt-1">Programs missing 1st-year fee</span>
+            <span className="text-[11px] text-blue-700 font-semibold mt-2 inline-flex items-center gap-1">Review catalog <ArrowRight className="w-3 h-3" /></span>
+          </Link>
+          <Link href="/admin/programs" className="rounded-xl border border-slate-200 p-4 hover:border-blue-300 hover:bg-blue-50/40 transition-colors">
+            <span className="text-2xl font-extrabold text-slate-900">{programsMissingRequirements}</span>
+            <span className="block text-xs font-bold text-slate-700 mt-1">Programs missing requirements</span>
+            <span className="text-[11px] text-blue-700 font-semibold mt-2 inline-flex items-center gap-1">Review catalog <ArrowRight className="w-3 h-3" /></span>
+          </Link>
+          <Link href="/admin/universities" className="rounded-xl border border-slate-200 p-4 hover:border-emerald-300 hover:bg-emerald-50/40 transition-colors">
+            <span className="text-2xl font-extrabold text-slate-900">{universitiesMissingFees}</span>
+            <span className="block text-xs font-bold text-slate-700 mt-1">Universities missing fee package</span>
+            <span className="text-[11px] text-emerald-700 font-semibold mt-2 inline-flex items-center gap-1">Review universities <ArrowRight className="w-3 h-3" /></span>
+          </Link>
+        </div>
+      </section>
 
       {/* Featured Bulk Upload Banner (User's primary requirement) */}
       <div className="bg-gradient-to-r from-[#0a2540] to-[#1a3d66] text-white rounded-2xl p-6 sm:p-8 shadow-md flex flex-col sm:flex-row items-center justify-between gap-6">

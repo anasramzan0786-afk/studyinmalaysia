@@ -51,6 +51,17 @@ interface UniversityWithCount {
   _count: { programs: number };
 }
 
+function getUniversityDataIssues(university: UniversityWithCount): string[] {
+  const issues: string[] = [];
+  if (!university.emgsFeeMYR || !university.miscFeesMYR || !university.totalInitialMYR) {
+    issues.push('fee package');
+  }
+  if (!university.intakeMonths) issues.push('intakes');
+  if (!university.websiteUrl) issues.push('website');
+  if (!university.description) issues.push('description');
+  return issues;
+}
+
 const PRESET_IMAGES = [
   { label: 'Modern Campus Park', url: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1200&q=80' },
   { label: 'Academic High-Rise', url: 'https://images.unsplash.com/photo-1562774053-701939374585?w=1200&q=80' },
@@ -67,6 +78,7 @@ export function AdminUniversitiesClient({
   const [universities, setUniversities] = useState<UniversityWithCount[]>(initialUniversities);
   const [search, setSearch] = useState('');
   const [selectedType, setSelectedType] = useState('All');
+  const [dataFilter, setDataFilter] = useState('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUni, setEditingUni] = useState<UniversityWithCount | null>(null);
 
@@ -95,6 +107,7 @@ export function AdminUniversitiesClient({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Auto-open modal if ?add=true in query param
   useEffect(() => {
@@ -110,6 +123,7 @@ export function AdminUniversitiesClient({
 
   const handleOpenAddModal = () => {
     setEditingUni(null);
+    setFormError(null);
     setName('');
     setShortName('');
     setType('Private Premier');
@@ -136,6 +150,7 @@ export function AdminUniversitiesClient({
 
   const handleOpenEditModal = (uni: UniversityWithCount) => {
     setEditingUni(uni);
+    setFormError(null);
     setName(uni.name);
     setShortName(uni.shortName);
     setType(uni.type);
@@ -195,11 +210,12 @@ export function AdminUniversitiesClient({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !shortName.trim() || !location.trim()) {
-      alert('Please fill in the University Name, Short Name, and Campus Location.');
+      setFormError('Please fill in the University Name, Short Name, and Campus Location.');
       return;
     }
 
     setIsSubmitting(true);
+    setFormError(null);
     const payload = {
       name,
       shortName,
@@ -240,7 +256,7 @@ export function AdminUniversitiesClient({
           setIsModalOpen(false);
           showNotification(`"${data.university.name}" updated successfully.`);
         } else {
-          alert(data.error || 'Failed to update university');
+          setFormError(data.error || 'Failed to update university. Please review the institution details.');
         }
       } else {
         // Create
@@ -255,11 +271,11 @@ export function AdminUniversitiesClient({
           setIsModalOpen(false);
           showNotification(`"${data.university.name}" added successfully to universities list!`);
         } else {
-          alert(data.error || 'Failed to create university');
+          setFormError(data.error || 'Failed to create university. Please review the institution details.');
         }
       }
     } catch {
-      alert('An unexpected error occurred while saving university.');
+      setFormError('An unexpected error occurred while saving university. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -267,6 +283,7 @@ export function AdminUniversitiesClient({
 
   const filtered = universities.filter((u) => {
     if (selectedType !== 'All' && u.type !== selectedType) return false;
+    if (dataFilter === 'NEEDS_REVIEW' && getUniversityDataIssues(u).length === 0) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
       return (
@@ -348,6 +365,20 @@ export function AdminUniversitiesClient({
             <option value="International Branch">International Branch</option>
           </select>
         </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider shrink-0">
+            Data:
+          </span>
+          <select
+            value={dataFilter}
+            onChange={(e) => setDataFilter(e.target.value)}
+            className="text-xs font-semibold px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:outline-hidden"
+          >
+            <option value="ALL">All Records</option>
+            <option value="NEEDS_REVIEW">Needs Review</option>
+          </select>
+        </div>
       </div>
 
       {/* Universities Table */}
@@ -396,6 +427,11 @@ export function AdminUniversitiesClient({
                             {u.featured && (
                               <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 py-0.2 rounded-md font-extrabold uppercase">
                                 Featured
+                              </span>
+                            )}
+                            {getUniversityDataIssues(u).length > 0 && (
+                              <span className="bg-amber-50 text-amber-800 border border-amber-200 text-[9px] px-1.5 py-0.2 rounded-md font-extrabold uppercase">
+                                {getUniversityDataIssues(u).length} to review
                               </span>
                             )}
                           </div>
@@ -488,6 +524,13 @@ export function AdminUniversitiesClient({
 
             {/* Modal Body / Form */}
             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+              {formError && (
+                <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-800" role="alert">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{formError}</span>
+                </div>
+              )}
+
               {/* Section 1: Basic Institutional Info */}
               <div className="space-y-3">
                 <h4 className="font-bold text-slate-900 flex items-center gap-1.5 border-b pb-1.5 text-xs uppercase tracking-wider text-[#0B2553]">

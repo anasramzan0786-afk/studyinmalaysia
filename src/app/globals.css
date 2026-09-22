@@ -20,10 +20,29 @@
     font-family: var(--font-sans);
     letter-spacing: -0.01em;
     background-color: #F9F9F9;
+    min-width: 320px;
     color: #1F2937;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (max-width: 640px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
   }
 
   :where(a, button, input, select, textarea):focus-visible {

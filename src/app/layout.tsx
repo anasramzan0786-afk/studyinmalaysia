@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Montserrat, Jost } from 'next/font/google';
 import './globals.css';
 import { CounselingProvider } from '@/components/CounselingContext';
@@ -19,6 +19,13 @@ const jost = Jost({
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.studyinmalaysia.vercel.app';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#0B2553',
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

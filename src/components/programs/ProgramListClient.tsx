@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useDeferredValue } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
@@ -129,6 +129,8 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
   const uniParam = searchParams.get('university') || 'All';
   const budgetParam = searchParams.get('budget') || 'all';
   const sortParam = searchParams.get('sort') || 'tuition-asc';
+  const durationParam = searchParams.get('duration') || 'all';
+  const intakeParam = searchParams.get('intake') || 'all';
 
   // Local state
   const [search, setSearch] = useState(queryParam);
@@ -136,6 +138,9 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
   const [selectedUni, setSelectedUni] = useState(uniParam);
   const [maxBudget, setMaxBudget] = useState(budgetParam);
   const [sortBy, setSortBy] = useState(sortParam);
+  const [duration, setDuration] = useState(durationParam);
+  const [intake, setIntake] = useState(intakeParam);
+  const deferredSearch = useDeferredValue(search);
   const [currency, setCurrency] = useState<'MYR' | 'PKR' | 'USD'>('MYR');
   const [expandedProgramId, setExpandedProgramId] = useState<string | null>(null);
 
@@ -146,7 +151,9 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
     setSelectedUni(uniParam);
     setMaxBudget(budgetParam);
     setSortBy(sortParam);
-  }, [queryParam, degreeParam, uniParam, budgetParam, sortParam]);
+    setDuration(durationParam);
+    setIntake(intakeParam);
+  }, [queryParam, degreeParam, uniParam, budgetParam, sortParam, durationParam, intakeParam]);
 
   const updateURL = (newParams: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -166,6 +173,8 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
     setSelectedUni('All');
     setMaxBudget('all');
     setSortBy('tuition-asc');
+    setDuration('all');
+    setIntake('all');
     router.push('/programs');
   };
 
@@ -173,8 +182,8 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
   const filteredPrograms = useMemo(() => {
     return initialPrograms.filter((p) => {
       // Search
-      if (search.trim()) {
-        const q = search.toLowerCase();
+      if (deferredSearch.trim()) {
+        const q = deferredSearch.toLowerCase();
         const matchTitle = p.title.toLowerCase().includes(q);
         const matchUni = p.university.name.toLowerCase().includes(q);
         const matchFaculty = p.faculty.toLowerCase().includes(q);
@@ -205,6 +214,18 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
         if ((p.totalInitialMYR || 9500) > limit) return false;
       }
 
+      if (duration !== 'all') {
+        const durationLimit = Number(duration);
+        const programDuration = p.durationYears || Number(p.duration.match(/([\d.]+)\s*(?:year|yr)/i)?.[1]);
+        if (!programDuration || (duration === '4+' ? programDuration < 4 : Math.abs(programDuration - durationLimit) > 0.25)) {
+          return false;
+        }
+      }
+
+      if (intake !== 'all' && !p.intakeMonths.toLowerCase().includes(intake.toLowerCase())) {
+        return false;
+      }
+
       return true;
     }).sort((a, b) => {
       if (sortBy === 'tuition-asc') return a.tuitionMYR - b.tuitionMYR;
@@ -212,7 +233,7 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
       if (sortBy === 'initial-asc') return (a.totalInitialMYR || 0) - (b.totalInitialMYR || 0);
       return 0;
     });
-  }, [initialPrograms, search, degree, selectedUni, maxBudget, sortBy]);
+  }, [initialPrograms, deferredSearch, degree, selectedUni, maxBudget, sortBy, duration, intake]);
 
   const formatPrice = (amountMYR: number | null | undefined) => {
     if (currency === 'USD') return formatUSD(amountMYR);
@@ -301,7 +322,7 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
         </div>
 
         {/* Secondary Filters (University, Upfront, Sorting) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-2">
           <div>
             <label className="block text-xs font-bold text-slate-600 mb-1">
               Select Institution
@@ -359,14 +380,56 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
               <option value="initial-asc">Initial Upfront: Lowest First</option>
             </select>
           </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">
+              Program Duration
+            </label>
+            <select
+              value={duration}
+              onChange={(e) => {
+                setDuration(e.target.value);
+                updateURL({ duration: e.target.value });
+              }}
+              className="w-full text-xs font-medium border border-slate-200 bg-slate-50 rounded-xl px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Any Duration</option>
+              <option value="1">1 Year</option>
+              <option value="1.5">1.5 Years</option>
+              <option value="2">2 Years</option>
+              <option value="3">3 Years</option>
+              <option value="4+">4+ Years</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1">
+              Intake Month
+            </label>
+            <select
+              value={intake}
+              onChange={(e) => {
+                setIntake(e.target.value);
+                updateURL({ intake: e.target.value });
+              }}
+              className="w-full text-xs font-medium border border-slate-200 bg-slate-50 rounded-xl px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Any Intake</option>
+              <option value="january">January</option>
+              <option value="february">February</option>
+              <option value="may">May</option>
+              <option value="september">September</option>
+              <option value="october">October</option>
+            </select>
+          </div>
         </div>
 
         {/* Results summary & reset */}
         <div className="flex items-center justify-between pt-2 text-xs text-slate-500">
-          <span>
+          <span aria-live="polite">
             Found <strong className="text-slate-900">{filteredPrograms.length}</strong> matching programs
           </span>
-          {(search || degree !== 'All' || selectedUni !== 'All' || maxBudget !== 'all') && (
+          {(search || degree !== 'All' || selectedUni !== 'All' || maxBudget !== 'all' || duration !== 'all' || intake !== 'all') && (
             <button
               onClick={handleReset}
               className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900 font-semibold"
