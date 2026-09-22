@@ -8,6 +8,7 @@ import {
   RotateCcw, 
   SlidersHorizontal, 
   ChevronRight, 
+  ChevronDown,
   GraduationCap, 
   Clock, 
   Calendar, 
@@ -37,6 +38,7 @@ interface ProgramWithUniversity {
   totalInitialMYR: number | null;
   scholarship: string | null;
   academicReq: string | null;
+  englishReq: string | null;
   badgeText: string | null;
   pakistanNotes: string | null;
   durationYears?: number | null;
@@ -135,6 +137,7 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
   const [maxBudget, setMaxBudget] = useState(budgetParam);
   const [sortBy, setSortBy] = useState(sortParam);
   const [currency, setCurrency] = useState<'MYR' | 'PKR' | 'USD'>('MYR');
+  const [expandedProgramId, setExpandedProgramId] = useState<string | null>(null);
 
   // Sync state if URL changes
   useEffect(() => {
@@ -422,6 +425,9 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
                   <Building2 className="w-3.5 h-3.5 text-[#E8A300] shrink-0" />
                   <span>{program.university.name}</span>
                 </p>
+                <p className="text-[11px] text-slate-500 mt-1 truncate">
+                  {program.faculty}
+                </p>
 
                 {/* Intake & Duration */}
                 <div className="flex items-center gap-4 text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
@@ -466,6 +472,49 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
                     </div>
                   )}
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setExpandedProgramId((current) => current === program.id ? null : program.id)}
+                  aria-expanded={expandedProgramId === program.id}
+                  className="mt-3 w-full flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 text-left text-[11px] font-bold text-[#0B2553] hover:bg-slate-50 transition-colors"
+                >
+                  <span>{expandedProgramId === program.id ? 'Hide counselor details' : 'Show counselor details'}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${expandedProgramId === program.id ? 'rotate-180' : ''}`} />
+                </button>
+
+                {expandedProgramId === program.id && (
+                  <div className="mt-2 rounded-xl border border-blue-100 bg-blue-50/50 p-3 space-y-2 text-[11px]">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                      {[
+                        ['1st Year', program.firstYearFeeMYR],
+                        ['2nd Year', program.secondYearFeeMYR],
+                        ['3rd Year', program.thirdYearFeeMYR],
+                        ['4th Year', program.fourthYearFeeMYR],
+                      ].map(([label, value]) => (
+                        <div key={label as string} className="flex justify-between gap-2 text-slate-600">
+                          <span>{label}</span>
+                          <strong className="text-slate-900">{value ? formatPrice(value as number) : 'Not set'}</strong>
+                        </div>
+                      ))}
+                    </div>
+                    {program.academicReq && (
+                      <p className="border-t border-blue-100 pt-2 text-slate-600">
+                        <strong className="text-[#0B2553]">Academic:</strong> {program.academicReq}
+                      </p>
+                    )}
+                    {program.englishReq && (
+                      <p className="text-slate-600">
+                        <strong className="text-[#0B2553]">English:</strong> {program.englishReq}
+                      </p>
+                    )}
+                    {program.pakistanNotes && (
+                      <p className="text-slate-600">
+                        <strong className="text-[#0B2553]">Counselor note:</strong> {program.pakistanNotes}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}

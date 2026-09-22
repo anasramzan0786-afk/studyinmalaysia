@@ -40,14 +40,14 @@ export const ProgramSchema = z.object({
   durationYears: z.number().optional().nullable(),
   intakeMonths: z.string().min(1, 'Intake months are required'),
   scholarship: z.string().optional().nullable(),
-  tuitionMYR: z.number().min(0, 'Tuition must be a positive number'),
-  firstYearFeeMYR: z.number().optional().nullable(),
-  secondYearFeeMYR: z.number().optional().nullable(),
-  thirdYearFeeMYR: z.number().optional().nullable(),
-  fourthYearFeeMYR: z.number().optional().nullable(),
-  emgsFeeMYR: z.number().optional().nullable(),
-  miscFeesMYR: z.number().optional().nullable(),
-  totalInitialMYR: z.number().optional().nullable(),
+  tuitionMYR: z.number().min(0, 'Tuition must be a non-negative number'),
+  firstYearFeeMYR: z.number().nonnegative().optional().nullable(),
+  secondYearFeeMYR: z.number().nonnegative().optional().nullable(),
+  thirdYearFeeMYR: z.number().nonnegative().optional().nullable(),
+  fourthYearFeeMYR: z.number().nonnegative().optional().nullable(),
+  emgsFeeMYR: z.number().nonnegative().optional().nullable(),
+  miscFeesMYR: z.number().nonnegative().optional().nullable(),
+  totalInitialMYR: z.number().nonnegative().optional().nullable(),
   miscBreakdown: z.string().optional().nullable(),
   pakistanNotes: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
@@ -55,6 +55,20 @@ export const ProgramSchema = z.object({
   englishReq: z.string().optional().nullable(),
   minGpa: z.string().optional().nullable(),
   documentsReq: z.array(z.string()).optional().nullable(),
+}).superRefine((program, context) => {
+  const yearlyTotal =
+    (program.firstYearFeeMYR || 0) +
+    (program.secondYearFeeMYR || 0) +
+    (program.thirdYearFeeMYR || 0) +
+    (program.fourthYearFeeMYR || 0);
+
+  if (yearlyTotal > 0 && program.tuitionMYR > 0 && Math.abs(yearlyTotal - program.tuitionMYR) > 1) {
+    context.addIssue({
+      code: 'custom',
+      path: ['tuitionMYR'],
+      message: 'Total tuition must equal the sum of the yearly fees.',
+    });
+  }
 });
 
 export const InquirySchema = z.object({

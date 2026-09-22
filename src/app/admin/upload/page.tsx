@@ -51,6 +51,17 @@ export default function BulkUploadPage() {
   const [rawText, setRawText] = useState('');
   const [uploadMode, setUploadMode] = useState<'file' | 'text'>('file');
 
+  const duplicateTitles = parsedData.filter((row, index, rows) =>
+    rows.findIndex((candidate) => candidate.title.toLowerCase() === row.title.toLowerCase()) !== index
+  );
+  const rowsMissingUniversity = parsedData.filter((row) => !row.universityName);
+  const rowsWithFeeMismatch = parsedData.filter((row) => {
+    const yearlyTotal = (row.firstYearFeeMYR || 0) + (row.secondYearFeeMYR || 0) + (row.thirdYearFeeMYR || 0) + (row.fourthYearFeeMYR || 0);
+    return yearlyTotal > 0 && row.tuitionMYR > 0 && Math.abs(yearlyTotal - row.tuitionMYR) > 1;
+  });
+  const previewHasBlockingIssues =
+    duplicateTitles.length > 0 || rowsMissingUniversity.length > 0 || rowsWithFeeMismatch.length > 0;
+
   // Sample CSV Template for user to download
   const downloadSampleTemplate = () => {
     const headers = [
@@ -305,6 +316,14 @@ export default function BulkUploadPage() {
   // Commit parsed data into the live database via /api/upload
   const handleCommitToDatabase = async () => {
     if (parsedData.length === 0) return;
+    if (
+      !window.confirm(
+        `Import ${parsedData.length} validated program${parsedData.length === 1 ? '' : 's'} into the team database?`
+      )
+    ) {
+      return;
+    }
+
     setIsUploading(true);
     setImportResult(null);
 
@@ -318,7 +337,11 @@ export default function BulkUploadPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to upload data');
+        const uploadError = new Error(data.error || 'Failed to upload data') as Error & {
+          errors?: string[];
+        };
+        uploadError.errors = data.errors;
+        throw uploadError;
       }
 
       setImportResult({
@@ -332,7 +355,9 @@ export default function BulkUploadPage() {
       setImportResult({
         success: false,
         count: 0,
-        errors: [err.message || 'Unknown network error'],
+        errors: Array.isArray(err.errors)
+          ? err.errors
+          : [err.message || 'Unknown network error'],
       });
     } finally {
       setIsUploading(false);
@@ -468,7 +493,7 @@ export default function BulkUploadPage() {
               </h4>
               <p className="text-xs">
                 {importResult.success
-                  ? 'All records have been written to the live database and are now visible on the public website.'
+                  ? 'The validated records were written to the team database.'
                   : 'Please check your CSV format and make sure required columns are included.'}
               </p>
 
@@ -489,7 +514,7 @@ export default function BulkUploadPage() {
                     href="/programs"
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:text-emerald-950 underline"
                   >
-                    <span>View Newly Added Courses on Public Website</span>
+                    <span>Review Newly Added Programs</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
@@ -513,6 +538,26 @@ export default function BulkUploadPage() {
               <p className="text-xs text-slate-500 mt-0.5">
                 Source: <strong className="text-slate-800">{fileName}</strong> • Review the rows below before committing to the database.
               </p>
+              <div className="flex flex-wrap gap-2 pt-2 text-[11px] font-bold">
+                <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-slate-700">
+                  {parsedData.length} rows detected
+                </span>
+                {duplicateTitles.length > 0 && (
+                  <span className="rounded-lg bg-red-50 px-2.5 py-1 text-red-700">
+                    Duplicate titles found
+                  </span>
+                )}
+                {rowsMissingUniversity.length > 0 && (
+                  <span className="rounded-lg bg-red-50 px-2.5 py-1 text-red-700">
+                    University missing in {rowsMissingUniversity.length} row{rowsMissingUniversity.length === 1 ? '' : 's'}
+                  </span>
+                )}
+                {rowsWithFeeMismatch.length > 0 && (
+                  <span className="rounded-lg bg-red-50 px-2.5 py-1 text-red-700">
+                    Yearly fees do not match tuition in {rowsWithFeeMismatch.length} row{rowsWithFeeMismatch.length === 1 ? '' : 's'}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-3">
@@ -529,7 +574,8 @@ export default function BulkUploadPage() {
 
               <button
                 onClick={handleCommitToDatabase}
-                disabled={isUploading}
+                disabled={isUploading || previewHasBlockingIssues}
+                title={previewHasBlockingIssues ? 'Resolve the validation issues before importing.' : undefined}
                 className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
               >
                 {isUploading ? (
@@ -560,6 +606,7 @@ export default function BulkUploadPage() {
                   <th className="py-2.5 px-3 text-blue-700 font-extrabold">1st Year Fee</th>
                   <th className="py-2.5 px-3">2nd Year Fee</th>
                   <th className="py-2.5 px-3">3rd Year Fee</th>
+                  <th className="py-2.5 px-3">4th Year Fee</th>
                   <th className="py-2.5 px-3">Upfront (MYR)</th>
                   <th className="py-2.5 px-3">Duration</th>
                 </tr>
@@ -586,6 +633,9 @@ export default function BulkUploadPage() {
                     </td>
                     <td className="py-2.5 px-3 text-slate-700">
                       {row.thirdYearFeeMYR ? formatMYR(row.thirdYearFeeMYR) : '-'}
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-700">
+                      {row.fourthYearFeeMYR ? formatMYR(row.fourthYearFeeMYR) : '-'}
                     </td>
                     <td className="py-2.5 px-3 font-bold text-emerald-700">
                       {formatMYR(row.totalInitialMYR)}

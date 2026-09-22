@@ -52,7 +52,7 @@ export default async function UniversitiesPage() {
             <div className="flex items-center gap-2.5 shrink-0">
               <Link
                 href="/admin/universities?add=true"
-                className="btn-meezab-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md hover:shadow-lg transition-all"
+                className="btn-meezab-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition-all"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add New University</span>
