@@ -15,7 +15,22 @@ export default async function AdminProgramsPage() {
       orderBy: { createdAt: 'desc' },
     }),
     db.university.findMany({
-      select: { id: true, name: true },
+      select: {
+        id: true,
+        name: true,
+        shortName: true,
+        type: true,
+        emgsFeeMYR: true,
+        miscFeesMYR: true,
+        totalInitialMYR: true,
+        intakeMonths: true,
+        tuitionBachelor: true,
+        tuitionMaster: true,
+        tuitionPhd: true,
+        avgTuition3Yr: true,
+        initialBreakdownNotes: true,
+        location: true,
+      },
       orderBy: { name: 'asc' },
     }),
   ]);

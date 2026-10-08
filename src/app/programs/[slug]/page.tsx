@@ -17,7 +17,9 @@ import {
   ChevronRight,
   AlertCircle
 } from 'lucide-react';
+import { BackButton } from '@/components/programs/BackButton';
 import { ApplyButton } from '@/components/programs/ApplyButton';
+import { getYearlyVisaRenewalFee } from '@/lib/utils';
 
 interface ProgramDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -103,21 +105,8 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdProgram) }}
       />
       <div className="max-w-5xl mx-auto space-y-8">
-        {/* Back Link & Breadcrumb */}
-        <div className="flex items-center justify-between text-xs text-slate-500">
-          <Link
-            href="/programs"
-            className="inline-flex items-center gap-1.5 font-bold text-blue-700 hover:text-blue-900 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to All Courses</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <span>Programs</span>
-            <span>/</span>
-            <span className="text-slate-800 font-semibold">{program.degreeLevel}</span>
-          </div>
-        </div>
+        {/* Smart Back Navigation & Breadcrumb */}
+        <BackButton degreeLevel={program.degreeLevel} />
 
         {/* Hero Header Card */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
@@ -160,8 +149,8 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
             </div>
           </div>
 
-          {/* Quick Stats Grid */}
-          <div className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {/* Quick Stats Grid with Yearly Visa Renewal */}
+          <div className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <div>
               <span className="text-xs text-slate-500 block">Total Tuition</span>
               <span className="text-lg sm:text-xl font-extrabold text-slate-900">
@@ -179,6 +168,17 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
               </span>
               <span className="text-[11px] text-slate-400 block mt-0.5">
                 Payable upon visa approval
+              </span>
+            </div>
+
+            <div>
+              <span className="text-xs text-slate-500 block">Yearly Visa Renewal</span>
+              <span className="text-lg sm:text-xl font-extrabold text-blue-900 flex items-center gap-1">
+                <span>{formatMYR(getYearlyVisaRenewalFee())}</span>
+                <span className="text-xs font-normal text-slate-500">/ yr</span>
+              </span>
+              <span className="text-[11px] text-slate-400 block mt-0.5">
+                From Year 2+ (EMGS & Insurance)
               </span>
             </div>
 
@@ -226,7 +226,7 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
 
               <div className="space-y-2 bg-slate-50 rounded-xl p-4 border border-slate-200 text-xs">
                 <div className="flex justify-between py-1.5 border-b border-slate-200/60">
-                  <span className="text-slate-600">EMGS Processing &amp; eVAL Fee:</span>
+                  <span className="text-slate-600">EMGS Processing &amp; eVAL Fee (Year 1):</span>
                   <span className="font-bold text-slate-900">{formatMYR(program.emgsFeeMYR || 3500)}</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-slate-200/60">
@@ -236,6 +236,40 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                 <div className="flex justify-between pt-2 text-sm">
                   <span className="font-bold text-slate-900">Total Non-Tuition Initial Payment:</span>
                   <span className="font-extrabold text-emerald-700">{formatMYR(program.totalInitialMYR || 9500)}</span>
+                </div>
+              </div>
+
+              {/* Itemized Yearly Visa Renewal Fee breakdown */}
+              <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#0B2553] flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-blue-600" />
+                    <span>Annual Visa &amp; Insurance Renewal (Year 2 Onwards):</span>
+                  </span>
+                  <span className="text-xs font-black text-blue-800">
+                    {formatMYR(getYearlyVisaRenewalFee())} / year
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Malaysian statutory requirement for international students continuing into subsequent years:
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] bg-blue-50/60 p-2.5 rounded-xl border border-blue-100/70">
+                  <div className="text-slate-600">
+                    <span className="block text-slate-400 text-[10px]">Student Pass Sticker</span>
+                    <strong className="text-slate-800">RM 140 / yr</strong>
+                  </div>
+                  <div className="text-slate-600">
+                    <span className="block text-slate-400 text-[10px]">Medical Insurance</span>
+                    <strong className="text-slate-800">RM 850 / yr</strong>
+                  </div>
+                  <div className="text-slate-600">
+                    <span className="block text-slate-400 text-[10px]">i-Kad Smart Card</span>
+                    <strong className="text-slate-800">RM 100 / yr</strong>
+                  </div>
+                  <div className="text-slate-600">
+                    <span className="block text-slate-400 text-[10px]">Admin &amp; Screening</span>
+                    <strong className="text-slate-800">RM 310 / yr</strong>
+                  </div>
                 </div>
               </div>
 
@@ -249,7 +283,12 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
             {/* Semester / Yearly Fee Schedule */}
             {((program.semesterSchedules && program.semesterSchedules.length > 0) || program.firstYearFeeMYR) && (
               <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-                <h2 className="text-lg font-bold text-slate-900">Yearly &amp; Semester Fee Schedule</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h2 className="text-lg font-bold text-slate-900">Yearly &amp; Semester Fee Schedule</h2>
+                  <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">
+                    Annual Visa Renewal: {formatMYR(getYearlyVisaRenewalFee())} / yr
+                  </span>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
@@ -266,7 +305,14 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                           <tr key={sem.id || idx} className="hover:bg-slate-50">
                             <td className="py-3 px-3 font-semibold text-slate-800">{sem.semester}</td>
                             <td className="py-3 px-3 text-slate-600">{formatMYR(sem.tuitionMYR)}</td>
-                            <td className="py-3 px-3 text-slate-600">{formatMYR(sem.miscMYR)}</td>
+                            <td className="py-3 px-3 text-slate-600">
+                              {formatMYR(sem.miscMYR)}
+                              {sem.semester.toLowerCase().includes('year 1') ? (
+                                <span className="text-[10px] text-slate-400 block">Initial Package</span>
+                              ) : (
+                                <span className="text-[10px] text-blue-600 block">Visa Renewal</span>
+                              )}
+                            </td>
                             <td className="py-3 px-3 font-bold text-slate-900 text-right">
                               {formatMYR(sem.tuitionMYR + sem.miscMYR)}
                             </td>
@@ -278,7 +324,10 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                             <tr className="hover:bg-slate-50">
                               <td className="py-3 px-3 font-semibold text-slate-800">Year 1</td>
                               <td className="py-3 px-3 text-slate-600">{formatMYR(program.firstYearFeeMYR)}</td>
-                              <td className="py-3 px-3 text-slate-600">{formatMYR(program.miscFeesMYR || 6000)}</td>
+                              <td className="py-3 px-3 text-slate-600">
+                                {formatMYR(program.miscFeesMYR || 6000)}
+                                <span className="text-[10px] text-slate-400 block">Upfront Admin &amp; Reg</span>
+                              </td>
                               <td className="py-3 px-3 font-bold text-slate-900 text-right">
                                 {formatMYR(program.firstYearFeeMYR + (program.miscFeesMYR || 6000))}
                               </td>
@@ -288,9 +337,12 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                             <tr className="hover:bg-slate-50">
                               <td className="py-3 px-3 font-semibold text-slate-800">Year 2</td>
                               <td className="py-3 px-3 text-slate-600">{formatMYR(program.secondYearFeeMYR)}</td>
-                              <td className="py-3 px-3 text-slate-600">{formatMYR(1600)}</td>
+                              <td className="py-3 px-3 text-slate-600">
+                                {formatMYR(getYearlyVisaRenewalFee())}
+                                <span className="text-[10px] text-blue-600 block">Annual Visa Renewal</span>
+                              </td>
                               <td className="py-3 px-3 font-bold text-slate-900 text-right">
-                                {formatMYR(program.secondYearFeeMYR + 1600)}
+                                {formatMYR(program.secondYearFeeMYR + getYearlyVisaRenewalFee())}
                               </td>
                             </tr>
                           )}
@@ -298,9 +350,12 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                             <tr className="hover:bg-slate-50">
                               <td className="py-3 px-3 font-semibold text-slate-800">Year 3</td>
                               <td className="py-3 px-3 text-slate-600">{formatMYR(program.thirdYearFeeMYR)}</td>
-                              <td className="py-3 px-3 text-slate-600">{formatMYR(1600)}</td>
+                              <td className="py-3 px-3 text-slate-600">
+                                {formatMYR(getYearlyVisaRenewalFee())}
+                                <span className="text-[10px] text-blue-600 block">Annual Visa Renewal</span>
+                              </td>
                               <td className="py-3 px-3 font-bold text-slate-900 text-right">
-                                {formatMYR(program.thirdYearFeeMYR + 1600)}
+                                {formatMYR(program.thirdYearFeeMYR + getYearlyVisaRenewalFee())}
                               </td>
                             </tr>
                           )}
@@ -308,9 +363,12 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                             <tr className="hover:bg-slate-50">
                               <td className="py-3 px-3 font-semibold text-slate-800">Year 4</td>
                               <td className="py-3 px-3 text-slate-600">{formatMYR(program.fourthYearFeeMYR)}</td>
-                              <td className="py-3 px-3 text-slate-600">{formatMYR(1600)}</td>
+                              <td className="py-3 px-3 text-slate-600">
+                                {formatMYR(getYearlyVisaRenewalFee())}
+                                <span className="text-[10px] text-blue-600 block">Annual Visa Renewal</span>
+                              </td>
                               <td className="py-3 px-3 font-bold text-slate-900 text-right">
-                                {formatMYR(program.fourthYearFeeMYR + 1600)}
+                                {formatMYR(program.fourthYearFeeMYR + getYearlyVisaRenewalFee())}
                               </td>
                             </tr>
                           )}
@@ -319,6 +377,9 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                     </tbody>
                   </table>
                 </div>
+                <p className="text-[11px] text-slate-500 italic pt-1">
+                  * Note: Year 2+ includes the statutory Malaysian EMGS Student Pass renewal (RM 140), mandatory annual medical insurance (RM 850), biometric i-Kad extension (RM 100), and campus immigration clearance (RM 310).
+                </p>
               </div>
             )}
 

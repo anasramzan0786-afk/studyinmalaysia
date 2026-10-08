@@ -33,3 +33,19 @@ export function formatPKR(amountInMYR: number | null | undefined, rate: number =
   return `Rs. ${pkr.toLocaleString('en-US')}`;
 }
 
+/**
+ * Malaysian EMGS & Statutory Annual Visa Renewal Fee
+ * Breakdown for Year 2, Year 3, Year 4+:
+ * - Annual Student Pass Sticker: RM 140
+ * - Mandatory International Student Health Insurance (AXA / AIA / Great Eastern): ~RM 850
+ * - Biometric i-Kad Card Renewal: RM 100
+ * - Post-arrival/Annual medical check & university immigration admin: ~RM 310
+ * Standard Total: RM 1,400 / year (typically between RM 1,240 and RM 1,600)
+ */
+export function getYearlyVisaRenewalFee(program?: { yearlyVisaRenewalMYR?: number | null } | null): number {
+  if (program?.yearlyVisaRenewalMYR && program.yearlyVisaRenewalMYR > 0) {
+    return program.yearlyVisaRenewalMYR;
+  }
+  return 1400;
+}
+

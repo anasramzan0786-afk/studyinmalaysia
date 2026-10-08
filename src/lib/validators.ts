@@ -48,6 +48,7 @@ export const ProgramSchema = z.object({
   emgsFeeMYR: z.number().nonnegative().optional().nullable(),
   miscFeesMYR: z.number().nonnegative().optional().nullable(),
   totalInitialMYR: z.number().nonnegative().optional().nullable(),
+  yearlyVisaRenewalMYR: z.number().nonnegative().optional().nullable(),
   miscBreakdown: z.string().optional().nullable(),
   pakistanNotes: z.string().optional().nullable(),
   description: z.string().optional().nullable(),

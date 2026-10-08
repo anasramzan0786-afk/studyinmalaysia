@@ -41,6 +41,7 @@ export interface Program {
   emgsFeeMYR?: number;
   miscFeesMYR?: number;
   totalInitialMYR?: number;
+  yearlyVisaRenewalMYR?: number;
   miscBreakdown?: string;
   pakistanNotes?: string;
 }

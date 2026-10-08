@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { 
   Plus, 
@@ -12,7 +12,8 @@ import {
   CheckCircle2, 
   AlertCircle,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Sparkles
 } from 'lucide-react';
 import { formatMYR } from '@/lib/utils';
 
@@ -45,11 +46,42 @@ interface ProgramItem {
 interface UniversityItem {
   id: string;
   name: string;
+  shortName?: string;
+  type?: string;
+  emgsFeeMYR?: number | null;
+  miscFeesMYR?: number | null;
+  totalInitialMYR?: number | null;
+  intakeMonths?: string | null;
+  tuitionBachelor?: string | null;
+  tuitionMaster?: string | null;
+  tuitionPhd?: string | null;
+  avgTuition3Yr?: number | null;
+  initialBreakdownNotes?: string | null;
+  location?: string | null;
 }
 
 interface AdminProgramsClientProps {
   initialPrograms: ProgramItem[];
   universities: UniversityItem[];
+}
+
+// Helper: Parse numeric value from tuition strings like 'RM 60k - 85k'
+function parseTuitionHint(str: string | null | undefined, fallback: number): number {
+  if (!str) return fallback;
+  const match = str.match(/(\d+)/g);
+  if (!match) return fallback;
+  const nums = match.map(Number);
+  // If range like "60k - 85k", use the lower bound
+  return Math.min(...nums) * (str.toLowerCase().includes('k') ? 1000 : 1);
+}
+
+// Helper: suggested duration based on degree level
+function suggestDuration(level: string): string {
+  const l = level.toLowerCase();
+  if (l.includes('phd') || l.includes('doctorate')) return '3 Years';
+  if (l.includes("master")) return '1.5 Years';
+  if (l.includes('foundation') || l.includes('diploma')) return '2 Years';
+  return '3 Years';
 }
 
 export function AdminProgramsClient({ initialPrograms, universities }: AdminProgramsClientProps) {
@@ -59,6 +91,7 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
   const [qualityFilter, setQualityFilter] = useState('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProgram, setEditingProgram] = useState<ProgramItem | null>(null);
+  const [autoFilledFields, setAutoFilledFields] = useState<string[]>([]);
 
   // Form states
   const [title, setTitle] = useState('');
@@ -80,6 +113,55 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Smart auto-fill: apply university-level defaults to the add-program form
+  const applyUniversityDefaults = useCallback((uniId: string, currentDegreeLevel: string) => {
+    if (editingProgram) return; // Don't auto-fill when editing
+    const uni = universities.find((u) => u.id === uniId);
+    if (!uni) return;
+
+    const filled: string[] = [];
+
+    // Auto-fill EMGS fee from university
+    if (uni.emgsFeeMYR && uni.emgsFeeMYR > 0) {
+      setEmgsFeeMYR(uni.emgsFeeMYR);
+      filled.push('EMGS Fee');
+    }
+
+    // Auto-fill misc fees from university
+    if (uni.miscFeesMYR && uni.miscFeesMYR > 0) {
+      setMiscFeesMYR(uni.miscFeesMYR);
+      filled.push('Reg & Bond');
+    }
+
+    // Auto-fill intake months from university
+    if (uni.intakeMonths && uni.intakeMonths.trim()) {
+      setIntakeMonths(uni.intakeMonths);
+      filled.push('Intake Months');
+    }
+
+    // Auto-fill tuition suggestion based on degree level
+    const level = currentDegreeLevel.toLowerCase();
+    if (level.includes('phd') || level.includes('doctorate')) {
+      const suggested = parseTuitionHint(uni.tuitionPhd, 60000);
+      setTuitionMYR(suggested);
+      filled.push('Tuition (PhD hint)');
+    } else if (level.includes('master')) {
+      const suggested = parseTuitionHint(uni.tuitionMaster, 40000);
+      setTuitionMYR(suggested);
+      filled.push('Tuition (Master hint)');
+    } else {
+      const suggested = uni.avgTuition3Yr || parseTuitionHint(uni.tuitionBachelor, 60000);
+      setTuitionMYR(suggested);
+      filled.push('Tuition (Bachelor hint)');
+    }
+
+    // Auto-fill duration from degree level
+    setDuration(suggestDuration(currentDegreeLevel));
+    filled.push('Duration');
+
+    setAutoFilledFields(filled);
+  }, [universities, editingProgram]);
 
   const filtered = programs.filter((p) => {
     if (selectedUni !== 'All' && p.universityId !== selectedUni) return false;
@@ -103,9 +185,12 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
   const handleOpenAddModal = () => {
     setEditingProgram(null);
     setFormError(null);
+    setAutoFilledFields([]);
     setTitle('');
-    setUniversityId(universities[0]?.id || '');
-    setDegreeLevel("Bachelor's Degree");
+    const defaultUniId = universities[0]?.id || '';
+    setUniversityId(defaultUniId);
+    const defaultDegreeLevel = "Bachelor's Degree";
+    setDegreeLevel(defaultDegreeLevel);
     setFaculty('School of Computing');
     setDuration('3 Years');
     setIntakeMonths('January, May, September');
@@ -120,6 +205,8 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
     setAcademicReq('');
     setEnglishReq('');
     setIsModalOpen(true);
+    // Apply university defaults after state is set
+    setTimeout(() => applyUniversityDefaults(defaultUniId, defaultDegreeLevel), 0);
   };
 
   const handleOpenEditModal = (prog: ProgramItem) => {
@@ -141,6 +228,7 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
     setScholarship(prog.scholarship || '');
     setAcademicReq(prog.academicReq || '');
     setEnglishReq(prog.englishReq || '');
+    setAutoFilledFields([]); // No auto-fill when editing
     setIsModalOpen(true);
   };
 
@@ -454,15 +542,25 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
                   </label>
                   <select
                     value={universityId}
-                    onChange={(e) => setUniversityId(e.target.value)}
-                    className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-hidden bg-white"
+                    onChange={(e) => {
+                      const newUniId = e.target.value;
+                      setUniversityId(newUniId);
+                      applyUniversityDefaults(newUniId, degreeLevel);
+                    }}
+                    className="w-full text-xs border border-[#0B2553]/40 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[#0B2553] focus:outline-hidden bg-white"
                   >
                     {universities.map((u) => (
                       <option key={u.id} value={u.id}>
-                        {u.name}
+                        {u.shortName || u.name}
                       </option>
                     ))}
                   </select>
+                  {!editingProgram && autoFilledFields.length > 0 && (
+                    <p className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1 mt-1">
+                      <Sparkles className="w-3 h-3" />
+                      <span>Auto-filled: {autoFilledFields.join(', ')}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -471,8 +569,15 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
                   </label>
                   <select
                     value={degreeLevel}
-                    onChange={(e) => setDegreeLevel(e.target.value)}
-                    className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-hidden bg-white"
+                    onChange={(e) => {
+                      const newLevel = e.target.value;
+                      setDegreeLevel(newLevel);
+                      // Re-apply university defaults when degree level changes (tuition + duration update)
+                      if (!editingProgram) {
+                        applyUniversityDefaults(universityId, newLevel);
+                      }
+                    }}
+                    className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[#0B2553] focus:outline-hidden bg-white"
                   >
                     <option value="Bachelor's Degree">Bachelor&apos;s Degree</option>
                     <option value="Master's (Postgraduate)">Master&apos;s (Postgraduate)</option>
@@ -523,9 +628,16 @@ export function AdminProgramsClient({ initialPrograms, universities }: AdminProg
 
               {/* Yearly Tuition Breakdown */}
               <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
-                <span className="text-[11px] font-bold text-slate-700 block">
-                  Yearly Fee Breakdown (ensures authentic 1st year fee without automated estimation):
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-700">
+                    Yearly Fee Breakdown (optional — enables precise 1st year cost on cards):
+                  </span>
+                  {!editingProgram && firstYearFeeMYR !== '' && (
+                    <span className="text-[10px] text-blue-700 font-semibold bg-blue-50 px-2 py-0.5 rounded-md">
+                      Sum: {formatMYR((Number(firstYearFeeMYR) || 0) + (Number(secondYearFeeMYR) || 0) + (Number(thirdYearFeeMYR) || 0) + (Number(fourthYearFeeMYR) || 0))}
+                    </span>
+                  )}
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-600 mb-1">
