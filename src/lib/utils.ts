@@ -21,13 +21,16 @@ export function formatMYR(amount: number | null | undefined): string {
   return `RM ${Math.round(amount).toLocaleString('en-US')}`;
 }
 
-export function formatUSD(amountInMYR: number | null | undefined, rate: number = 4.45): string {
+export const DEFAULT_MYR_TO_PKR_RATE = 67.80;
+export const DEFAULT_USD_TO_MYR_RATE = 4.09;
+
+export function formatUSD(amountInMYR: number | null | undefined, rate: number = DEFAULT_USD_TO_MYR_RATE): string {
   if (amountInMYR === null || amountInMYR === undefined || isNaN(amountInMYR)) return '$0';
   const usd = Math.round(amountInMYR / rate);
   return `$${usd.toLocaleString('en-US')}`;
 }
 
-export function formatPKR(amountInMYR: number | null | undefined, rate: number = 62.5): string {
+export function formatPKR(amountInMYR: number | null | undefined, rate: number = DEFAULT_MYR_TO_PKR_RATE): string {
   if (amountInMYR === null || amountInMYR === undefined || isNaN(amountInMYR)) return 'Rs 0';
   const pkr = Math.round(amountInMYR * rate);
   return `Rs. ${pkr.toLocaleString('en-US')}`;

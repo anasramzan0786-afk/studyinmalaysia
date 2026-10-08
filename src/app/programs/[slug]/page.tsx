@@ -20,6 +20,7 @@ import {
 import { BackButton } from '@/components/programs/BackButton';
 import { ApplyButton } from '@/components/programs/ApplyButton';
 import { getYearlyVisaRenewalFee, getFirstYearTuition, getTotalFirstYearBudget } from '@/lib/utils';
+import { getLiveExchangeRates } from '@/lib/exchangeRate';
 
 interface ProgramDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -53,23 +54,27 @@ export async function generateMetadata({ params }: ProgramDetailPageProps) {
 
 export default async function ProgramDetailPage({ params }: ProgramDetailPageProps) {
   const { slug } = await params;
-  const program = await db.program.findFirst({
-    where: {
-      OR: [
-        { slug },
-        { id: slug },
-      ],
-    },
-    include: {
-      university: true,
-      semesterSchedules: true,
-    },
-  });
+  const [program, liveRates] = await Promise.all([
+    db.program.findFirst({
+      where: {
+        OR: [
+          { slug },
+          { id: slug },
+        ],
+      },
+      include: {
+        university: true,
+        semesterSchedules: true,
+      },
+    }),
+    getLiveExchangeRates(),
+  ]);
 
   if (!program) {
     notFound();
   }
 
+  const pkrRate = liveRates.MYR_PKR;
   const firstYearTuition = getFirstYearTuition(program);
   const totalFirstYearBudget = getTotalFirstYearBudget(program);
 
@@ -153,26 +158,36 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
           </div>
 
           {/* Quick Stats Grid: 1st Year Budget + Total Tuition + Upfront + Visa Renewal */}
-          <div className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-            <div className="bg-emerald-50/70 p-3.5 rounded-xl border border-emerald-200/80">
-              <span className="text-[11px] font-bold text-emerald-950 block">Total 1st Year Budget</span>
-              <span className="text-lg sm:text-xl font-black text-emerald-700 block">
-                {formatMYR(totalFirstYearBudget)}
-              </span>
-              <span className="text-[10px] text-emerald-800/80 block mt-0.5">
-                ≈ {formatPKR(totalFirstYearBudget)}
-              </span>
+          <div className="mt-8 pt-6 border-t border-slate-100 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-700">Financial Quick Overview</span>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Live Interbank: 1 RM = Rs. {pkrRate.toFixed(2)}</span>
+                <span className="text-[9px] uppercase tracking-wider bg-emerald-200/70 text-emerald-900 px-1 py-0.2 rounded font-black">Daily Sync</span>
+              </div>
             </div>
 
-            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-              <span className="text-[11px] font-medium text-slate-500 block">Total Course Tuition</span>
-              <span className="text-base sm:text-lg font-extrabold text-slate-900 block">
-                {formatMYR(program.tuitionMYR)}
-              </span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">
-                ≈ {formatPKR(program.tuitionMYR)}
-              </span>
-            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+              <div className="bg-emerald-50/70 p-3.5 rounded-xl border border-emerald-200/80">
+                <span className="text-[11px] font-bold text-emerald-950 block">Total 1st Year Budget</span>
+                <span className="text-lg sm:text-xl font-black text-emerald-700 block">
+                  {formatMYR(totalFirstYearBudget)}
+                </span>
+                <span className="text-[10px] text-emerald-800/80 block mt-0.5">
+                  ≈ {formatPKR(totalFirstYearBudget, pkrRate)}
+                </span>
+              </div>
+
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <span className="text-[11px] font-medium text-slate-500 block">Total Course Tuition</span>
+                <span className="text-base sm:text-lg font-extrabold text-slate-900 block">
+                  {formatMYR(program.tuitionMYR)}
+                </span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  ≈ {formatPKR(program.tuitionMYR, pkrRate)}
+                </span>
+              </div>
 
             <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
               <span className="text-[11px] font-medium text-slate-500 block">Upfront eVAL Package</span>
@@ -212,6 +227,7 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
             </div>
           </div>
         </div>
+      </div>
 
         {/* Main Content Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -275,7 +291,7 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                     <span>Total 1st Year Budget Needed:</span>
                     <span className="text-emerald-700 text-base">
                       {formatMYR(totalFirstYearBudget)}{' '}
-                      <span className="text-xs font-normal text-slate-500">(≈ {formatPKR(totalFirstYearBudget)})</span>
+                      <span className="text-xs font-normal text-slate-500">(≈ {formatPKR(totalFirstYearBudget, pkrRate)})</span>
                     </span>
                   </div>
                 </div>

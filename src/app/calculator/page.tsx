@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calculator, 
   ShieldCheck, 
@@ -17,7 +17,7 @@ import {
   ArrowRight,
   ChevronRight
 } from 'lucide-react';
-import { formatMYR, formatPKR, formatUSD } from '@/lib/utils';
+import { formatMYR, formatPKR, formatUSD, DEFAULT_MYR_TO_PKR_RATE, DEFAULT_USD_TO_MYR_RATE } from '@/lib/utils';
 import { useCounseling } from '@/components/CounselingContext';
 import { UNIVERSITIES_DATA } from '@/data/universitiesData';
 
@@ -38,6 +38,20 @@ export default function CalculatorPage() {
   const [dependents, setDependents] = useState<number>(0);
   const [expedited, setExpedited] = useState<boolean>(false);
   const [studentName, setStudentName] = useState('');
+
+  // Live Exchange Rates
+  const [exchangeRate, setExchangeRate] = useState<number>(DEFAULT_MYR_TO_PKR_RATE);
+  const [usdRate, setUsdRate] = useState<number>(DEFAULT_USD_TO_MYR_RATE);
+
+  useEffect(() => {
+    fetch('/api/exchange-rates')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.MYR_PKR && Number(data.MYR_PKR) > 0) setExchangeRate(Number(data.MYR_PKR));
+        if (data?.USD_MYR && Number(data.USD_MYR) > 0) setUsdRate(Number(data.USD_MYR));
+      })
+      .catch(() => {});
+  }, []);
 
   // Itemized fee calculations for Generic Mode
   const emgsFee = instType === 'public' ? 1200 : 1800;
@@ -364,11 +378,11 @@ export default function CalculatorPage() {
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px] font-medium">Approx. in PKR (Direct):</span>
-                  <span className="font-extrabold text-[#B57F00] text-sm sm:text-base">{formatPKR(activeTotalMYR)}</span>
+                  <span className="font-extrabold text-[#B57F00] text-sm sm:text-base">{formatPKR(activeTotalMYR, exchangeRate)}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px] font-medium">Approx. in USD:</span>
-                  <span className="font-bold text-slate-700 text-sm sm:text-base">{formatUSD(activeTotalMYR)}</span>
+                  <span className="font-bold text-slate-700 text-sm sm:text-base">{formatUSD(activeTotalMYR, usdRate)}</span>
                 </div>
               </div>
 

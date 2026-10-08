@@ -20,7 +20,16 @@ import {
   ShieldCheck,
   ArrowUpRight
 } from 'lucide-react';
-import { formatMYR, formatPKR, formatUSD, getYearlyVisaRenewalFee, getFirstYearTuition, getTotalFirstYearBudget } from '@/lib/utils';
+import { 
+  formatMYR, 
+  formatPKR, 
+  formatUSD, 
+  getYearlyVisaRenewalFee, 
+  getFirstYearTuition, 
+  getTotalFirstYearBudget,
+  DEFAULT_MYR_TO_PKR_RATE,
+  DEFAULT_USD_TO_MYR_RATE
+} from '@/lib/utils';
 import { useCounseling } from '@/components/CounselingContext';
 
 interface ProgramWithUniversity {
@@ -108,6 +117,24 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
   const deferredSearch = useDeferredValue(search);
   const [currency, setCurrency] = useState<'MYR' | 'PKR' | 'USD'>('MYR');
   const [expandedProgramId, setExpandedProgramId] = useState<string | null>(null);
+
+  // Live exchange rates state (daily updated)
+  const [exchangeRate, setExchangeRate] = useState<number>(DEFAULT_MYR_TO_PKR_RATE);
+  const [usdRate, setUsdRate] = useState<number>(DEFAULT_USD_TO_MYR_RATE);
+
+  useEffect(() => {
+    fetch('/api/exchange-rates')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.MYR_PKR && Number(data.MYR_PKR) > 0) {
+          setExchangeRate(Number(data.MYR_PKR));
+        }
+        if (data?.USD_MYR && Number(data.USD_MYR) > 0) {
+          setUsdRate(Number(data.USD_MYR));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Sync state if URL changes
   useEffect(() => {
@@ -281,8 +308,8 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
   }, [initialPrograms, deferredSearch, degree, selectedUni, maxBudget, tuitionCap, discipline, sortBy, duration, intake]);
 
   const formatPrice = (amountMYR: number | null | undefined) => {
-    if (currency === 'USD') return formatUSD(amountMYR);
-    if (currency === 'PKR') return formatPKR(amountMYR);
+    if (currency === 'USD') return formatUSD(amountMYR, usdRate);
+    if (currency === 'PKR') return formatPKR(amountMYR, exchangeRate);
     return formatMYR(amountMYR);
   };
 
@@ -314,33 +341,45 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
             />
           </div>
 
-          <div className="flex items-center gap-3 self-end md:self-auto">
+          <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
             <span className="text-xs font-semibold text-slate-500">Display Currency:</span>
-            <div className="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
-              <button
-                onClick={() => setCurrency('MYR')}
-                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                  currency === 'MYR' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-600'
-                }`}
+            <div className="flex items-center gap-2">
+              <div className="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+                <button
+                  onClick={() => setCurrency('MYR')}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                    currency === 'MYR' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-600'
+                  }`}
+                >
+                  RM (MYR)
+                </button>
+                <button
+                  onClick={() => setCurrency('PKR')}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                    currency === 'PKR' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-600'
+                  }`}
+                >
+                  Rs (PKR)
+                </button>
+                <button
+                  onClick={() => setCurrency('USD')}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                    currency === 'USD' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-600'
+                  }`}
+                >
+                  $ (USD)
+                </button>
+              </div>
+
+              {/* Live Exchange Rate Pill */}
+              <div 
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200/80 text-[11px] font-bold shadow-2xs" 
+                title="Live interbank exchange rate updated daily"
               >
-                RM (MYR)
-              </button>
-              <button
-                onClick={() => setCurrency('PKR')}
-                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                  currency === 'PKR' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-600'
-                }`}
-              >
-                Rs (PKR)
-              </button>
-              <button
-                onClick={() => setCurrency('USD')}
-                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                  currency === 'USD' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-600'
-                }`}
-              >
-                $ (USD)
-              </button>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>1 RM = Rs. {exchangeRate.toFixed(2)}</span>
+                <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-200/70 text-emerald-900 px-1 py-0.5 rounded">Live</span>
+              </div>
             </div>
           </div>
         </div>
@@ -639,7 +678,7 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
                         </span>
                         {currency === 'MYR' && (
                           <span className="text-[11px] font-medium text-emerald-100 bg-emerald-800/50 px-2 py-0.5 rounded-md">
-                            ≈ {formatPKR(totalFirstYear)}
+                            ≈ {formatPKR(totalFirstYear, exchangeRate)}
                           </span>
                         )}
                       </div>
