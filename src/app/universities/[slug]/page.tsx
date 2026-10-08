@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { formatMYR, formatPKR } from '@/lib/utils';
+import { formatMYR, formatPKR, getTotalFirstYearBudget } from '@/lib/utils';
 import { 
   Building2, 
   MapPin, 
@@ -239,12 +239,12 @@ export default async function UniversityDetailPage({ params }: UniversityDetailP
 
                   <div className="mt-3 flex items-center justify-between text-xs pt-2 border-t border-slate-100">
                     <div>
-                      <span className="text-slate-400 block text-[10px]">Total Tuition</span>
-                      <span className="font-bold text-slate-900">{formatMYR(prog.tuitionMYR)}</span>
+                      <span className="text-slate-400 block text-[10px]">1st Year Budget</span>
+                      <span className="font-extrabold text-emerald-700">{formatMYR(getTotalFirstYearBudget(prog))}</span>
                     </div>
                     <div className="text-right">
                       <span className="text-slate-400 block text-[10px]">Upfront eVAL</span>
-                      <span className="font-bold text-emerald-700">
+                      <span className="font-bold text-slate-700">
                         {formatMYR(prog.totalInitialMYR || 9500)}
                       </span>
                     </div>

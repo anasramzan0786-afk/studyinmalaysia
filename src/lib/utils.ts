@@ -49,3 +49,69 @@ export function getYearlyVisaRenewalFee(program?: { yearlyVisaRenewalMYR?: numbe
   return 1400;
 }
 
+export interface ProgramFeeFields {
+  tuitionMYR: number;
+  firstYearFeeMYR?: number | null;
+  totalInitialMYR?: number | null;
+  duration?: string | null;
+  durationYears?: number | null;
+  degreeLevel?: string | null;
+  semesterSchedules?: { semester: string; tuitionMYR: number }[] | null;
+}
+
+/**
+ * Calculates or retrieves the authentic 1st Year tuition fee.
+ * Prioritizes explicitly set `firstYearFeeMYR`, then semester schedule Year 1 sum,
+ * and falls back to course tuition divided by duration years.
+ */
+export function getFirstYearTuition(program: ProgramFeeFields): number {
+  if (program.firstYearFeeMYR && Number(program.firstYearFeeMYR) > 0) {
+    return Number(program.firstYearFeeMYR);
+  }
+
+  if (program.semesterSchedules && program.semesterSchedules.length > 0) {
+    const year1 = program.semesterSchedules.find((s) =>
+      s.semester.toLowerCase().includes('year 1') ||
+      s.semester.toLowerCase().includes('sem 1')
+    );
+    if (year1 && year1.tuitionMYR > 0) {
+      if (year1.semester.toLowerCase().includes('sem 1')) {
+        const sem2 = program.semesterSchedules.find((s) => s.semester.toLowerCase().includes('sem 2'));
+        return year1.tuitionMYR + (sem2 ? sem2.tuitionMYR : year1.tuitionMYR);
+      }
+      return year1.tuitionMYR;
+    }
+  }
+
+  // Parse duration in years
+  let years = program.durationYears;
+  if (!years && program.duration) {
+    const match = program.duration.match(/([\d.]+)\s*(?:year|yr)/i);
+    if (match) {
+      years = parseFloat(match[1]);
+    }
+  }
+
+  if (!years || years <= 0) {
+    const level = (program.degreeLevel || '').toLowerCase();
+    if (level.includes('master')) years = 1.5;
+    else if (level.includes('phd') || level.includes('doctorate')) years = 3;
+    else if (level.includes('bachelor')) years = 3;
+    else if (level.includes('diploma') || level.includes('foundation')) years = 2;
+    else years = 3;
+  }
+
+  return Math.round(program.tuitionMYR / years);
+}
+
+/**
+ * Calculates total first year initial departure budget:
+ * Sum of 1st year tuition fee + total initial upfront package (eVAL + Admin + Bond).
+ */
+export function getTotalFirstYearBudget(program: ProgramFeeFields): number {
+  const firstYearTuition = getFirstYearTuition(program);
+  const initialUpfront = program.totalInitialMYR || 9500;
+  return firstYearTuition + initialUpfront;
+}
+
+

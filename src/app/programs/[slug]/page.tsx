@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { BackButton } from '@/components/programs/BackButton';
 import { ApplyButton } from '@/components/programs/ApplyButton';
-import { getYearlyVisaRenewalFee } from '@/lib/utils';
+import { getYearlyVisaRenewalFee, getFirstYearTuition, getTotalFirstYearBudget } from '@/lib/utils';
 
 interface ProgramDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -69,6 +69,9 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
   if (!program) {
     notFound();
   }
+
+  const firstYearTuition = getFirstYearTuition(program);
+  const totalFirstYearBudget = getTotalFirstYearBudget(program);
 
   const jsonLdProgram = {
     '@context': 'https://schema.org',
@@ -149,52 +152,62 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
             </div>
           </div>
 
-          {/* Quick Stats Grid with Yearly Visa Renewal */}
-          <div className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            <div>
-              <span className="text-xs text-slate-500 block">Total Tuition</span>
-              <span className="text-lg sm:text-xl font-extrabold text-slate-900">
+          {/* Quick Stats Grid: 1st Year Budget + Total Tuition + Upfront + Visa Renewal */}
+          <div className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+            <div className="bg-emerald-50/70 p-3.5 rounded-xl border border-emerald-200/80">
+              <span className="text-[11px] font-bold text-emerald-950 block">Total 1st Year Budget</span>
+              <span className="text-lg sm:text-xl font-black text-emerald-700 block">
+                {formatMYR(totalFirstYearBudget)}
+              </span>
+              <span className="text-[10px] text-emerald-800/80 block mt-0.5">
+                ≈ {formatPKR(totalFirstYearBudget)}
+              </span>
+            </div>
+
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <span className="text-[11px] font-medium text-slate-500 block">Total Course Tuition</span>
+              <span className="text-base sm:text-lg font-extrabold text-slate-900 block">
                 {formatMYR(program.tuitionMYR)}
               </span>
-              <span className="text-[11px] text-slate-400 block mt-0.5">
+              <span className="text-[10px] text-slate-400 block mt-0.5">
                 ≈ {formatPKR(program.tuitionMYR)}
               </span>
             </div>
 
-            <div>
-              <span className="text-xs text-slate-500 block">Upfront eVAL Package</span>
-              <span className="text-lg sm:text-xl font-extrabold text-emerald-700">
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <span className="text-[11px] font-medium text-slate-500 block">Upfront eVAL Package</span>
+              <span className="text-base sm:text-lg font-extrabold text-[#BA2E34] block">
                 {formatMYR(program.totalInitialMYR || 9500)}
               </span>
-              <span className="text-[11px] text-slate-400 block mt-0.5">
+              <span className="text-[10px] text-slate-400 block mt-0.5">
                 Payable upon visa approval
               </span>
             </div>
 
-            <div>
-              <span className="text-xs text-slate-500 block">Yearly Visa Renewal</span>
-              <span className="text-lg sm:text-xl font-extrabold text-blue-900 flex items-center gap-1">
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <span className="text-[11px] font-medium text-slate-500 block">Yearly Visa Renewal</span>
+              <span className="text-base sm:text-lg font-extrabold text-blue-900 flex items-center gap-1">
                 <span>{formatMYR(getYearlyVisaRenewalFee())}</span>
                 <span className="text-xs font-normal text-slate-500">/ yr</span>
               </span>
-              <span className="text-[11px] text-slate-400 block mt-0.5">
-                From Year 2+ (EMGS & Insurance)
+              <span className="text-[10px] text-slate-400 block mt-0.5">
+                Year 2+ (EMGS &amp; Insurance)
               </span>
             </div>
 
-            <div>
-              <span className="text-xs text-slate-500 block">Course Duration</span>
-              <span className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-1">
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <span className="text-[11px] font-medium text-slate-500 block">Course Duration</span>
+              <span className="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-1 mt-0.5">
                 <Clock className="w-4 h-4 text-slate-400" />
                 <span>{program.duration}</span>
               </span>
             </div>
 
-            <div>
-              <span className="text-xs text-slate-500 block">Upcoming Intakes</span>
-              <span className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-1">
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <span className="text-[11px] font-medium text-slate-500 block">Upcoming Intakes</span>
+              <span className="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-1 mt-0.5">
                 <Calendar className="w-4 h-4 text-slate-400" />
-                <span>{program.intakeMonths}</span>
+                <span className="truncate">{program.intakeMonths}</span>
               </span>
             </div>
           </div>
@@ -235,8 +248,40 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                 </div>
                 <div className="flex justify-between pt-2 text-sm">
                   <span className="font-bold text-slate-900">Total Non-Tuition Initial Payment:</span>
-                  <span className="font-extrabold text-emerald-700">{formatMYR(program.totalInitialMYR || 9500)}</span>
+                  <span className="font-extrabold text-[#BA2E34]">{formatMYR(program.totalInitialMYR || 9500)}</span>
                 </div>
+              </div>
+
+              {/* Comprehensive 1st Year Initial Budget Box */}
+              <div className="bg-emerald-50/70 rounded-xl p-4 border border-emerald-200/80 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-emerald-950 uppercase tracking-wider">
+                    Total 1st Year Initial Budget Summary
+                  </span>
+                  <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-md">
+                    1st Yr Tuition + Upfront
+                  </span>
+                </div>
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex justify-between text-slate-700">
+                    <span>1st Year Course Tuition:</span>
+                    <strong className="text-slate-900">{formatMYR(firstYearTuition)}</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-700">
+                    <span>Initial Upfront Package (EMGS + Admin + Bond):</span>
+                    <strong className="text-slate-900">{formatMYR(program.totalInitialMYR || 9500)}</strong>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-emerald-200/80 text-sm font-black text-emerald-950">
+                    <span>Total 1st Year Budget Needed:</span>
+                    <span className="text-emerald-700 text-base">
+                      {formatMYR(totalFirstYearBudget)}{' '}
+                      <span className="text-xs font-normal text-slate-500">(≈ {formatPKR(totalFirstYearBudget)})</span>
+                    </span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-emerald-800/80 pt-0.5">
+                  ✓ Covers both your non-tuition statutory clearance fees and your 1st year academic tuition fees in full.
+                </p>
               </div>
 
               {/* Itemized Yearly Visa Renewal Fee breakdown */}
@@ -320,16 +365,28 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                         ))
                       ) : (
                         <>
-                          {program.firstYearFeeMYR && (
+                          {program.firstYearFeeMYR ? (
                             <tr className="hover:bg-slate-50">
                               <td className="py-3 px-3 font-semibold text-slate-800">Year 1</td>
                               <td className="py-3 px-3 text-slate-600">{formatMYR(program.firstYearFeeMYR)}</td>
                               <td className="py-3 px-3 text-slate-600">
-                                {formatMYR(program.miscFeesMYR || 6000)}
-                                <span className="text-[10px] text-slate-400 block">Upfront Admin &amp; Reg</span>
+                                {formatMYR(program.totalInitialMYR || 9500)}
+                                <span className="text-[10px] text-slate-400 block">Upfront eVAL &amp; Admin</span>
                               </td>
-                              <td className="py-3 px-3 font-bold text-slate-900 text-right">
-                                {formatMYR(program.firstYearFeeMYR + (program.miscFeesMYR || 6000))}
+                              <td className="py-3 px-3 font-bold text-emerald-700 text-right">
+                                {formatMYR(program.firstYearFeeMYR + (program.totalInitialMYR || 9500))}
+                              </td>
+                            </tr>
+                          ) : (
+                            <tr className="hover:bg-slate-50">
+                              <td className="py-3 px-3 font-semibold text-slate-800">Year 1 (Est.)</td>
+                              <td className="py-3 px-3 text-slate-600">{formatMYR(firstYearTuition)}</td>
+                              <td className="py-3 px-3 text-slate-600">
+                                {formatMYR(program.totalInitialMYR || 9500)}
+                                <span className="text-[10px] text-slate-400 block">Upfront eVAL &amp; Admin</span>
+                              </td>
+                              <td className="py-3 px-3 font-bold text-emerald-700 text-right">
+                                {formatMYR(totalFirstYearBudget)}
                               </td>
                             </tr>
                           )}
@@ -431,6 +488,22 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                 <p className="text-xs text-slate-500 mt-1">
                   Meezab Education is the direct verified admissions desk for {program.university.name}.
                 </p>
+              </div>
+
+              {/* Fee summary overview in sticky action box */}
+              <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200 text-xs space-y-2">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-slate-600 font-medium">1st Year Total Budget:</span>
+                  <span className="font-black text-emerald-700 text-base">{formatMYR(totalFirstYearBudget)}</span>
+                </div>
+                <div className="flex justify-between items-baseline">
+                  <span className="text-slate-600">Total Course Tuition:</span>
+                  <span className="font-bold text-slate-900">{formatMYR(program.tuitionMYR)}</span>
+                </div>
+                <div className="flex justify-between items-baseline text-[11px] text-slate-500 pt-1.5 border-t border-slate-200">
+                  <span>Upfront eVAL Package:</span>
+                  <span className="font-semibold text-slate-700">{formatMYR(program.totalInitialMYR || 9500)}</span>
+                </div>
               </div>
 
               <div className="space-y-3 pt-2">

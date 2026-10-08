@@ -17,9 +17,10 @@ import {
   ArrowUpDown, 
   BookOpen,
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  ArrowUpRight
 } from 'lucide-react';
-import { formatMYR, formatPKR, formatUSD, getYearlyVisaRenewalFee } from '@/lib/utils';
+import { formatMYR, formatPKR, formatUSD, getYearlyVisaRenewalFee, getFirstYearTuition, getTotalFirstYearBudget } from '@/lib/utils';
 import { useCounseling } from '@/components/CounselingContext';
 
 interface ProgramWithUniversity {
@@ -55,45 +56,6 @@ interface ProgramWithUniversity {
   };
 }
 
-function getFirstYearTuition(program: ProgramWithUniversity): number {
-  if (program.firstYearFeeMYR && Number(program.firstYearFeeMYR) > 0) {
-    return Number(program.firstYearFeeMYR);
-  }
-
-  if (program.semesterSchedules && program.semesterSchedules.length > 0) {
-    const year1 = program.semesterSchedules.find((s) =>
-      s.semester.toLowerCase().includes('year 1') ||
-      s.semester.toLowerCase().includes('sem 1')
-    );
-    if (year1 && year1.tuitionMYR > 0) {
-      if (year1.semester.toLowerCase().includes('sem 1')) {
-        const sem2 = program.semesterSchedules.find((s) => s.semester.toLowerCase().includes('sem 2'));
-        return year1.tuitionMYR + (sem2 ? sem2.tuitionMYR : year1.tuitionMYR);
-      }
-      return year1.tuitionMYR;
-    }
-  }
-
-  // Parse duration in years
-  let years = program.durationYears;
-  if (!years && program.duration) {
-    const match = program.duration.match(/([\d.]+)\s*(?:year|yr)/i);
-    if (match) {
-      years = parseFloat(match[1]);
-    }
-  }
-
-  if (!years || years <= 0) {
-    const level = (program.degreeLevel || '').toLowerCase();
-    if (level.includes('master')) years = 1.5;
-    else if (level.includes('phd') || level.includes('doctorate')) years = 3;
-    else if (level.includes('bachelor')) years = 3;
-    else if (level.includes('diploma') || level.includes('foundation')) years = 2;
-    else years = 3;
-  }
-
-  return Math.round(program.tuitionMYR / years);
-}
 
 interface ProgramListClientProps {
   initialPrograms: ProgramWithUniversity[];
@@ -287,10 +249,12 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
       return true;
     }).sort((a, b) => {
       // Extensive precise sorting
-      if (sortBy === 'tuition-asc') return a.tuitionMYR - b.tuitionMYR;
-      if (sortBy === 'tuition-desc') return b.tuitionMYR - a.tuitionMYR;
+      if (sortBy === 'budget-asc') return getTotalFirstYearBudget(a) - getTotalFirstYearBudget(b);
+      if (sortBy === 'budget-desc') return getTotalFirstYearBudget(b) - getTotalFirstYearBudget(a);
       if (sortBy === 'firstyear-asc') return getFirstYearTuition(a) - getFirstYearTuition(b);
       if (sortBy === 'firstyear-desc') return getFirstYearTuition(b) - getFirstYearTuition(a);
+      if (sortBy === 'tuition-asc') return a.tuitionMYR - b.tuitionMYR;
+      if (sortBy === 'tuition-desc') return b.tuitionMYR - a.tuitionMYR;
       if (sortBy === 'initial-asc') return (a.totalInitialMYR || 9500) - (b.totalInitialMYR || 9500);
       if (sortBy === 'initial-desc') return (b.totalInitialMYR || 9500) - (a.totalInitialMYR || 9500);
       if (sortBy === 'duration-asc') {
@@ -463,12 +427,14 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
               }}
               className="w-full text-xs font-semibold border border-blue-200 bg-blue-50/50 rounded-xl px-2.5 py-2 text-[#0B2553] focus:outline-hidden focus:ring-2 focus:ring-[#0B2553]"
             >
-              <option value="tuition-asc">Total Tuition: Low to High</option>
-              <option value="tuition-desc">Total Tuition: High to Low</option>
+              <option value="budget-asc">1st Year Total Budget: Low to High</option>
+              <option value="budget-desc">1st Year Total Budget: High to Low</option>
               <option value="firstyear-asc">1st Year Tuition: Low to High</option>
               <option value="firstyear-desc">1st Year Tuition: High to Low</option>
               <option value="initial-asc">Initial Upfront (eVAL): Low to High</option>
               <option value="initial-desc">Initial Upfront (eVAL): High to Low</option>
+              <option value="tuition-asc">Total Tuition: Low to High</option>
+              <option value="tuition-desc">Total Tuition: High to Low</option>
               <option value="duration-asc">Duration: Shortest First</option>
               <option value="duration-desc">Duration: Longest First</option>
               <option value="title-asc">Degree Title: A to Z</option>
@@ -581,129 +547,174 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
           {filteredPrograms.map((program) => {
             const yearlyRenewalFee = getYearlyVisaRenewalFee(program);
             const detailUrl = getDetailUrl(program.slug);
+            const totalFirstYear = getTotalFirstYearBudget(program);
+            const firstYearTuition = getFirstYearTuition(program);
 
             return (
               <div
                 key={program.id}
-                className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between shadow-xs hover:shadow-xl hover:border-[#3A60A1] transition-all duration-300 group hover:-translate-y-1"
+                className="relative bg-white rounded-3xl border border-slate-200/90 p-6 flex flex-col justify-between shadow-[0_4px_20px_-4px_rgba(11,37,83,0.06)] hover:shadow-[0_22px_45px_-12px_rgba(11,37,83,0.18)] hover:border-[#3A60A1]/60 transition-all duration-300 group hover:-translate-y-2 overflow-hidden"
               >
+                {/* Glowing Top Accent Bar on Hover */}
+                <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-emerald-500 via-[#3A60A1] to-[#E8A300] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                {/* Subtle Ambient Light Corner Glow */}
+                <div className="absolute -top-16 -right-16 w-36 h-36 bg-blue-100/40 rounded-full blur-2xl group-hover:bg-[#3A60A1]/15 transition-all duration-500 pointer-events-none" />
+
                 <div>
-                  {/* Header row */}
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <span className="text-[11px] font-bold text-[#3A60A1] bg-[#3A60A1]/10 px-2.5 py-1 rounded-md border border-[#3A60A1]/20">
-                      {program.degreeLevel}
+                  {/* Top Badges Header */}
+                  <div className="flex items-center justify-between gap-2 mb-3.5">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#0B2553] bg-gradient-to-r from-blue-50 to-indigo-50/80 px-3 py-1 rounded-full border border-blue-200/70 shadow-2xs">
+                      <GraduationCap className="w-3.5 h-3.5 text-[#3A60A1]" />
+                      <span>{program.degreeLevel}</span>
                     </span>
-                    {program.badgeText && (
-                      <span className="text-[10px] font-bold text-[#B57F00] bg-[#E8A300]/15 px-2 py-0.5 rounded-md border border-[#E8A300]/30">
-                        {program.badgeText}
+
+                    {program.badgeText ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#9A6700] bg-gradient-to-r from-amber-50 to-amber-100/70 px-2.5 py-1 rounded-full border border-amber-300/80 shadow-2xs">
+                        <Sparkles className="w-3 h-3 text-[#E8A300]" />
+                        <span>{program.badgeText}</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                        <span>MQA Accredited</span>
                       </span>
                     )}
                   </div>
 
-                  {/* Title */}
-                  <h3 className="font-bold text-base text-[#0B2553] leading-snug line-clamp-2 group-hover:text-[#3A60A1] transition-colors">
-                    <Link href={detailUrl}>
-                      {program.title}
+                  {/* Degree Title with Hover Accent & Arrow */}
+                  <h3 className="font-extrabold text-base text-[#0B2553] leading-snug line-clamp-2 group-hover:text-[#2563EB] transition-colors">
+                    <Link href={detailUrl} className="flex items-start justify-between gap-1 group/title">
+                      <span>{program.title}</span>
+                      <ArrowUpRight className="w-4 h-4 text-slate-300 group-hover/title:text-[#2563EB] group-hover/title:translate-x-0.5 group-hover/title:-translate-y-0.5 transition-all shrink-0 mt-0.5" />
                     </Link>
                   </h3>
 
-                  {/* University Name */}
-                  <p className="text-xs font-semibold text-slate-600 mt-1 flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-[#E8A300] shrink-0" />
-                    <span>{program.university.name}</span>
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-1 truncate">
-                    {program.faculty}
-                  </p>
-
-                  {/* Intake & Duration */}
-                  <div className="flex items-center gap-4 text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{program.duration}</span>
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="truncate max-w-[130px]">{program.intakeMonths}</span>
-                    </span>
+                  {/* University Row with Icon Container */}
+                  <div className="mt-3 flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-200/80 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                      <Building2 className="w-4 h-4 text-[#E8A300]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-800 truncate group-hover:text-[#0B2553] transition-colors">
+                        {program.university.name}
+                      </p>
+                      <p className="text-[11px] text-slate-400 truncate">
+                        {program.faculty}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Pricing Box with Yearly Visa Renewal Fee */}
-                  <div className="mt-4 bg-[#F9F9F9] rounded-xl p-3.5 border border-slate-200 space-y-1.5">
-                    <div className="flex justify-between items-baseline">
-                      <span className="text-xs text-slate-500">Total Course Tuition:</span>
-                      <span className="text-base font-extrabold text-[#0B2553]">
-                        {formatPrice(program.tuitionMYR)}
+                  {/* Duration & Intake Meta Bar */}
+                  <div className="grid grid-cols-2 gap-2 text-xs mt-3.5 pt-3 border-t border-slate-100">
+                    <div className="flex items-center gap-1.5 bg-slate-50/80 px-2.5 py-1.5 rounded-xl border border-slate-100 shadow-2xs">
+                      <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span className="text-slate-600 font-semibold text-[11px] truncate">{program.duration}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-slate-50/80 px-2.5 py-1.5 rounded-xl border border-slate-100 shadow-2xs">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span className="text-slate-600 font-semibold text-[11px] truncate" title={program.intakeMonths}>
+                        {program.intakeMonths}
                       </span>
                     </div>
+                  </div>
 
-                    <div className="flex justify-between items-baseline">
-                      <span className="text-xs text-slate-600 font-medium">First Year Tuition:</span>
-                      <span className="text-xs font-black text-[#0B2553]">
-                        {formatPrice(getFirstYearTuition(program))}
-                      </span>
+                  {/* Fintech-Grade 1st Year Total Budget Module */}
+                  <div className="mt-4 bg-gradient-to-b from-slate-50/90 to-slate-100/40 rounded-2xl p-3.5 border border-slate-200/90 shadow-2xs relative overflow-hidden group/pricing transition-all">
+                    {/* Primary Highlight: 1st Year Total Budget Header */}
+                    <div className="relative bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white -mx-1.5 -mt-1.5 p-3 rounded-xl shadow-sm mb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-100">
+                            1st Year Total Budget
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-semibold bg-white/20 backdrop-blur-xs px-2 py-0.5 rounded-full text-white">
+                          Tuition + Upfront
+                        </span>
+                      </div>
+                      <div className="mt-1 flex items-baseline justify-between gap-1">
+                        <span className="text-xl font-black text-white tracking-tight drop-shadow-xs">
+                          {formatPrice(totalFirstYear)}
+                        </span>
+                        {currency === 'MYR' && (
+                          <span className="text-[11px] font-medium text-emerald-100 bg-emerald-800/50 px-2 py-0.5 rounded-md">
+                            ≈ {formatPKR(totalFirstYear)}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex justify-between items-baseline">
-                      <span className="text-xs text-slate-600 font-medium">
-                        Upfront (eVAL + Admin):
-                      </span>
-                      <span className="text-xs font-bold text-[#BA2E34]">
-                        {formatPrice(program.totalInitialMYR || 9500)}
-                      </span>
+                    {/* Itemized Fee Breakdown */}
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between items-center text-slate-600">
+                        <span className="font-medium text-slate-500">1st Year Tuition:</span>
+                        <span className="font-black text-[#0B2553]">{formatPrice(firstYearTuition)}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center text-slate-600">
+                        <span className="font-medium text-slate-500">Initial Upfront (eVAL + Admin):</span>
+                        <span className="font-bold text-[#BA2E34]">{formatPrice(program.totalInitialMYR || 9500)}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-2 border-t border-slate-200/70 text-slate-600">
+                        <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                          <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          <span>Visa Renewal (Yr 2+):</span>
+                        </span>
+                        <span className="text-[11px] font-bold text-blue-900 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                          {formatPrice(yearlyRenewalFee)} / yr
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="flex justify-between items-baseline pt-1 border-t border-slate-200/50">
-                      <span className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
-                        <ShieldCheck className="w-3 h-3 text-blue-600" />
-                        <span>Visa Renewal (Yr 2+):</span>
-                      </span>
-                      <span className="text-[11px] font-bold text-blue-900">
-                        {formatPrice(yearlyRenewalFee)} / yr
-                      </span>
-                    </div>
-
+                    {/* Scholarship / Rebate Banner */}
                     {program.scholarship && (
-                      <div className="pt-1.5 border-t border-slate-200/50 text-[11px] text-[#B57F00] font-medium">
-                        ✨ {program.scholarship}
+                      <div className="mt-2.5 pt-2 border-t border-amber-200/50 flex items-center gap-1.5 text-[11px] text-[#9A6700] font-semibold bg-amber-50/80 -mx-1 p-1.5 rounded-lg border border-amber-200/70">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <span className="truncate">{program.scholarship}</span>
                       </div>
                     )}
                   </div>
 
-                  {/* Counselor Drawer Button */}
+                  {/* Counselor Drawer Toggle */}
                   <button
                     type="button"
                     onClick={() => setExpandedProgramId((current) => current === program.id ? null : program.id)}
                     aria-expanded={expandedProgramId === program.id}
-                    className="mt-3 w-full flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 text-left text-[11px] font-bold text-[#0B2553] hover:bg-slate-50 transition-colors cursor-pointer"
+                    className="mt-3.5 w-full flex items-center justify-between rounded-xl border border-slate-200/80 bg-white/70 hover:bg-slate-50 px-3.5 py-2 text-left text-[11px] font-bold text-[#0B2553] transition-all cursor-pointer shadow-2xs group/btn"
                   >
-                    <span>{expandedProgramId === program.id ? 'Hide counselor breakdown' : 'Show counselor breakdown'}</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${expandedProgramId === program.id ? 'rotate-180' : ''}`} />
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                      <span>{expandedProgramId === program.id ? 'Hide 4-Year Breakdown' : 'Show 4-Year Fee Breakdown'}</span>
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 group-hover/btn:text-[#0B2553] transition-transform duration-200 ${expandedProgramId === program.id ? 'rotate-180' : ''}`} />
                   </button>
 
+                  {/* Counselor Drawer Body */}
                   {expandedProgramId === program.id && (
-                    <div className="mt-2 rounded-xl border border-blue-100 bg-blue-50/50 p-3 space-y-2 text-[11px]">
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                    <div className="mt-2.5 rounded-2xl border border-blue-100 bg-gradient-to-b from-blue-50/60 to-indigo-50/30 p-3.5 space-y-2 text-[11px] shadow-inner">
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
                         {[
                           ['1st Year', program.firstYearFeeMYR],
                           ['2nd Year', program.secondYearFeeMYR],
                           ['3rd Year', program.thirdYearFeeMYR],
                           ['4th Year', program.fourthYearFeeMYR],
                         ].map(([label, value]) => (
-                          <div key={label as string} className="flex justify-between gap-2 text-slate-600">
-                            <span>{label}</span>
-                            <strong className="text-slate-900">{value ? formatPrice(value as number) : 'Not set'}</strong>
+                          <div key={label as string} className="flex justify-between items-center gap-1 text-slate-600 bg-white/60 px-2 py-1 rounded-md border border-blue-50">
+                            <span className="text-slate-500">{label}:</span>
+                            <strong className="text-slate-900 font-bold">{value ? formatPrice(value as number) : 'Not set'}</strong>
                           </div>
                         ))}
                       </div>
 
-                      <div className="flex justify-between gap-2 border-t border-blue-100 pt-1.5 text-slate-600">
+                      <div className="flex justify-between items-center gap-2 border-t border-blue-100/80 pt-2 text-slate-600">
                         <span>Annual Visa Renewal:</span>
-                        <strong className="text-blue-900">{formatPrice(yearlyRenewalFee)} / yr (Statutory EMGS)</strong>
+                        <strong className="text-blue-900 bg-white/80 px-2 py-0.5 rounded-md border border-blue-100">{formatPrice(yearlyRenewalFee)} / yr</strong>
                       </div>
 
                       {program.academicReq && (
-                        <p className="border-t border-blue-100 pt-2 text-slate-600">
+                        <p className="border-t border-blue-100/80 pt-2 text-slate-600">
                           <strong className="text-[#0B2553]">Academic:</strong> {program.academicReq}
                         </p>
                       )}
@@ -721,20 +732,21 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
                   )}
                 </div>
 
-                {/* Action Buttons */}
-                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center gap-2">
+                {/* Card Action Buttons */}
+                <div className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2.5">
                   <Link
                     href={detailUrl}
-                    className="flex-1 text-center py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all"
+                    className="flex-1 text-center py-2.5 px-3.5 bg-slate-100/90 hover:bg-[#0B2553] text-slate-700 hover:text-white text-xs font-bold rounded-xl transition-all duration-200 shadow-2xs hover:shadow-md flex items-center justify-center gap-1 group/breakdown"
                   >
-                    Full Breakdown
+                    <span>Full Breakdown</span>
+                    <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover/breakdown:text-white transition-colors" />
                   </Link>
                   <button
                     onClick={() => openModal(program.title, program.id)}
-                    className="btn-meezab-gold py-2.5 px-4 text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1 cursor-pointer"
+                    className="btn-meezab-gold py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-1.5 cursor-pointer group/apply"
                   >
                     <span>Apply Now</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-white" />
+                    <ChevronRight className="w-3.5 h-3.5 text-[#07172B] group-hover/apply:translate-x-0.5 transition-transform" />
                   </button>
                 </div>
               </div>
