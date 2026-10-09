@@ -48,6 +48,7 @@ export async function GET(request: Request) {
     });
 
     const headers = [
+      'id',
       'title',
       'universityName',
       'degreeLevel',
@@ -78,6 +79,7 @@ export async function GET(request: Request) {
 
     for (const p of programs) {
       const row = [
+        escapeCsv(p.id),
         escapeCsv(p.title),
         escapeCsv(p.university?.name || ''),
         escapeCsv(p.degreeLevel || ''),
@@ -100,7 +102,8 @@ export async function GET(request: Request) {
       csvRows.push(row.join(','));
     }
 
-    const csvContent = csvRows.join('\r\n');
+    // Include UTF-8 BOM for Microsoft Excel compatibility
+    const csvContent = '\uFEFF' + csvRows.join('\r\n');
     const timestamp = new Date().toISOString().slice(0, 10);
     const filename = `studyinmalaysia_programs_export_${timestamp}.csv`;
 
@@ -116,4 +119,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message || 'Export failed' }, { status: 500 });
   }
 }
-

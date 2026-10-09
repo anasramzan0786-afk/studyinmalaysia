@@ -25,6 +25,7 @@ import { formatMYR } from '@/lib/utils';
 
 interface ParsedRow {
   id: string; // internal tracking id
+  programDbId?: string; // actual database id if existing record
   title: string;
   universityName: string;
   universityId?: string;
@@ -63,6 +64,8 @@ export default function BulkUploadPage() {
   const [importResult, setImportResult] = useState<{
     success: boolean;
     importedCount: number;
+    createdCount?: number;
+    updatedCount?: number;
     skippedCount?: number;
     errors: string[];
   } | null>(null);
@@ -422,12 +425,14 @@ export default function BulkUploadPage() {
         const misc = parseNumberField(row, ['miscFeesMYR', 'AdminFee', 'misc', 'MiscFees']) || 6000;
         const initial = parseNumberField(row, ['totalInitialMYR', 'Upfront', 'initial', 'TotalInitial']) || (emgs + misc);
 
+        const rawId = String(row.id || row.Id || row.ID || '').trim();
         const uniName = String(
           row.universityName || row.University || row.university || row.UniversityName || row.Institute || ''
         ).trim();
 
         const baseRow = {
           id: `row-${idx}-${Date.now()}`,
+          programDbId: rawId || undefined,
           title: String(row.title || row.Title || row.Program || row.ProgramTitle || '').trim(),
           universityName: uniName,
           degreeLevel: String(row.degreeLevel || row.Degree || row.Level || "Bachelor's Degree").trim(),
@@ -546,6 +551,7 @@ export default function BulkUploadPage() {
 
     try {
       const payload = rowsToUpload.map((r) => ({
+        id: r.programDbId,
         title: r.title,
         universityName: r.universityName,
         universityId: r.universityId,
@@ -585,6 +591,8 @@ export default function BulkUploadPage() {
       setImportResult({
         success: true,
         importedCount: data.importedCount,
+        createdCount: data.createdCount,
+        updatedCount: data.updatedCount,
         skippedCount: data.skippedCount || 0,
         errors: data.errors || [],
       });
@@ -839,12 +847,16 @@ export default function BulkUploadPage() {
                 <div className="space-y-1 w-full">
                   <h4 className="font-bold text-base">
                     {importResult.success
-                      ? `Successfully Imported ${importResult.importedCount} Courses!`
+                      ? `Successfully Processed ${importResult.importedCount} Courses!${
+                          importResult.updatedCount !== undefined
+                            ? ` (${importResult.createdCount || 0} Created, ${importResult.updatedCount || 0} Updated)`
+                            : ''
+                        }`
                       : 'Import Failed'}
                   </h4>
                   <p className="text-xs">
                     {importResult.success
-                      ? `The records have been written to the live database.${
+                      ? `Database sync completed cleanly without duplicates.${
                           importResult.skippedCount
                             ? ` (${importResult.skippedCount} rows with errors were skipped and remain in the editor below).`
                             : ''
