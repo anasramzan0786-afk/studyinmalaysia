@@ -23,5 +23,9 @@ export function getJwtSecret(): string {
 }
 
 export function getAuthCredentialValue(name: string, fallback: string): string {
-  return getRequiredEnv(name, fallback);
+  const value = process.env[name];
+  if (value && value.trim().length > 0) {
+    return value.trim();
+  }
+  return fallback;
 }

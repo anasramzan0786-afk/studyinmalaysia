@@ -5,12 +5,13 @@ import { getAuthSession } from '@/lib/auth';
 
 interface BulkProgramInput {
   title: string;
-  universityName: string;
+  universityName?: string;
+  universityId?: string;
   degreeLevel: string;
   faculty?: string;
   duration?: string;
   intakeMonths?: string;
-  tuitionMYR: number;
+  tuitionMYR?: number;
   firstYearFeeMYR?: number;
   secondYearFeeMYR?: number;
   thirdYearFeeMYR?: number;
@@ -32,7 +33,10 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { programs } = body as { programs: BulkProgramInput[] };
+    const { programs, allowPartial = false } = body as { 
+      programs: BulkProgramInput[];
+      allowPartial?: boolean;
+    };
 
     if (!Array.isArray(programs) || programs.length === 0) {
       return NextResponse.json({ error: 'No programs provided for upload' }, { status: 400 });
@@ -42,16 +46,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Bulk upload supports up to 500 program rows per request.' }, { status: 400 });
     }
 
-    const duplicateNames = programs
-      .map((item) => item.title?.trim().toLowerCase())
-      .filter((value): value is string => Boolean(value));
-
-    const hasDuplicateRowTitle = duplicateNames.length !== new Set(duplicateNames).size;
-    if (hasDuplicateRowTitle) {
-      return NextResponse.json({ error: 'Duplicate program titles were detected in the upload. Please remove duplicates and retry.' }, { status: 400 });
-    }
-
-    // 1. Fetch all existing universities for fuzzy matching
+    // 1. Fetch all existing universities for robust matching
     const existingUniversities = await db.university.findMany({
       select: { id: true, name: true, shortName: true },
     });
@@ -70,14 +65,20 @@ export async function POST(request: Request) {
       rowNumber: number;
     }> = [];
 
+    // Helper to normalize strings for comparison
+    const cleanStr = (s?: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
     for (let i = 0; i < programs.length; i++) {
       const item = programs[i];
+      const rowNum = i + 1;
+      const title = (item.title || '').trim();
 
-      if (!item.title || !item.degreeLevel) {
-        errors.push(`Row ${i + 1}: Missing required title or degree level.`);
+      if (!title || !item.degreeLevel) {
+        errors.push(`Row ${rowNum}: Title and Degree Level are required.`);
         continue;
       }
 
+      // Check numeric fields
       const numericFields = [
         ['tuitionMYR', item.tuitionMYR],
         ['firstYearFeeMYR', item.firstYearFeeMYR],
@@ -88,105 +89,129 @@ export async function POST(request: Request) {
         ['miscFeesMYR', item.miscFeesMYR],
         ['totalInitialMYR', item.totalInitialMYR],
       ] as const;
+
       const invalidNumber = numericFields.find(([, value]) => {
-        if (value === undefined || value === null) return false;
+        if (value === undefined || value === null || value === ('' as any)) return false;
         const numericValue = Number(value);
         return !Number.isFinite(numericValue) || numericValue < 0;
       });
 
       if (invalidNumber) {
-        errors.push(`Row ${i + 1} (${item.title}): ${invalidNumber[0]} must be a non-negative number.`);
+        errors.push(`Row ${rowNum} (${title}): "${invalidNumber[0]}" must be a non-negative number.`);
         continue;
       }
 
-      // Match university
-      const searchTarget = (item.universityName || '').toLowerCase().trim();
-      if (!searchTarget) {
-        errors.push(`Row ${i + 1} (${item.title}): University name is required.`);
-        continue;
+      // 2. Resolve University (by direct ID or smart fuzzy matching)
+      let matchedUni: { id: string; name: string; shortName: string } | undefined;
+
+      if (item.universityId) {
+        matchedUni = existingUniversities.find((u) => u.id === item.universityId);
       }
 
-      const matchingUniversities = existingUniversities.filter((u) => {
-        const universityName = u.name.toLowerCase();
-        const shortName = u.shortName.toLowerCase();
-        return (
-          universityName === searchTarget ||
-          shortName === searchTarget ||
-          universityName.includes(searchTarget) ||
-          shortName.includes(searchTarget) ||
-          searchTarget.includes(shortName)
+      if (!matchedUni && item.universityName) {
+        const rawTarget = item.universityName.trim();
+        const normTarget = cleanStr(rawTarget);
+
+        // A. Exact match by name or shortName (case-insensitive)
+        matchedUni = existingUniversities.find(
+          (u) =>
+            u.name.toLowerCase() === rawTarget.toLowerCase() ||
+            u.shortName.toLowerCase() === rawTarget.toLowerCase()
         );
-      });
 
-      if (matchingUniversities.length === 0) {
-        errors.push(`Row ${i + 1} (${item.title}): University "${item.universityName}" was not found. No records were imported.`);
-        continue;
-      }
+        // B. Normalized alphanumeric match
+        if (!matchedUni) {
+          matchedUni = existingUniversities.find(
+            (u) =>
+              cleanStr(u.name) === normTarget ||
+              cleanStr(u.shortName) === normTarget
+          );
+        }
 
-      if (matchingUniversities.length > 1) {
-        errors.push(`Row ${i + 1} (${item.title}): University "${item.universityName}" matched multiple records. Use the exact university name or short name.`);
-        continue;
-      }
+        // C. Substring match (either name contains target or target contains shortName)
+        if (!matchedUni) {
+          const substringCandidates = existingUniversities.filter((u) => {
+            const uNameClean = cleanStr(u.name);
+            const uShortClean = cleanStr(u.shortName);
+            return (
+              uNameClean.includes(normTarget) ||
+              normTarget.includes(uShortClean) ||
+              (uShortClean.length >= 3 && normTarget.includes(uShortClean))
+            );
+          });
 
-      const matchedUni = matchingUniversities[0];
-
-      const y1 = item.firstYearFeeMYR ? Number(item.firstYearFeeMYR) : undefined;
-      const y2 = item.secondYearFeeMYR ? Number(item.secondYearFeeMYR) : undefined;
-      const y3 = item.thirdYearFeeMYR ? Number(item.thirdYearFeeMYR) : undefined;
-      const y4 = item.fourthYearFeeMYR ? Number(item.fourthYearFeeMYR) : undefined;
-      const yearlyTotal = (y1 || 0) + (y2 || 0) + (y3 || 0) + (y4 || 0);
-      const statedTuition = Number(item.tuitionMYR) || 0;
-
-      if (yearlyTotal > 0 && statedTuition > 0 && Math.abs(statedTuition - yearlyTotal) > 1) {
-        errors.push(
-          `Row ${i + 1} (${item.title}): tuitionMYR (${statedTuition}) must equal the sum of the 1st-4th year fees (${yearlyTotal}).`
-        );
-        continue;
-      }
-
-      let tuition = Number(item.tuitionMYR) || 0;
-      if (tuition === 0 && (y1 || y2 || y3)) {
-        tuition = (y1 || 0) + (y2 || 0) + (y3 || 0) + (y4 || 0);
-      }
-
-      const emgs = Number(item.emgsFeeMYR) || 3500;
-      const misc = Number(item.miscFeesMYR) || 6000;
-      const initial = Number(item.totalInitialMYR) || (emgs + misc);
-
-      // Parse duration in years
-      let parsedYears = 3;
-      if (item.duration) {
-        const match = item.duration.match(/([\d.]+)\s*(?:year|yr)/i);
-        if (match) {
-          parsedYears = parseFloat(match[1]);
+          if (substringCandidates.length === 1) {
+            matchedUni = substringCandidates[0];
+          } else if (substringCandidates.length > 1) {
+            // Pick highest scoring (e.g., closest length match)
+            matchedUni = substringCandidates.sort(
+              (a, b) => Math.abs(a.name.length - rawTarget.length) - Math.abs(b.name.length - rawTarget.length)
+            )[0];
+          }
         }
       }
 
-      // Prepare semester/year schedules if yearly fee breakdown exists
-      const scheduleList: { semester: string; tuitionMYR: number; miscMYR: number }[] = [];
-      if (y1 && y1 > 0) {
-        scheduleList.push({ semester: 'Year 1', tuitionMYR: y1, miscMYR: misc });
-      }
-      if (y2 && y2 > 0) {
-        scheduleList.push({ semester: 'Year 2', tuitionMYR: y2, miscMYR: 1600 });
-      }
-      if (y3 && y3 > 0) {
-        scheduleList.push({ semester: 'Year 3', tuitionMYR: y3, miscMYR: 1600 });
-      }
-      if (y4 && y4 > 0) {
-        scheduleList.push({ semester: 'Year 4', tuitionMYR: y4, miscMYR: 1600 });
+      if (!matchedUni) {
+        errors.push(
+          `Row ${rowNum} (${title}): University "${item.universityName || 'unspecified'}" could not be identified.`
+        );
+        continue;
       }
 
-      preparedPrograms.push({ item, universityId: matchedUni.id, rowNumber: i + 1 });
+      // Check fee calculations
+      const y1 = item.firstYearFeeMYR !== undefined && item.firstYearFeeMYR !== null ? Number(item.firstYearFeeMYR) : undefined;
+      const y2 = item.secondYearFeeMYR !== undefined && item.secondYearFeeMYR !== null ? Number(item.secondYearFeeMYR) : undefined;
+      const y3 = item.thirdYearFeeMYR !== undefined && item.thirdYearFeeMYR !== null ? Number(item.thirdYearFeeMYR) : undefined;
+      const y4 = item.fourthYearFeeMYR !== undefined && item.fourthYearFeeMYR !== null ? Number(item.fourthYearFeeMYR) : undefined;
+      const yearlyTotal = (y1 || 0) + (y2 || 0) + (y3 || 0) + (y4 || 0);
+      let statedTuition = Number(item.tuitionMYR) || 0;
+
+      // Smart auto-fix: If tuition is 0 or missing, compute from yearly total
+      if (statedTuition === 0 && yearlyTotal > 0) {
+        statedTuition = yearlyTotal;
+      }
+
+      preparedPrograms.push({
+        item: {
+          ...item,
+          tuitionMYR: statedTuition,
+        },
+        universityId: matchedUni.id,
+        rowNumber: rowNum,
+      });
     }
 
-    if (errors.length > 0) {
+    // Check duplicate titles *within the same university* in this batch
+    const seenByUni = new Set<string>();
+    for (const prep of preparedPrograms) {
+      const key = `${prep.universityId}_${prep.item.title.toLowerCase().trim()}`;
+      if (seenByUni.has(key)) {
+        errors.push(`Row ${prep.rowNumber}: Duplicate title "${prep.item.title}" found under the same university in this batch.`);
+      } else {
+        seenByUni.add(key);
+      }
+    }
+
+    if (errors.length > 0 && !allowPartial) {
       return NextResponse.json(
-        { error: 'Import validation failed. No records were written to the database.', errors },
+        { 
+          error: `Import validation failed with ${errors.length} issue(s). No records were written to the database. Fix issues or use "Import Valid Only".`,
+          errors,
+          validCount: preparedPrograms.length,
+          totalCount: programs.length
+        },
         { status: 400 }
       );
     }
 
+    if (preparedPrograms.length === 0) {
+      return NextResponse.json(
+        { error: 'No valid programs to import.', errors },
+        { status: 400 }
+      );
+    }
+
+    // Insert prepared programs in a transaction
     const insertedPrograms = await db.$transaction(async (transaction) => {
       const createdPrograms = [];
 
@@ -203,6 +228,7 @@ export async function POST(request: Request) {
         const emgs = Number(item.emgsFeeMYR) || 3500;
         const misc = Number(item.miscFeesMYR) || 6000;
         const initial = Number(item.totalInitialMYR) || (emgs + misc);
+
         let parsedYears = 3;
         if (item.duration) {
           const match = item.duration.match(/([\d.]+)\s*(?:year|yr)/i);
@@ -257,7 +283,7 @@ export async function POST(request: Request) {
             title: `Bulk Imported ${createdPrograms.length} Courses`,
             action: 'BATCH_IMPORT',
             target: `${createdPrograms.length} Program Records`,
-            details: 'Imported courses via Bulk CSV/JSON Uploader.',
+            details: `Imported via Bulk CSV Uploader. ${errors.length > 0 ? `Skipped ${errors.length} failed rows.` : 'All rows succeeded.'}`,
           },
         });
       }
@@ -268,6 +294,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       importedCount: insertedPrograms.length,
+      skippedCount: programs.length - insertedPrograms.length,
       errors,
       sample: insertedPrograms.slice(0, 5),
     });
@@ -276,4 +303,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message || 'Server error processing bulk upload' }, { status: 500 });
   }
 }
-
