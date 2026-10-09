@@ -3,6 +3,7 @@ import { Montserrat, Jost } from 'next/font/google';
 import './globals.css';
 import { CounselingProvider } from '@/components/CounselingContext';
 import { PageLoader } from '@/components/PageLoader';
+import { PwaInstallPrompt } from '@/components/PwaInstallPrompt';
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -35,6 +36,12 @@ export const metadata: Metadata = {
   },
   description:
     'Study In Malaysia By Meezab — Official higher education admissions & EMGS visa portal by Meezab Future Consulting. Compare university fees, upfront statutory visa costs, and apply directly with zero consultant markup.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Meezab Portal',
+  },
   icons: {
     icon: 'https://meezabfuture.com/wp-content/uploads/2025/03/cropped-fav-32x32.png',
     apple: 'https://meezabfuture.com/wp-content/uploads/2025/03/cropped-fav-192x192.png',
@@ -124,6 +131,7 @@ export default function RootLayout({
       </head>
       <body className={`${montserrat.className} min-h-screen flex flex-col bg-[#F9F9F9] text-[#1F2937] antialiased selection:bg-[#0B2553] selection:text-[#E8A300]`}>
         <PageLoader />
+        <PwaInstallPrompt />
         <CounselingProvider>
           {children}
         </CounselingProvider>
