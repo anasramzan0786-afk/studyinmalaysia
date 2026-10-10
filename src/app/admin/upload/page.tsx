@@ -21,7 +21,7 @@ import {
   Info,
   ChevronDown
 } from 'lucide-react';
-import { formatMYR } from '@/lib/utils';
+import { formatMYR, normalizeDegreeLevel } from '@/lib/utils';
 
 interface ParsedRow {
   id: string; // internal tracking id
@@ -430,12 +430,16 @@ export default function BulkUploadPage() {
           row.universityName || row.University || row.university || row.UniversityName || row.Institute || ''
         ).trim();
 
+        const programTitle = String(row.title || row.Title || row.Program || row.ProgramTitle || '').trim();
+        const rawDegreeLevel = String(row.degreeLevel || row.Degree || row.Level || row.degree || row.level || '').trim();
+        const canonicalDegreeLevel = normalizeDegreeLevel(rawDegreeLevel, programTitle);
+
         const baseRow = {
           id: `row-${idx}-${Date.now()}`,
           programDbId: rawId || undefined,
-          title: String(row.title || row.Title || row.Program || row.ProgramTitle || '').trim(),
+          title: programTitle,
           universityName: uniName,
-          degreeLevel: String(row.degreeLevel || row.Degree || row.Level || "Bachelor's Degree").trim(),
+          degreeLevel: canonicalDegreeLevel,
           faculty: String(row.faculty || row.Faculty || row.Department || 'General').trim(),
           duration: String(row.duration || row.Duration || '3 Years').trim(),
           intakeMonths: String(row.intakeMonths || row.Intakes || row.intakes || 'January, May, September').trim(),
@@ -1066,10 +1070,10 @@ export default function BulkUploadPage() {
                               onChange={(e) => updateRowField(row.id, 'degreeLevel', e.target.value)}
                               className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-200 focus:border-blue-500 text-[11px] rounded px-1.5 py-1 font-bold text-blue-700 focus:outline-hidden"
                             >
-                              <option value="Bachelor's Degree">Bachelor's Degree</option>
-                              <option value="Master's (Postgraduate)">Master's</option>
+                              <option value="Bachelor's Degree">Bachelor&apos;s Degree</option>
+                              <option value="Master's (Postgraduate)">Master&apos;s (Postgraduate)</option>
+                              <option value="Ph.D & Doctorate">Ph.D &amp; Doctorate</option>
                               <option value="Foundation / Diploma">Foundation / Diploma</option>
-                              <option value="Ph.D & Doctorate">Ph.D & Doctorate</option>
                             </select>
                           </td>
 

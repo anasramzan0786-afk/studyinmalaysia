@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { slugify } from '@/lib/utils';
+import { slugify, normalizeDegreeLevel } from '@/lib/utils';
 import { getAuthSession } from '@/lib/auth';
 
 interface BulkProgramInput {
@@ -200,9 +200,12 @@ export async function POST(request: Request) {
         }
       }
 
+      const canonicalDegree = normalizeDegreeLevel(item.degreeLevel, title);
+
       preparedPrograms.push({
         item: {
           ...item,
+          degreeLevel: canonicalDegree,
           tuitionMYR: statedTuition,
         },
         universityId: matchedUni.id,

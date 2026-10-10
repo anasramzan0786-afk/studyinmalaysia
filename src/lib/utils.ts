@@ -117,4 +117,91 @@ export function getTotalFirstYearBudget(program: ProgramFeeFields): number {
   return firstYearTuition + initialUpfront;
 }
 
+/**
+ * Normalizes any degree level input (or program title) into the 4 canonical degree levels:
+ * - "Bachelor's Degree"
+ * - "Master's (Postgraduate)"
+ * - "Ph.D & Doctorate"
+ * - "Foundation / Diploma"
+ */
+export function normalizeDegreeLevel(rawLevel?: string, title?: string): string {
+  const clean = (rawLevel || '').trim().toLowerCase();
+  const cleanTitle = (title || '').trim().toLowerCase();
+
+  // 1. Ph.D & Doctorate checks
+  if (
+    clean.includes('phd') ||
+    clean.includes('ph.d') ||
+    clean.includes('doctor') ||
+    clean.includes('doctorate') ||
+    clean.includes('dba') ||
+    cleanTitle.includes('ph.d') ||
+    cleanTitle.includes('phd') ||
+    cleanTitle.includes('doctor of philosophy') ||
+    cleanTitle.includes('doctor of business')
+  ) {
+    return 'Ph.D & Doctorate';
+  }
+
+  // 2. Master's (Postgraduate) checks
+  if (
+    clean.includes('master') ||
+    clean.includes('postgrad') ||
+    clean.includes('mba') ||
+    clean.includes('msc') ||
+    clean.includes('m.sc') ||
+    clean.includes('m.eng') ||
+    clean.includes('m.phil') ||
+    cleanTitle.startsWith('master') ||
+    cleanTitle.startsWith('mba') ||
+    cleanTitle.startsWith('msc') ||
+    cleanTitle.startsWith('m.sc')
+  ) {
+    return "Master's (Postgraduate)";
+  }
+
+  // 3. Foundation / Diploma checks
+  if (
+    clean.includes('diploma') ||
+    clean.includes('foundation') ||
+    clean.includes('certificate') ||
+    clean.includes('pre-u') ||
+    cleanTitle.startsWith('diploma') ||
+    cleanTitle.startsWith('foundation') ||
+    cleanTitle.startsWith('certificate')
+  ) {
+    return 'Foundation / Diploma';
+  }
+
+  // 4. Bachelor's checks
+  if (
+    clean.includes('bachelor') ||
+    clean.includes('undergrad') ||
+    clean.includes('degree') ||
+    clean.includes('bsc') ||
+    clean.includes('b.sc') ||
+    clean.includes('bba') ||
+    clean.includes('b.eng') ||
+    cleanTitle.startsWith('bachelor') ||
+    cleanTitle.startsWith('bsc') ||
+    cleanTitle.startsWith('bba') ||
+    cleanTitle.startsWith('b.eng')
+  ) {
+    return "Bachelor's Degree";
+  }
+
+  // Default fallback based on title if level was ambiguous
+  if (cleanTitle.includes('diploma') || cleanTitle.includes('foundation')) {
+    return 'Foundation / Diploma';
+  }
+  if (cleanTitle.includes('master') || cleanTitle.includes('mba')) {
+    return "Master's (Postgraduate)";
+  }
+  if (cleanTitle.includes('phd') || cleanTitle.includes('doctor')) {
+    return 'Ph.D & Doctorate';
+  }
+
+  return "Bachelor's Degree";
+}
+
 
