@@ -19,7 +19,8 @@ import {
   Check,
   AlertTriangle,
   Info,
-  ChevronDown
+  ChevronDown,
+  Search
 } from 'lucide-react';
 import { formatMYR, normalizeDegreeLevel } from '@/lib/utils';
 
@@ -81,6 +82,20 @@ export default function BulkUploadPage() {
   const [exportUniId, setExportUniId] = useState<string>('All');
   const [exportDegreeLevel, setExportDegreeLevel] = useState<string>('All');
   const [isExporting, setIsExporting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | ParsedRow['status']>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [editingRowId, setEditingRowId] = useState<string | null>(null);
+  const rowsPerPage = 15;
+
+  useEffect(() => {
+    if (!editingRowId) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setEditingRowId(null);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [editingRowId]);
 
   // Fetch universities on mount
   useEffect(() => {
@@ -154,6 +169,23 @@ export default function BulkUploadPage() {
     if (!row.degreeLevel.trim()) {
       issues.push('Degree level is required');
       isError = true;
+    }
+
+    const feeFields: Array<[string, number | undefined]> = [
+      ['Total tuition', row.tuitionMYR],
+      ['1st year fee', row.firstYearFeeMYR],
+      ['2nd year fee', row.secondYearFeeMYR],
+      ['3rd year fee', row.thirdYearFeeMYR],
+      ['4th year fee', row.fourthYearFeeMYR],
+      ['EMGS fee', row.emgsFeeMYR],
+      ['Other fees', row.miscFeesMYR],
+      ['Total upfront', row.totalInitialMYR],
+    ];
+    for (const [label, value] of feeFields) {
+      if (value !== undefined && (!Number.isFinite(value) || value < 0)) {
+        issues.push(`${label} must be a non-negative number`);
+        isError = true;
+      }
     }
 
     const yearlySum = (row.firstYearFeeMYR || 0) + (row.secondYearFeeMYR || 0) + (row.thirdYearFeeMYR || 0) + (row.fourthYearFeeMYR || 0);
@@ -470,6 +502,9 @@ export default function BulkUploadPage() {
       .filter((r) => r.title.length > 0);
 
     setParsedData(rawCleaned);
+    setCurrentPage(1);
+    setSearchTerm('');
+    setStatusFilter('all');
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -506,7 +541,7 @@ export default function BulkUploadPage() {
   };
 
   // Update a single cell in the preview
-  const updateRowField = (id: string, field: keyof ParsedRow, value: any) => {
+  const updateRowField = <K extends keyof ParsedRow>(id: string, field: K, value: ParsedRow[K]) => {
     setParsedData((prev) => {
       const updated = prev.map((row) => {
         if (row.id === id) {
@@ -622,6 +657,68 @@ export default function BulkUploadPage() {
   const validRowsCount = parsedData.filter((r) => r.status === 'valid').length;
   const warningRowsCount = parsedData.filter((r) => r.status === 'warning').length;
   const errorRowsCount = parsedData.filter((r) => r.status === 'error').length;
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredRows = parsedData.filter((row) => {
+    const matchesSearch =
+      !normalizedSearch ||
+      [row.title, row.universityName, row.faculty, row.degreeLevel]
+        .some((value) => value.toLowerCase().includes(normalizedSearch));
+    return matchesSearch && (statusFilter === 'all' || row.status === statusFilter);
+  });
+  const pageCount = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
+  const visiblePage = Math.min(currentPage, pageCount);
+  const visibleRows = filteredRows.slice((visiblePage - 1) * rowsPerPage, visiblePage * rowsPerPage);
+  const editingRow = parsedData.find((row) => row.id === editingRowId);
+
+  const renderTextField = (
+    label: string,
+    field: 'title' | 'faculty' | 'duration' | 'intakeMonths' | 'scholarship' | 'academicReq' | 'englishReq' | 'pakistanNotes',
+    value: string | undefined,
+    multiline = false
+  ) => (
+    <label className="block space-y-1.5 text-xs font-semibold text-slate-700">
+      <span>{label}</span>
+      {multiline ? (
+        <textarea
+          rows={3}
+          value={value || ''}
+          onChange={(e) => editingRow && updateRowField(editingRow.id, field, e.target.value)}
+          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-100"
+        />
+      ) : (
+        <input
+          type="text"
+          value={value || ''}
+          onChange={(e) => editingRow && updateRowField(editingRow.id, field, e.target.value)}
+          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-100"
+        />
+      )}
+    </label>
+  );
+
+  const renderNumberField = (
+    label: string,
+    field: 'tuitionMYR' | 'firstYearFeeMYR' | 'secondYearFeeMYR' | 'thirdYearFeeMYR' | 'fourthYearFeeMYR' | 'emgsFeeMYR' | 'miscFeesMYR' | 'totalInitialMYR',
+    value: number | undefined
+  ) => (
+    <label className="block space-y-1.5 text-xs font-semibold text-slate-700">
+      <span>{label}</span>
+      <input
+        type="number"
+        min="0"
+        step="any"
+        value={value ?? ''}
+        onChange={(e) => {
+          if (!editingRow) return;
+          const nextValue = e.target.value === ''
+            ? (field === 'tuitionMYR' ? 0 : undefined)
+            : Number(e.target.value);
+          updateRowField(editingRow.id, field, nextValue);
+        }}
+        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-100"
+      />
+    </label>
+  );
 
   return (
     <div className="space-y-8">
@@ -913,21 +1010,57 @@ export default function BulkUploadPage() {
                   
                   {/* Status Pills */}
                   <div className="flex flex-wrap items-center gap-2 pt-2.5 text-[11px] font-bold">
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 text-emerald-700 px-2.5 py-1 border border-emerald-200">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStatusFilter(statusFilter === 'valid' ? 'all' : 'valid');
+                        setCurrentPage(1);
+                      }}
+                      aria-pressed={statusFilter === 'valid'}
+                      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 border transition-colors ${
+                        statusFilter === 'valid'
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      }`}
+                    >
                       <Check className="w-3 h-3" />
                       <span>{validRowsCount} Ready</span>
-                    </span>
+                    </button>
                     {warningRowsCount > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 text-amber-700 px-2.5 py-1 border border-amber-200">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStatusFilter(statusFilter === 'warning' ? 'all' : 'warning');
+                          setCurrentPage(1);
+                        }}
+                        aria-pressed={statusFilter === 'warning'}
+                        className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 border transition-colors ${
+                          statusFilter === 'warning'
+                            ? 'bg-amber-100 text-amber-800 border-amber-300'
+                            : 'bg-amber-50 text-amber-700 border-amber-200'
+                        }`}
+                      >
                         <AlertTriangle className="w-3 h-3" />
                         <span>{warningRowsCount} Minor Warnings</span>
-                      </span>
+                      </button>
                     )}
                     {errorRowsCount > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-red-50 text-red-700 px-2.5 py-1 border border-red-200">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStatusFilter(statusFilter === 'error' ? 'all' : 'error');
+                          setCurrentPage(1);
+                        }}
+                        aria-pressed={statusFilter === 'error'}
+                        className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 border transition-colors ${
+                          statusFilter === 'error'
+                            ? 'bg-red-100 text-red-800 border-red-300'
+                            : 'bg-red-50 text-red-700 border-red-200'
+                        }`}
+                      >
                         <AlertCircle className="w-3 h-3" />
                         <span>{errorRowsCount} Needs Attention</span>
-                      </span>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -977,13 +1110,60 @@ export default function BulkUploadPage() {
                 </div>
               </div>
 
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <label className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="search"
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Search program, university, faculty, or level..."
+                    aria-label="Search imported programs"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-100"
+                  />
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                  <Filter className="w-4 h-4 text-slate-400" />
+                  <span className="sr-only">Filter by status</span>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value as 'all' | ParsedRow['status']);
+                      setCurrentPage(1);
+                    }}
+                    className="min-w-40 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-700 focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="valid">Ready</option>
+                    <option value="warning">Warnings</option>
+                    <option value="error">Needs attention</option>
+                  </select>
+                </label>
+                {(searchTerm || statusFilter !== 'all') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setStatusFilter('all');
+                      setCurrentPage(1);
+                    }}
+                    className="self-start sm:self-auto px-3 py-2.5 text-xs font-bold text-blue-700 hover:bg-blue-50 rounded-xl"
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+
               {/* Editable Table */}
-              <div className="overflow-x-auto max-h-[500px] border border-slate-200 rounded-xl">
-                <table className="w-full text-left text-xs border-collapse">
+              <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                <table className="w-full min-w-[1200px] text-left text-xs border-collapse">
                   <thead className="sticky top-0 bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[10px] z-10 shadow-xs">
                     <tr className="border-b border-slate-200">
                       <th className="py-2.5 px-3 w-10">Status</th>
-                      <th className="py-2.5 px-3 min-w-[220px]">Program Title</th>
+                      <th className="py-2.5 px-3 min-w-[360px]">Program Title</th>
                       <th className="py-2.5 px-3 min-w-[200px]">University</th>
                       <th className="py-2.5 px-3 min-w-[140px]">Level</th>
                       <th className="py-2.5 px-3 min-w-[100px]">Total Tuition</th>
@@ -992,13 +1172,11 @@ export default function BulkUploadPage() {
                       <th className="py-2.5 px-3 min-w-[90px]">3rd Yr</th>
                       <th className="py-2.5 px-3 min-w-[90px]">Upfront</th>
                       <th className="py-2.5 px-3 min-w-[90px]">Duration</th>
-                      <th className="py-2.5 px-2 text-center w-10">Action</th>
+                      <th className="py-2.5 px-2 text-center min-w-[112px]">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {parsedData.map((row, idx) => {
-                      const matchedUni = universities.find((u) => u.id === row.universityId);
-
+                    {visibleRows.map((row) => {
                       return (
                         <tr
                           key={row.id}
@@ -1032,12 +1210,13 @@ export default function BulkUploadPage() {
                           </td>
 
                           {/* Editable Title */}
-                          <td className="py-1.5 px-3">
-                            <input
-                              type="text"
+                          <td className="py-2 px-3">
+                            <textarea
+                              rows={Math.max(2, Math.ceil(row.title.length / 48))}
                               value={row.title}
                               onChange={(e) => updateRowField(row.id, 'title', e.target.value)}
-                              className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-200 focus:border-blue-500 rounded px-1.5 py-1 font-semibold text-slate-900 focus:outline-hidden"
+                              aria-label={`Program title for ${row.title || 'unnamed program'}`}
+                              className="w-full min-w-[340px] resize-y whitespace-normal break-words bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-200 focus:border-blue-500 rounded px-1.5 py-1 font-semibold leading-5 text-slate-900 focus:outline-hidden"
                             />
                           </td>
 
@@ -1154,21 +1333,146 @@ export default function BulkUploadPage() {
                           </td>
 
                           {/* Remove */}
-                          <td className="py-1.5 px-2 text-center">
+                          <td className="py-1.5 px-2">
+                            <div className="flex items-center justify-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setEditingRowId(row.id)}
+                                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-bold text-blue-700 hover:bg-blue-50"
+                                aria-label={`Edit details for ${row.title}`}
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                Details
+                              </button>
                             <button
+                              type="button"
                               onClick={() => removeRow(row.id)}
-                              className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-red-600 rounded transition-colors"
                               title="Remove row from import"
+                              aria-label={`Remove ${row.title} from import`}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
+                            </div>
                           </td>
                         </tr>
                       );
                     })}
+                    {visibleRows.length === 0 && (
+                      <tr>
+                        <td colSpan={11} className="px-4 py-12 text-center text-sm text-slate-500">
+                          No programs match these filters. Try a different search or clear the filters.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p className="text-xs text-slate-500" aria-live="polite">
+                  Showing {filteredRows.length === 0 ? 0 : (visiblePage - 1) * rowsPerPage + 1}
+                  {'–'}{Math.min(visiblePage * rowsPerPage, filteredRows.length)} of {filteredRows.length} matching programs
+                  {filteredRows.length !== parsedData.length && ` (${parsedData.length} total)`}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                    disabled={visiblePage <= 1}
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Previous
+                  </button>
+                  <span className="min-w-20 text-center text-xs font-semibold text-slate-600">
+                    Page {visiblePage} of {pageCount}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
+                    disabled={visiblePage >= pageCount}
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+
+              {editingRow && (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6"
+                  role="presentation"
+                  onMouseDown={(e) => {
+                    if (e.target === e.currentTarget) setEditingRowId(null);
+                  }}
+                >
+                  <section
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="program-details-title"
+                    className="w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-7"
+                  >
+                    <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+                      <div>
+                        <h4 id="program-details-title" className="text-lg font-extrabold text-slate-900">
+                          Edit program details
+                        </h4>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Changes update the preview only. They are saved to the database when you commit the import.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEditingRowId(null)}
+                        className="rounded-lg px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100"
+                      >
+                        Close
+                      </button>
+                    </div>
+
+                    {editingRow.issues.length > 0 && (
+                      <div className={`mt-4 rounded-xl border p-3 text-xs ${
+                        editingRow.status === 'error'
+                          ? 'border-red-200 bg-red-50 text-red-800'
+                          : 'border-amber-200 bg-amber-50 text-amber-800'
+                      }`}>
+                        <p className="font-bold">Review this program</p>
+                        <ul className="mt-1 list-inside list-disc space-y-0.5">
+                          {editingRow.issues.map((issue) => <li key={issue}>{issue}</li>)}
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {renderTextField('Full program title', 'title', editingRow.title)}
+                      {renderTextField('Faculty / department', 'faculty', editingRow.faculty)}
+                      {renderTextField('Duration', 'duration', editingRow.duration)}
+                      {renderTextField('Intake months', 'intakeMonths', editingRow.intakeMonths)}
+                      {renderNumberField('Total tuition (MYR)', 'tuitionMYR', editingRow.tuitionMYR)}
+                      {renderNumberField('1st year fee (MYR)', 'firstYearFeeMYR', editingRow.firstYearFeeMYR)}
+                      {renderNumberField('2nd year fee (MYR)', 'secondYearFeeMYR', editingRow.secondYearFeeMYR)}
+                      {renderNumberField('3rd year fee (MYR)', 'thirdYearFeeMYR', editingRow.thirdYearFeeMYR)}
+                      {renderNumberField('4th year fee (MYR)', 'fourthYearFeeMYR', editingRow.fourthYearFeeMYR)}
+                      {renderNumberField('EMGS fee (MYR)', 'emgsFeeMYR', editingRow.emgsFeeMYR)}
+                      {renderNumberField('Other fees (MYR)', 'miscFeesMYR', editingRow.miscFeesMYR)}
+                      {renderNumberField('Total upfront (MYR)', 'totalInitialMYR', editingRow.totalInitialMYR)}
+                      {renderTextField('Scholarship', 'scholarship', editingRow.scholarship)}
+                      {renderTextField('Academic requirements', 'academicReq', editingRow.academicReq, true)}
+                      {renderTextField('English requirements', 'englishReq', editingRow.englishReq, true)}
+                      {renderTextField('Notes for Pakistan applicants', 'pakistanNotes', editingRow.pakistanNotes, true)}
+                    </div>
+                    <div className="mt-6 flex justify-end border-t border-slate-100 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setEditingRowId(null)}
+                        className="rounded-xl bg-blue-700 px-5 py-2.5 text-xs font-bold text-white hover:bg-blue-800"
+                      >
+                        Done editing
+                      </button>
+                    </div>
+                  </section>
+                </div>
+              )}
             </div>
           )}
         </div>
