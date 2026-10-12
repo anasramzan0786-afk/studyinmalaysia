@@ -1,58 +1,74 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Download, Smartphone, Check } from 'lucide-react';
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
+import { Smartphone, Check } from 'lucide-react';
 
 export function InstallAppButton({ className = '' }: { className?: string }) {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [hasPrompt, setHasPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showIOSModal, setShowIOSModal] = useState(false);
 
   useEffect(() => {
-    // Check if running in standalone
+    // Check if running in standalone mode
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true;
+      (window.navigator as any).standalone === true ||
+      document.referrer.includes('android-app://');
 
     if (isStandalone) {
       setIsInstalled(true);
       return;
     }
 
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    // Check if window already captured early install prompt
+    if ((window as any).__meezab_install_prompt) {
+      setHasPrompt(true);
+    }
+
+    const onCanInstall = () => {
+      setHasPrompt(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    const onBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      (window as any).__meezab_install_prompt = e;
+      setHasPrompt(true);
+    };
+
+    window.addEventListener('meezab_can_install', onCanInstall);
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
 
     window.addEventListener('appinstalled', () => {
       setIsInstalled(true);
-      setDeferredPrompt(null);
+      setHasPrompt(false);
+      (window as any).__meezab_install_prompt = null;
     });
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('meezab_can_install', onCanInstall);
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
     };
   }, []);
 
   const handleClick = async () => {
     if (isInstalled) return;
 
-    if (deferredPrompt) {
-      await deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice;
-      if (choice.outcome === 'accepted') {
-        setIsInstalled(true);
+    const promptEvent = (window as any).__meezab_install_prompt;
+    if (promptEvent) {
+      // 1-Click Native Chrome Prompt!
+      try {
+        await promptEvent.prompt();
+        const choice = await promptEvent.userChoice;
+        if (choice.outcome === 'accepted') {
+          setIsInstalled(true);
+        }
+        (window as any).__meezab_install_prompt = null;
+        setHasPrompt(false);
+      } catch (err) {
+        console.error('Install prompt error:', err);
       }
-      setDeferredPrompt(null);
     } else {
-      // Trigger instruction modal for iOS or browsers without native prompt
+      // Browser doesn't support direct trigger or has blocked it (e.g. iOS Safari)
       setShowIOSModal(true);
     }
   };
@@ -70,13 +86,13 @@ export function InstallAppButton({ className = '' }: { className?: string }) {
     <>
       <button
         onClick={handleClick}
-        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white shadow-xs transition-all active:scale-95 ${className}`}
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white shadow-xs transition-all active:scale-95 cursor-pointer ${className}`}
       >
         <Smartphone className="w-3.5 h-3.5 text-amber-300" />
         <span>Install App</span>
       </button>
 
-      {/* Manual Install Instruction Modal if native prompt not supported by browser */}
+      {/* Fallback instruction modal ONLY when browser strictly prevents 1-click (like Safari) */}
       {showIOSModal && (
         <div
           className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4"
@@ -100,18 +116,18 @@ export function InstallAppButton({ className = '' }: { className?: string }) {
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              To install this portal as a standalone app on your phone:
+              If your browser doesn&apos;t show the 1-click popup automatically:
             </p>
 
             <div className="space-y-2 text-xs text-slate-200 bg-white/5 p-3 rounded-xl border border-white/10">
               <p>
                 <strong>Android (Chrome / Samsung / Mi):</strong><br />
-                Tap the <span className="text-amber-300 font-bold">3 dots (⋮)</span> at the top right of your browser and select <span className="text-amber-300 font-bold">&quot;Install app&quot;</span> or <span className="text-amber-300 font-bold">&quot;Add to Home screen&quot;</span>.
+                Tap the <span className="text-amber-300 font-bold">3 dots (⋮)</span> at top right &rarr; select <span className="text-amber-300 font-bold">&quot;Install app&quot;</span>.
               </p>
               <div className="border-t border-white/10 pt-2">
                 <p>
                   <strong>iPhone / iPad (Safari):</strong><br />
-                  Tap the <span className="text-blue-400 font-bold">Share icon</span> at the bottom and select <span className="text-blue-400 font-bold">&quot;Add to Home Screen&quot;</span>.
+                  Tap the <span className="text-blue-400 font-bold">Share icon</span> at bottom &rarr; select <span className="text-blue-400 font-bold">&quot;Add to Home Screen&quot;</span>.
                 </p>
               </div>
             </div>
@@ -128,4 +144,3 @@ export function InstallAppButton({ className = '' }: { className?: string }) {
     </>
   );
 }
-

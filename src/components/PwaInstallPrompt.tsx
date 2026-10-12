@@ -46,8 +46,23 @@ export function PwaInstallPrompt() {
     }
 
     // 5. Listen for native Android/Chrome beforeinstallprompt
+    if ((window as any).__meezab_install_prompt) {
+      setDeferredPrompt((window as any).__meezab_install_prompt);
+      setIsVisible(true);
+    }
+
+    const onCanInstall = () => {
+      if ((window as any).__meezab_install_prompt) {
+        setDeferredPrompt((window as any).__meezab_install_prompt);
+        setIsVisible(true);
+      }
+    };
+
+    window.addEventListener('meezab_can_install', onCanInstall);
+
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
+      (window as any).__meezab_install_prompt = e;
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setIsVisible(true);
     };
@@ -66,23 +81,31 @@ export function PwaInstallPrompt() {
       setIsInstalled(true);
       setIsVisible(false);
       setDeferredPrompt(null);
+      (window as any).__meezab_install_prompt = null;
     });
 
     return () => {
       clearTimeout(timer);
+      window.removeEventListener('meezab_can_install', onCanInstall);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
 
   const handleInstallClick = async () => {
-    if (deferredPrompt) {
+    const promptEvent = deferredPrompt || (window as any).__meezab_install_prompt;
+    if (promptEvent) {
       // Direct 1-tap native prompt
-      await deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice;
-      if (choice.outcome === 'accepted') {
-        setIsVisible(false);
+      try {
+        await promptEvent.prompt();
+        const choice = await promptEvent.userChoice;
+        if (choice.outcome === 'accepted') {
+          setIsVisible(false);
+        }
+        setDeferredPrompt(null);
+        (window as any).__meezab_install_prompt = null;
+      } catch (err) {
+        setShowInstructions(true);
       }
-      setDeferredPrompt(null);
     } else {
       // Browser didn't expose native event -> Show instant 2-step manual instruction
       setShowInstructions(true);
