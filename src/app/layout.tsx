@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   description:
     'Study In Malaysia By Meezab — Official higher education admissions & EMGS visa portal by Meezab Future Consulting. Compare university fees, upfront statutory visa costs, and apply directly with zero consultant markup.',
-  manifest: '/manifest.json',
+  manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -124,26 +124,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${montserrat.variable} ${jost.variable} scroll-smooth`}>
       <head>
-        <link rel="manifest" href="/manifest.json" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrg) }}
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js');
-                });
-              }
-              window.addEventListener('beforeinstallprompt', function(e) {
-                e.preventDefault();
-                window.__meezab_install_prompt = e;
-                window.dispatchEvent(new CustomEvent('meezab_can_install'));
-              });
-            `,
-          }}
         />
       </head>
       <body className={`${montserrat.className} min-h-screen flex flex-col bg-[#F9F9F9] text-[#1F2937] antialiased selection:bg-[#0B2553] selection:text-[#E8A300]`}>
