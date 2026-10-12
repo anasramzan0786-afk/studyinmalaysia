@@ -233,129 +233,137 @@ export async function POST(request: Request) {
       );
     }
 
-    // Process all prepared programs in a single database transaction
-    const result = await db.$transaction(async (transaction) => {
-      let createdCount = 0;
-      let updatedCount = 0;
-      const touchedProgramSlugs: string[] = [];
+    const transactionOptions = {
+      timeout: 60000,
+      maxWait: 30000,
+    };
 
-      for (const { item, universityId, rowNumber, existingProgramId } of preparedPrograms) {
-        const y1 = item.firstYearFeeMYR ? Number(item.firstYearFeeMYR) : undefined;
-        const y2 = item.secondYearFeeMYR ? Number(item.secondYearFeeMYR) : undefined;
-        const y3 = item.thirdYearFeeMYR ? Number(item.thirdYearFeeMYR) : undefined;
-        const y4 = item.fourthYearFeeMYR ? Number(item.fourthYearFeeMYR) : undefined;
-        let tuition = Number(item.tuitionMYR) || 0;
-        if (tuition === 0 && (y1 || y2 || y3 || y4)) {
-          tuition = (y1 || 0) + (y2 || 0) + (y3 || 0) + (y4 || 0);
+    const batchSize = 25;
+    const result = { createdCount: 0, updatedCount: 0 };
+
+    for (let batchStart = 0; batchStart < preparedPrograms.length; batchStart += batchSize) {
+      const batch = preparedPrograms.slice(batchStart, batchStart + batchSize);
+      const batchResult = await db.$transaction(async (transaction) => {
+        let createdCount = 0;
+        let updatedCount = 0;
+
+        for (const { item, universityId, rowNumber, existingProgramId } of batch) {
+          const y1 = item.firstYearFeeMYR ? Number(item.firstYearFeeMYR) : undefined;
+          const y2 = item.secondYearFeeMYR ? Number(item.secondYearFeeMYR) : undefined;
+          const y3 = item.thirdYearFeeMYR ? Number(item.thirdYearFeeMYR) : undefined;
+          const y4 = item.fourthYearFeeMYR ? Number(item.fourthYearFeeMYR) : undefined;
+          let tuition = Number(item.tuitionMYR) || 0;
+          if (tuition === 0 && (y1 || y2 || y3 || y4)) {
+            tuition = (y1 || 0) + (y2 || 0) + (y3 || 0) + (y4 || 0);
+          }
+
+          const emgs = Number(item.emgsFeeMYR) || 3500;
+          const misc = Number(item.miscFeesMYR) || 6000;
+          const initial = Number(item.totalInitialMYR) || (emgs + misc);
+
+          let parsedYears = 3;
+          if (item.duration) {
+            const match = item.duration.match(/([\d.]+)\s*(?:year|yr)/i);
+            if (match) parsedYears = parseFloat(match[1]);
+          }
+
+          const scheduleList: { semester: string; tuitionMYR: number; miscMYR: number }[] = [];
+          if (y1 && y1 > 0) scheduleList.push({ semester: 'Year 1', tuitionMYR: y1, miscMYR: misc });
+          if (y2 && y2 > 0) scheduleList.push({ semester: 'Year 2', tuitionMYR: y2, miscMYR: 1600 });
+          if (y3 && y3 > 0) scheduleList.push({ semester: 'Year 3', tuitionMYR: y3, miscMYR: 1600 });
+          if (y4 && y4 > 0) scheduleList.push({ semester: 'Year 4', tuitionMYR: y4, miscMYR: 1600 });
+
+          if (existingProgramId) {
+            await transaction.semesterSchedule.deleteMany({
+              where: { programId: existingProgramId },
+            });
+
+            await transaction.program.update({
+              where: { id: existingProgramId },
+              data: {
+                title: item.title.trim(),
+                universityId,
+                degreeLevel: item.degreeLevel.trim(),
+                faculty: item.faculty || 'General Studies',
+                duration: item.duration || '3 Years (Full-time)',
+                durationYears: parsedYears,
+                intakeMonths: item.intakeMonths || 'January, May, September',
+                scholarship: item.scholarship || 'Standard Pricing',
+                tuitionMYR: tuition,
+                firstYearFeeMYR: y1 || null,
+                secondYearFeeMYR: y2 || null,
+                thirdYearFeeMYR: y3 || null,
+                fourthYearFeeMYR: y4 || null,
+                tuitionUSD: Math.round(tuition / 4.45),
+                emgsFeeMYR: emgs,
+                miscFeesMYR: misc,
+                totalInitialMYR: initial,
+                academicReq: item.academicReq || 'Standard academic entry requirements apply.',
+                englishReq: item.englishReq || 'IELTS 5.5 - 6.0 or English placement certificate.',
+                pakistanNotes: item.pakistanNotes || `Upfront initial package: RM ${initial.toLocaleString()}.`,
+                ...(scheduleList.length > 0
+                  ? {
+                      semesterSchedules: {
+                        create: scheduleList,
+                      },
+                    }
+                  : {}),
+              },
+            });
+            updatedCount++;
+          } else {
+            const uniqueSlug = `${slugify(item.title)}-${Date.now().toString().slice(-4)}-${rowNumber}`;
+            await transaction.program.create({
+              data: {
+                slug: uniqueSlug,
+                title: item.title.trim(),
+                universityId,
+                degreeLevel: item.degreeLevel.trim(),
+                faculty: item.faculty || 'General Studies',
+                duration: item.duration || '3 Years (Full-time)',
+                durationYears: parsedYears,
+                intakeMonths: item.intakeMonths || 'January, May, September',
+                scholarship: item.scholarship || 'Standard Pricing',
+                tuitionMYR: tuition,
+                firstYearFeeMYR: y1 || null,
+                secondYearFeeMYR: y2 || null,
+                thirdYearFeeMYR: y3 || null,
+                fourthYearFeeMYR: y4 || null,
+                tuitionUSD: Math.round(tuition / 4.45),
+                emgsFeeMYR: emgs,
+                miscFeesMYR: misc,
+                totalInitialMYR: initial,
+                academicReq: item.academicReq || 'Standard academic entry requirements apply.',
+                englishReq: item.englishReq || 'IELTS 5.5 - 6.0 or English placement certificate.',
+                pakistanNotes: item.pakistanNotes || `Upfront initial package: RM ${initial.toLocaleString()}.`,
+                ...(scheduleList.length > 0
+                  ? {
+                      semesterSchedules: {
+                        create: scheduleList,
+                      },
+                    }
+                  : {}),
+              },
+            });
+            createdCount++;
+          }
         }
 
-        const emgs = Number(item.emgsFeeMYR) || 3500;
-        const misc = Number(item.miscFeesMYR) || 6000;
-        const initial = Number(item.totalInitialMYR) || (emgs + misc);
+        await transaction.auditLog.create({
+          data: {
+            title: `Bulk Sync: ${createdCount} Created, ${updatedCount} Updated`,
+            action: 'BATCH_IMPORT',
+            target: `${createdCount + updatedCount} Program Records`,
+            details: `Smart Upsert executed via Bulk Uploader. Created: ${createdCount}, Updated: ${updatedCount}.`,
+          },
+        });
 
-        let parsedYears = 3;
-        if (item.duration) {
-          const match = item.duration.match(/([\d.]+)\s*(?:year|yr)/i);
-          if (match) parsedYears = parseFloat(match[1]);
-        }
+        return { createdCount, updatedCount };
+      }, transactionOptions);
 
-        const scheduleList: { semester: string; tuitionMYR: number; miscMYR: number }[] = [];
-        if (y1 && y1 > 0) scheduleList.push({ semester: 'Year 1', tuitionMYR: y1, miscMYR: misc });
-        if (y2 && y2 > 0) scheduleList.push({ semester: 'Year 2', tuitionMYR: y2, miscMYR: 1600 });
-        if (y3 && y3 > 0) scheduleList.push({ semester: 'Year 3', tuitionMYR: y3, miscMYR: 1600 });
-        if (y4 && y4 > 0) scheduleList.push({ semester: 'Year 4', tuitionMYR: y4, miscMYR: 1600 });
-
-        if (existingProgramId) {
-          // UPDATE existing program
-          await transaction.semesterSchedule.deleteMany({
-            where: { programId: existingProgramId },
-          });
-
-          const updated = await transaction.program.update({
-            where: { id: existingProgramId },
-            data: {
-              title: item.title.trim(),
-              universityId,
-              degreeLevel: item.degreeLevel.trim(),
-              faculty: item.faculty || 'General Studies',
-              duration: item.duration || '3 Years (Full-time)',
-              durationYears: parsedYears,
-              intakeMonths: item.intakeMonths || 'January, May, September',
-              scholarship: item.scholarship || 'Standard Pricing',
-              tuitionMYR: tuition,
-              firstYearFeeMYR: y1 || null,
-              secondYearFeeMYR: y2 || null,
-              thirdYearFeeMYR: y3 || null,
-              fourthYearFeeMYR: y4 || null,
-              tuitionUSD: Math.round(tuition / 4.45),
-              emgsFeeMYR: emgs,
-              miscFeesMYR: misc,
-              totalInitialMYR: initial,
-              academicReq: item.academicReq || 'Standard academic entry requirements apply.',
-              englishReq: item.englishReq || 'IELTS 5.5 - 6.0 or English placement certificate.',
-              pakistanNotes: item.pakistanNotes || `Upfront initial package: RM ${initial.toLocaleString()}.`,
-              ...(scheduleList.length > 0
-                ? {
-                    semesterSchedules: {
-                      create: scheduleList,
-                    },
-                  }
-                : {}),
-            },
-          });
-          updatedCount++;
-          touchedProgramSlugs.push(updated.slug);
-        } else {
-          // CREATE new program
-          const uniqueSlug = `${slugify(item.title)}-${Date.now().toString().slice(-4)}-${rowNumber}`;
-          const created = await transaction.program.create({
-            data: {
-              slug: uniqueSlug,
-              title: item.title.trim(),
-              universityId,
-              degreeLevel: item.degreeLevel.trim(),
-              faculty: item.faculty || 'General Studies',
-              duration: item.duration || '3 Years (Full-time)',
-              durationYears: parsedYears,
-              intakeMonths: item.intakeMonths || 'January, May, September',
-              scholarship: item.scholarship || 'Standard Pricing',
-              tuitionMYR: tuition,
-              firstYearFeeMYR: y1 || null,
-              secondYearFeeMYR: y2 || null,
-              thirdYearFeeMYR: y3 || null,
-              fourthYearFeeMYR: y4 || null,
-              tuitionUSD: Math.round(tuition / 4.45),
-              emgsFeeMYR: emgs,
-              miscFeesMYR: misc,
-              totalInitialMYR: initial,
-              academicReq: item.academicReq || 'Standard academic entry requirements apply.',
-              englishReq: item.englishReq || 'IELTS 5.5 - 6.0 or English placement certificate.',
-              pakistanNotes: item.pakistanNotes || `Upfront initial package: RM ${initial.toLocaleString()}.`,
-              ...(scheduleList.length > 0
-                ? {
-                    semesterSchedules: {
-                      create: scheduleList,
-                    },
-                  }
-                : {}),
-            },
-          });
-          createdCount++;
-          touchedProgramSlugs.push(created.slug);
-        }
-      }
-
-      await transaction.auditLog.create({
-        data: {
-          title: `Bulk Sync: ${createdCount} Created, ${updatedCount} Updated`,
-          action: 'BATCH_IMPORT',
-          target: `${createdCount + updatedCount} Program Records`,
-          details: `Smart Upsert executed via Bulk Uploader. Created: ${createdCount}, Updated: ${updatedCount}.`,
-        },
-      });
-
-      return { createdCount, updatedCount };
-    });
+      result.createdCount += batchResult.createdCount;
+      result.updatedCount += batchResult.updatedCount;
+    }
 
     return NextResponse.json({
       success: true,
