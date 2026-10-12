@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useCounseling } from '@/components/CounselingContext';
 import { Footer } from './Footer';
+import { InstallAppButton } from '@/components/InstallAppButton';
 
 export function PortalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -291,6 +292,7 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="pt-4 border-t border-white/10 space-y-2">
+            <InstallAppButton className="w-full justify-center py-2.5" />
             <button
               onClick={() => {
                 setIsMobileOpen(false);
@@ -339,6 +341,9 @@ export function PortalLayout({ children }: { children: React.ReactNode }) {
 
           {/* Right Topbar Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Install App button in Header */}
+            <InstallAppButton className="hidden sm:inline-flex" />
+
             {/* Minimal Intake Pill */}
             <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FEF2F2] text-[#BA2E34] border border-[#FECACA]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#BA2E34]" />

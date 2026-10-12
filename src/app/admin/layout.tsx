@@ -17,6 +17,7 @@ import {
   Menu,
   X,
 } from 'lucide-react';
+import { InstallAppButton } from '@/components/InstallAppButton';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -49,15 +50,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <p className="text-[10px] uppercase tracking-wider font-bold text-amber-400">Portal Management</p>
           <h1 className="text-base font-extrabold">Meezab Admin</h1>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsMobileOpen((open) => !open)}
-          aria-label={isMobileOpen ? 'Close admin navigation' : 'Open admin navigation'}
-          aria-expanded={isMobileOpen}
-          className="p-2 rounded-lg text-slate-200 hover:bg-white/10"
-        >
-          {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <InstallAppButton />
+          <button
+            type="button"
+            onClick={() => setIsMobileOpen((open) => !open)}
+            aria-label={isMobileOpen ? 'Close admin navigation' : 'Open admin navigation'}
+            aria-expanded={isMobileOpen}
+            className="p-2 rounded-lg text-slate-200 hover:bg-white/10"
+          >
+            {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </header>
 
       {isMobileOpen && (
