@@ -9,7 +9,8 @@ import {
   ArrowRight, 
   Clock, 
   CheckCircle2, 
-  AlertCircle 
+  AlertCircle,
+  Briefcase,
 } from 'lucide-react';
 import { formatMYR } from '@/lib/utils';
 
@@ -20,6 +21,8 @@ export default async function AdminDashboardPage() {
     programsCount,
     universitiesCount,
     inquiriesCount,
+    studentCasesCount,
+    closedCasesCount,
     programsMissingFees,
     programsMissingRequirements,
     universitiesMissingFees,
@@ -29,6 +32,8 @@ export default async function AdminDashboardPage() {
       db.program.count(),
       db.university.count(),
       db.inquiry.count(),
+      db.studentCase.count(),
+      db.studentCase.count({ where: { status: 'CASE_CLOSED' } }),
       db.program.count({
         where: {
           OR: [{ firstYearFeeMYR: null }, { firstYearFeeMYR: 0 }],
@@ -73,6 +78,36 @@ export default async function AdminDashboardPage() {
         <p className="text-xs sm:text-sm text-slate-500 mt-1">
           Control your live database, upload fee schedules in bulk, and manage counseling inquiries.
         </p>
+      </div>
+
+      {/* Team Management Admin Highlight */}
+      <div className="bg-gradient-to-r from-[#08182b] via-[#0f2c4f] to-[#1a4475] rounded-2xl p-6 text-white shadow-md border border-slate-700/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-black shrink-0 shadow-sm">
+            <Briefcase className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
+                Admin Console
+              </span>
+              <span className="text-xs text-slate-300">Operations &amp; Cases</span>
+            </div>
+            <h2 className="text-lg font-black text-white mt-0.5">
+              Team Management &amp; Case Tracking System
+            </h2>
+            <p className="text-xs text-slate-300">
+              {studentCasesCount} total cases logged &bull; {closedCasesCount} successfully closed &bull; 10 Pakistan branches
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/admin/team-management"
+          className="shrink-0 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-sm transition-all active:scale-95 inline-flex items-center gap-2"
+        >
+          <span>Open Team Console</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
       </div>
 
       {/* Metrics Row */}

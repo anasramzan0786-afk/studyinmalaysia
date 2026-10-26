@@ -12,14 +12,15 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String        @id @default(cuid())
+  email     String        @unique
   name      String
-  password  String   // bcrypt hashed
-  role      String   @default("COUNSELOR") // 'COUNSELOR' | 'ADMIN'
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  password  String        // bcrypt hashed
+  role      String        @default("COUNSELOR") // 'COUNSELOR' | 'ADMIN'
+  active    Boolean       @default(true)
+  cases     StudentCase[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }
 
 model University {
@@ -128,4 +129,101 @@ model AuditLog {
   details   String?
   createdAt DateTime @default(now())
 }
+
+model StudentCase {
+  id                String            @id @default(cuid())
+  studentName       String
+  passportNumber    String?
+  phone             String
+  email             String?
+  city              String?
+  
+  // Counselor assigned (from User model or custom name)
+  counselorId       String?
+  counselorName     String?
+  counselor         User?             @relation(fields: [counselorId], references: [id], onDelete: SetNull)
+  
+  // Branch origin / handling
+  branch            String            @default("Lahore (Head Office)")
+  
+  // Academic target
+  targetUniversity  String
+  targetProgram     String
+  intake            String
+  degreeLevel       String?
+  
+  // Overall Case Status
+  // 'NEW' | 'DOCS_PENDING' | 'DOCS_RECEIVED' | 'APPLICATION_SUBMITTED' | 'OFFER_LETTER_RECEIVED' | 'EMGS_PENDING' | 'EMGS_PAID' | 'VAL_IN_PROCESS' | 'VAL_ISSUED' | 'VISA_APPLIED' | 'VISA_RECEIVED' | 'CASE_CLOSED' | 'DROPPED_REJECTED'
+  status            String            @default("APPLICATION_SUBMITTED")
+  
+  // Detailed milestone checks
+  offerLetterStatus String?           // 'PENDING' | 'CONDITIONAL' | 'UNCONDITIONAL'
+  
+  emgsPaid          Boolean           @default(false)
+  emgsPaymentDate   DateTime?
+  emgsRefNumber     String?
+  
+  valPercentage     Int?              @default(0) // 0, 15, 35, 70, 80, 100
+  valStatus         String?           // 'NOT_APPLIED' | 'IN_PROCESS' | 'VAL_ISSUED' | 'VAL_REJECTED'
+  valIssuedDate     DateTime?
+  
+  visaStatus        String?           // 'NOT_APPLIED' | 'SEV_APPLIED' | 'VISA_STICKER' | 'EVISA_RECEIVED'
+  visaDate          DateTime?
+  
+  travelDate        DateTime?
+  caseClosedDate    DateTime?
+  
+  notes             String?
+  
+  referrals         BranchReferral[]
+  timelineLogs      CaseTimelineLog[]
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model BranchReferral {
+  id              String      @id @default(cuid())
+  caseId          String
+  studentCase     StudentCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  fromBranch      String
+  toBranch        String
+  referredBy      String      // Counselor or Staff name
+  handledBy       String?     // Staff at receiving branch
+  reason          String?
+  status          String      @default("TRANSFERRED") // 'PENDING' | 'TRANSFERRED' | 'COMPLETED'
+  transferDate    DateTime    @default(now())
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model CaseTimelineLog {
+  id          String      @id @default(cuid())
+  caseId      String
+  studentCase StudentCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  action      String      // 'STATUS_CHANGE' | 'EMGS_UPDATE' | 'VAL_UPDATE' | 'VISA_UPDATE' | 'REFERRAL' | 'NOTE'
+  title       String
+  details     String?
+  performedBy String      @default("Admin")
+  createdAt   DateTime    @default(now())
+}
+
+model DirectPanelUniversity {
+  id                String   @id @default(cuid())
+  name              String   @unique
+  shortName         String?
+  contractType      String   @default("Direct Agreement") // 'Direct Agreement' | 'Preferred Tier-1' | 'Official Representative' | 'Govt MoA'
+  contractStatus    String   @default("Active") // 'Active' | 'Under Renewal' | 'Review'
+  directPortalUrl   String?
+  focalPersonName   String?
+  focalPersonEmail  String?
+  focalPersonPhone  String?
+  supportedIntakes  String?  // e.g. "Feb, July, Sept, Nov"
+  specialNotes      String?
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
 

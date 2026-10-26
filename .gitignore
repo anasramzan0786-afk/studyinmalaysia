@@ -39,6 +39,7 @@ desktop.ini
 # Editor directories
 .vscode/
 .idea/
+.gemini/
 *.swp
 *.swo
 

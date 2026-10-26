@@ -16,22 +16,42 @@ import {
   History,
   Menu,
   X,
+  Briefcase,
 } from 'lucide-react';
 import { InstallAppButton } from '@/components/InstallAppButton';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
+  const [userRole, setUserRole] = React.useState<string | null>(null);
 
-  const links = [
+  React.useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.user?.role) {
+          setUserRole(data.user.role);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const allLinks = [
     { href: '/admin', label: 'Overview', icon: LayoutDashboard },
-    { href: '/admin/inquiries', label: '📩 Student Inquiries', icon: Users, highlight: true },
-    { href: '/admin/users', label: '👥 Team Accounts', icon: ShieldCheck },
+    { href: '/admin/team-management', label: '💼 Team & Case Tracker', icon: Briefcase, adminOnly: true, highlight: true },
+    { href: '/admin/inquiries', label: '📩 Student Inquiries', icon: Users },
+    { href: '/admin/users', label: '👥 Team Accounts', icon: ShieldCheck, adminOnly: true },
     { href: '/admin/universities', label: 'Manage Universities', icon: Building2 },
     { href: '/admin/programs', label: 'Manage Programs', icon: GraduationCap },
-    { href: '/admin/upload', label: 'Bulk Import & Export', icon: UploadCloud },
-    { href: '/admin/audit', label: 'Audit Activity', icon: History },
+    { href: '/admin/upload', label: 'Bulk Import & Export', icon: UploadCloud, adminOnly: true },
+    { href: '/admin/audit', label: 'Audit Activity', icon: History, adminOnly: true },
   ];
+
+  // Counselors cannot see adminOnly links
+  const links = allLinks.filter((link) => {
+    if (link.adminOnly && userRole === 'COUNSELOR') return false;
+    return true;
+  });
 
   const isActive = (href: string) => {
     if (href === '/admin' && pathname === '/admin') return true;
