@@ -22,7 +22,7 @@ export const CASE_STAGES = [
   { value: 'VAL_IN_PROCESS', label: 'VAL In Process (EMGS)', color: 'bg-purple-100 text-purple-800 border-purple-200' },
   { value: 'VAL_ISSUED', label: 'VAL / eVAL Approved', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
   { value: 'VISA_STAMPED', label: 'SEV Visa Stamped', color: 'bg-teal-100 text-teal-800 border-teal-200' },
-  { value: 'CASE_CLOSED', label: 'Case Closed (Arrived in Malaysia)', color: 'bg-emerald-600 text-white border-emerald-700' },
+  { value: 'PROCESS_COMPLETED', label: 'Reached Malaysia (Process Completed)', color: 'bg-emerald-600 text-white border-emerald-700' },
   { value: 'DROPPED_REJECTED', label: 'Withdrawn / Rejected', color: 'bg-rose-100 text-rose-800 border-rose-200' },
 ] as const;
 

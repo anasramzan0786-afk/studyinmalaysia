@@ -12,6 +12,7 @@ import {
   Filter,
   Plus,
   Edit3,
+  Trash2,
   Phone,
   Mail,
   Calendar,
@@ -29,15 +30,18 @@ import {
   TrendingUp,
   History,
   ShieldCheck,
-  Award
+  Award,
+  UserPlus
 } from 'lucide-react';
 import { PAKISTAN_BRANCHES, CASE_STAGES } from '@/lib/team-config';
 
-interface CounselorUser {
+interface TrackedCounselorItem {
   id: string;
   name: string;
-  email: string;
-  role: string;
+  email?: string | null;
+  phone?: string | null;
+  branch: string;
+  active: boolean;
 }
 
 interface CaseTimelineItem {
@@ -86,6 +90,8 @@ interface StudentCaseItem {
   intake: string;
   degreeLevel: string | null;
   status: string;
+  bookingDone?: boolean;
+  reachedMalaysia?: boolean;
   offerLetterStatus: string | null;
   emgsPaid: boolean;
   emgsPaymentDate: string | Date | null;
@@ -121,19 +127,20 @@ interface DirectPanelUniItem {
 
 interface Props {
   initialCases: StudentCaseItem[];
-  counselors: CounselorUser[];
+  counselors: TrackedCounselorItem[];
   initialReferrals: ReferralItem[];
   initialPanelUnis: DirectPanelUniItem[];
 }
 
 export function AdminTeamManagementClient({
   initialCases,
-  counselors,
+  counselors: initialCounselors,
   initialReferrals,
   initialPanelUnis,
 }: Props) {
   const [activeTab, setActiveTab] = useState<'cases' | 'referrals' | 'counselors' | 'panel'>('cases');
   const [cases, setCases] = useState<StudentCaseItem[]>(initialCases);
+  const [counselors, setCounselors] = useState<TrackedCounselorItem[]>(initialCounselors);
   const [referrals, setReferrals] = useState<ReferralItem[]>(initialReferrals);
   const [panelUnis, setPanelUnis] = useState<DirectPanelUniItem[]>(initialPanelUnis);
 
@@ -148,6 +155,7 @@ export function AdminTeamManagementClient({
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
   const [isPanelModalOpen, setIsPanelModalOpen] = useState(false);
+  const [isAddCounselorModalOpen, setIsAddCounselorModalOpen] = useState(false);
   const [selectedCase, setSelectedCase] = useState<StudentCaseItem | null>(null);
 
   // Form states for New Case
@@ -157,13 +165,14 @@ export function AdminTeamManagementClient({
     phone: '',
     email: '',
     city: '',
-    counselorId: '',
+    counselorName: '',
     branch: 'Lahore (Head Office)',
     targetUniversity: '',
     targetProgram: '',
     intake: 'September 2025',
     degreeLevel: "Bachelor's Degree",
     status: 'APPLICATION_SUBMITTED',
+    bookingDone: true,
     offerLetterStatus: 'PENDING',
     emgsPaid: false,
     emgsRefNumber: '',
@@ -174,6 +183,9 @@ export function AdminTeamManagementClient({
   // Form states for Updating Case
   const [updateFormData, setUpdateFormData] = useState({
     status: '',
+    counselorName: '',
+    bookingDone: true,
+    reachedMalaysia: false,
     offerLetterStatus: '',
     emgsPaid: false,
     emgsPaymentDate: '',
@@ -195,6 +207,14 @@ export function AdminTeamManagementClient({
     handledBy: '',
     reason: '',
     notes: '',
+  });
+
+  // Form states for Add Counselor to Tracking
+  const [newCounselorData, setNewCounselorData] = useState({
+    name: '',
+    branch: 'Lahore (Head Office)',
+    phone: '',
+    email: '',
   });
 
   // Form states for Panel University
@@ -223,8 +243,16 @@ export function AdminTeamManagementClient({
   // KPI Calculations
   const stats = useMemo(() => {
     const total = cases.length;
-    const closed = cases.filter((c) => c.status === 'CASE_CLOSED').length;
-    const emgsPending = cases.filter((c) => c.status === 'EMGS_PENDING' || (!c.emgsPaid && c.status !== 'CASE_CLOSED' && c.status !== 'DROPPED_REJECTED')).length;
+    // Cases currently under process (active applications)
+    const inProcess = cases.filter((c) => c.status !== 'PROCESS_COMPLETED' && c.status !== 'DROPPED_REJECTED').length;
+    
+    // Cases Closed (Bookings Done / Process Started by Counselor)
+    const casesClosed = cases.filter((c) => c.bookingDone !== false).length;
+
+    // Process Completed (Reached Malaysia)
+    const reachedMalaysia = cases.filter((c) => c.status === 'PROCESS_COMPLETED' || c.reachedMalaysia === true).length;
+
+    const emgsPending = cases.filter((c) => c.status === 'EMGS_PENDING' || (!c.emgsPaid && c.status !== 'PROCESS_COMPLETED' && c.status !== 'DROPPED_REJECTED')).length;
     const emgsPaid = cases.filter((c) => c.emgsPaid).length;
     const valInProcess = cases.filter((c) => c.status === 'VAL_IN_PROCESS' || (c.valPercentage && c.valPercentage > 0 && c.valPercentage < 100)).length;
     const valApproved = cases.filter((c) => c.status === 'VAL_ISSUED' || c.valPercentage === 100).length;
@@ -233,14 +261,16 @@ export function AdminTeamManagementClient({
 
     return {
       total,
-      closed,
+      inProcess,
+      casesClosed,
+      reachedMalaysia,
       emgsPending,
       emgsPaid,
       valInProcess,
       valApproved,
       totalReferrals,
       directUnis,
-      successRate: total > 0 ? Math.round((closed / total) * 100) : 0,
+      completionRate: casesClosed > 0 ? Math.round((reachedMalaysia / casesClosed) * 100) : 0,
     };
   }, [cases, referrals, panelUnis]);
 
@@ -249,7 +279,7 @@ export function AdminTeamManagementClient({
     return cases.filter((item) => {
       if (filterStage !== 'ALL' && item.status !== filterStage) return false;
       if (filterBranch !== 'ALL' && item.branch !== filterBranch) return false;
-      if (filterCounselor !== 'ALL' && item.counselorId !== filterCounselor) return false;
+      if (filterCounselor !== 'ALL' && item.counselorName !== filterCounselor) return false;
 
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
@@ -267,28 +297,32 @@ export function AdminTeamManagementClient({
     });
   }, [cases, filterStage, filterBranch, filterCounselor, searchQuery]);
 
-  // Counselor Metrics
+  // Counselor Metrics (Calculated for Admin's Tracked Counselors)
   const counselorPerformance = useMemo(() => {
     const map = new Map<string, {
       id: string;
       name: string;
       email: string;
-      total: number;
-      closed: number;
-      inProgress: number;
+      phone: string;
+      branch: string;
+      totalBookings: number;
+      underProcess: number;
+      reachedMalaysia: number;
       emgsCount: number;
       valCount: number;
     }>();
 
-    // Initialize with all counselors
+    // Initialize with counselors Admin added
     counselors.forEach((c) => {
-      map.set(c.id, {
+      map.set(c.name.toLowerCase().trim(), {
         id: c.id,
         name: c.name,
-        email: c.email,
-        total: 0,
-        closed: 0,
-        inProgress: 0,
+        email: c.email || 'N/A',
+        phone: c.phone || 'N/A',
+        branch: c.branch,
+        totalBookings: 0,
+        underProcess: 0,
+        reachedMalaysia: 0,
         emgsCount: 0,
         valCount: 0,
       });
@@ -296,35 +330,77 @@ export function AdminTeamManagementClient({
 
     // Count cases
     cases.forEach((c) => {
-      if (c.counselorId && map.has(c.counselorId)) {
-        const record = map.get(c.counselorId)!;
-        record.total += 1;
-        if (c.status === 'CASE_CLOSED') {
-          record.closed += 1;
+      const cNameKey = (c.counselorName || '').toLowerCase().trim();
+      if (cNameKey && map.has(cNameKey)) {
+        const record = map.get(cNameKey)!;
+        record.totalBookings += 1;
+        if (c.status === 'PROCESS_COMPLETED' || c.reachedMalaysia) {
+          record.reachedMalaysia += 1;
         } else if (c.status !== 'DROPPED_REJECTED') {
-          record.inProgress += 1;
+          record.underProcess += 1;
         }
         if (c.emgsPaid) record.emgsCount += 1;
         if (c.valPercentage && c.valPercentage >= 35) record.valCount += 1;
       }
     });
 
-    return Array.from(map.values()).sort((a, b) => b.closed - a.closed || b.total - a.total);
+    return Array.from(map.values()).sort((a, b) => b.totalBookings - a.totalBookings);
   }, [counselors, cases]);
+
+  // Handle Add Counselor to Tracking
+  const handleAddCounselor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/admin/counselors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCounselorData),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to add counselor');
+
+      setCounselors((prev) => [...prev, data.counselor]);
+      notify(`Counselor ${data.counselor.name} added to Team Management!`);
+      setIsAddCounselorModalOpen(false);
+      setNewCounselorData({
+        name: '',
+        branch: 'Lahore (Head Office)',
+        phone: '',
+        email: '',
+      });
+    } catch (err: any) {
+      notify(err.message, 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle Remove Counselor from Tracking
+  const handleRemoveCounselor = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to remove ${name} from Team Tracking?`)) return;
+    try {
+      const res = await fetch(`/api/admin/counselors?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setCounselors((prev) => prev.filter((c) => c.id !== id));
+        notify(`Removed ${name} from tracking`);
+      }
+    } catch (err: any) {
+      notify('Failed to remove counselor', 'error');
+    }
+  };
 
   // Handle Create Case
   const handleCreateCase = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const selectedCounselorObj = counselors.find((c) => c.id === newCaseData.counselorId);
       const res = await fetch('/api/admin/cases', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newCaseData,
-          counselorName: selectedCounselorObj ? selectedCounselorObj.name : null,
-        }),
+        body: JSON.stringify(newCaseData),
       });
 
       const data = await res.json();
@@ -340,13 +416,14 @@ export function AdminTeamManagementClient({
         phone: '',
         email: '',
         city: '',
-        counselorId: '',
+        counselorName: '',
         branch: 'Lahore (Head Office)',
         targetUniversity: '',
         targetProgram: '',
         intake: 'September 2025',
         degreeLevel: "Bachelor's Degree",
         status: 'APPLICATION_SUBMITTED',
+        bookingDone: true,
         offerLetterStatus: 'PENDING',
         emgsPaid: false,
         emgsRefNumber: '',
@@ -365,6 +442,9 @@ export function AdminTeamManagementClient({
     setSelectedCase(item);
     setUpdateFormData({
       status: item.status,
+      counselorName: item.counselorName || '',
+      bookingDone: item.bookingDone !== false,
+      reachedMalaysia: item.reachedMalaysia || item.status === 'PROCESS_COMPLETED',
       offerLetterStatus: item.offerLetterStatus || 'PENDING',
       emgsPaid: item.emgsPaid,
       emgsPaymentDate: item.emgsPaymentDate ? new Date(item.emgsPaymentDate).toISOString().split('T')[0] : '',
@@ -386,12 +466,16 @@ export function AdminTeamManagementClient({
     setIsSubmitting(true);
 
     try {
+      const finalStatus = updateFormData.reachedMalaysia ? 'PROCESS_COMPLETED' : updateFormData.status;
       const res = await fetch('/api/admin/cases', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: selectedCase.id,
-          status: updateFormData.status,
+          status: finalStatus,
+          counselorName: updateFormData.counselorName || null,
+          bookingDone: updateFormData.bookingDone,
+          reachedMalaysia: updateFormData.reachedMalaysia,
           offerLetterStatus: updateFormData.offerLetterStatus,
           emgsPaid: updateFormData.emgsPaid,
           emgsPaymentDate: updateFormData.emgsPaymentDate || null,
@@ -415,28 +499,6 @@ export function AdminTeamManagementClient({
       notify(err.message, 'error');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  // Quick One-Click Stage Update from table
-  const handleQuickStatusChange = async (caseId: string, newStatus: string) => {
-    try {
-      const res = await fetch('/api/admin/cases', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: caseId,
-          status: newStatus,
-          timelineNote: `Admin changed status to ${newStatus}`,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-
-      setCases((prev) => prev.map((c) => (c.id === caseId ? data.case : c)));
-      notify('Status updated successfully');
-    } catch (err: any) {
-      notify(err.message, 'error');
     }
   };
 
@@ -477,7 +539,6 @@ export function AdminTeamManagementClient({
       if (!res.ok) throw new Error(data.error || 'Failed to create branch referral');
 
       setReferrals((prev) => [data.referral, ...prev]);
-      // Update case in state as well
       setCases((prev) =>
         prev.map((c) => (c.id === referralFormData.caseId ? { ...c, branch: referralFormData.toBranch } : c))
       );
@@ -552,14 +613,14 @@ export function AdminTeamManagementClient({
       'Program',
       'Intake',
       'Status',
-      'Offer Letter',
+      'Booking Done (Case Closed)',
+      'Reached Malaysia',
       'EMGS Paid',
       'EMGS Ref',
       'VAL Progress %',
       'VAL Status',
       'Visa Status',
       'Travel Date',
-      'Case Closed Date',
     ];
 
     const rows = cases.map((c) => [
@@ -574,14 +635,14 @@ export function AdminTeamManagementClient({
       `"${c.targetProgram || ''}"`,
       `"${c.intake || ''}"`,
       `"${c.status || ''}"`,
-      `"${c.offerLetterStatus || ''}"`,
+      `"${c.bookingDone !== false ? 'YES' : 'NO'}"`,
+      `"${c.reachedMalaysia || c.status === 'PROCESS_COMPLETED' ? 'YES' : 'NO'}"`,
       `"${c.emgsPaid ? 'YES' : 'NO'}"`,
       `"${c.emgsRefNumber || ''}"`,
       `"${c.valPercentage || 0}%"`,
       `"${c.valStatus || ''}"`,
       `"${c.visaStatus || ''}"`,
       `"${c.travelDate ? new Date(c.travelDate).toLocaleDateString() : ''}"`,
-      `"${c.caseClosedDate ? new Date(c.caseClosedDate).toLocaleDateString() : ''}"`,
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
@@ -633,16 +694,16 @@ export function AdminTeamManagementClient({
           <div className="flex items-center gap-2 mb-1.5">
             <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400 text-slate-950 uppercase tracking-widest flex items-center gap-1">
               <ShieldCheck className="w-3 h-3" />
-              Admin Only Access
+              Admin Only Console
             </span>
-            <span className="text-xs text-slate-300 font-medium">Head Office: Lahore</span>
+            <span className="text-xs text-slate-300 font-medium">Head Office: Lahore &bull; 10 Regional Branches</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
             <Briefcase className="w-6 h-6 text-amber-400" />
             Team Management &amp; Case Tracking System
           </h1>
           <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-            Monitor closed admissions cases, assigned counselors, EMGS and VAL milestones, branch referrals across Pakistan, and direct partner universities.
+            Monitor cases under process, bookings closed by counselors, students reached Malaysia, EMGS &amp; VAL milestones, and regional branch referrals.
           </p>
         </div>
 
@@ -675,34 +736,46 @@ export function AdminTeamManagementClient({
         </div>
       </div>
 
-      {/* KPI Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-        {/* Total Cases */}
+      {/* KPI Stats Cards - Updated with exact requested labels & boxes */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4">
+        {/* Box 1: Total Cases Under Process */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Total Cases</span>
-            <Users className="w-4 h-4 text-blue-600" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">Cases Under Process</span>
+            <Clock className="w-4 h-4 text-blue-600" />
           </div>
-          <div className="text-2xl font-black text-slate-900">{stats.total}</div>
-          <div className="text-[10px] text-slate-400 mt-0.5">Active &amp; archived</div>
+          <div className="text-2xl font-black text-slate-900">{stats.inProcess}</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">Active applications</div>
         </div>
 
-        {/* Closed Cases */}
-        <div className="bg-white p-4 rounded-xl border border-emerald-200 bg-emerald-50/20 shadow-2xs">
-          <div className="flex items-center justify-between text-emerald-700 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Cases Closed</span>
-            <Award className="w-4 h-4 text-emerald-600" />
+        {/* Box 2: Cases Closed (Booking Confirmed / Process Started) */}
+        <div className="bg-white p-4 rounded-xl border border-indigo-200 bg-indigo-50/20 shadow-2xs">
+          <div className="flex items-center justify-between text-indigo-700 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider">Cases Closed</span>
+            <Award className="w-4 h-4 text-indigo-600" />
           </div>
-          <div className="text-2xl font-black text-emerald-700">{stats.closed}</div>
+          <div className="text-2xl font-black text-indigo-700">{stats.casesClosed}</div>
+          <div className="text-[10px] text-indigo-600 font-bold mt-0.5">
+            Bookings confirmed
+          </div>
+        </div>
+
+        {/* Box 3: Reached Malaysia / Process Completed (New Requested Card) */}
+        <div className="bg-white p-4 rounded-xl border border-emerald-300 bg-emerald-50/40 shadow-2xs">
+          <div className="flex items-center justify-between text-emerald-800 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider">Reached Malaysia</span>
+            <Plane className="w-4 h-4 text-emerald-600" />
+          </div>
+          <div className="text-2xl font-black text-emerald-700">{stats.reachedMalaysia}</div>
           <div className="text-[10px] text-emerald-600 font-bold mt-0.5">
-            {stats.successRate}% Success Ratio
+            Process completed
           </div>
         </div>
 
-        {/* EMGS Status */}
+        {/* Box 4: EMGS Status */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">EMGS Paid</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">EMGS Paid</span>
             <CheckCircle2 className="w-4 h-4 text-cyan-600" />
           </div>
           <div className="text-2xl font-black text-cyan-700">{stats.emgsPaid}</div>
@@ -711,30 +784,30 @@ export function AdminTeamManagementClient({
           </div>
         </div>
 
-        {/* VAL Status */}
+        {/* Box 5: VAL Status */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">VAL In Process</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">VAL In Process</span>
             <Clock className="w-4 h-4 text-purple-600" />
           </div>
           <div className="text-2xl font-black text-purple-700">{stats.valInProcess}</div>
           <div className="text-[10px] text-emerald-600 font-bold mt-0.5">{stats.valApproved} VALs approved</div>
         </div>
 
-        {/* Branch Referrals */}
+        {/* Box 6: Branch Referrals */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Referrals</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">Referrals</span>
             <ArrowRightLeft className="w-4 h-4 text-indigo-600" />
           </div>
           <div className="text-2xl font-black text-indigo-700">{stats.totalReferrals}</div>
           <div className="text-[10px] text-slate-400 mt-0.5">Across 10 branches</div>
         </div>
 
-        {/* Direct Panel Unis */}
+        {/* Box 7: Direct Panel Unis */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Direct Unis</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">Direct Unis</span>
             <Building2 className="w-4 h-4 text-amber-600" />
           </div>
           <div className="text-2xl font-black text-amber-700">{stats.directUnis}</div>
@@ -866,8 +939,8 @@ export function AdminTeamManagementClient({
                 >
                   <option value="ALL">All Counselors</option>
                   {counselors.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
+                    <option key={c.id} value={c.name}>
+                      {c.name} ({c.branch})
                     </option>
                   ))}
                 </select>
@@ -905,9 +978,9 @@ export function AdminTeamManagementClient({
                       <th className="p-3.5">Counselor &amp; Branch</th>
                       <th className="p-3.5">Target Uni &amp; Program</th>
                       <th className="p-3.5">Intake</th>
-                      <th className="p-3.5">Process Stage</th>
+                      <th className="p-3.5">Status &amp; Milestones</th>
                       <th className="p-3.5">EMGS Fee</th>
-                      <th className="p-3.5">VAL Status</th>
+                      <th className="p-3.5">VAL Progress</th>
                       <th className="p-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -964,15 +1037,22 @@ export function AdminTeamManagementClient({
                           </span>
                         </td>
 
-                        {/* Stage */}
+                        {/* Status & Badges */}
                         <td className="p-3.5">
                           <div className="space-y-1">
                             <div>{getStageBadge(item.status)}</div>
-                            {item.offerLetterStatus && item.offerLetterStatus !== 'PENDING' && (
-                              <div className="text-[9px] text-slate-500 font-semibold">
-                                Offer: {item.offerLetterStatus}
-                              </div>
-                            )}
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {item.bookingDone !== false && (
+                                <span className="bg-indigo-50 text-indigo-700 text-[9px] font-extrabold px-1.5 py-0.5 rounded border border-indigo-200">
+                                  ✓ Booking Confirmed
+                                </span>
+                              )}
+                              {(item.reachedMalaysia || item.status === 'PROCESS_COMPLETED') && (
+                                <span className="bg-emerald-100 text-emerald-800 text-[9px] font-extrabold px-1.5 py-0.5 rounded border border-emerald-300">
+                                  ✈ Reached Malaysia
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
 
@@ -1066,7 +1146,7 @@ export function AdminTeamManagementClient({
                 Inter-Branch Student Referral Registry
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Full transparency on cases referred between Meezab Head Office and regional branches.
+                Full transparency on cases referred between Meezab Head Office (Lahore) and regional branches across Pakistan.
               </p>
             </div>
             <button
@@ -1127,24 +1207,51 @@ export function AdminTeamManagementClient({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 3: COUNSELOR PERFORMANCE */}
+      {/* TAB 3: COUNSELOR PERFORMANCE (ADMIN-MANAGED COUNSELORS) */}
       {/* ========================================================================= */}
       {activeTab === 'counselors' && (
         <div className="space-y-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
-            <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-              <Users className="w-5 h-5 text-emerald-600" />
-              Counselors Operational Performance (No Financial Data)
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Review case volume, successful closures, active pipeline workload, and processing velocity per team counselor.
-            </p>
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <Users className="w-5 h-5 text-emerald-600" />
+                Tracked Counselors &amp; Operational Performance
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Add and track counselors of your choice. Monitor cases booked, active processing workload, and students reached Malaysia (No finances).
+              </p>
+            </div>
+
+            {/* Admin Add Counselor Button */}
+            <button
+              onClick={() => setIsAddCounselorModalOpen(true)}
+              className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>+ Add Counselor to Team</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {counselorPerformance.map((c) => {
-              const conversionRate = c.total > 0 ? Math.round((c.closed / c.total) * 100) : 0;
-              return (
+          {counselors.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+                <Users className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-800">No counselors added to tracking yet</h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                Aap apni marzi se jin counselors ko track karna chahein, unko yahan add karein.
+              </p>
+              <button
+                onClick={() => setIsAddCounselorModalOpen(true)}
+                className="mt-2 inline-flex items-center gap-1.5 bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-xl"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Add Counselor Now</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {counselorPerformance.map((c) => (
                 <div key={c.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
                   {/* Counselor Info */}
                   <div className="flex items-start justify-between">
@@ -1154,27 +1261,39 @@ export function AdminTeamManagementClient({
                       </div>
                       <div>
                         <div className="font-extrabold text-slate-900 text-sm">{c.name}</div>
-                        <div className="text-[11px] text-slate-400 font-mono">{c.email}</div>
+                        <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3 h-3 text-slate-400" />
+                          <span>{c.branch}</span>
+                        </div>
                       </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700">
-                      Counselor
-                    </span>
+                    
+                    {/* Delete Counselor Action */}
+                    <button
+                      onClick={() => handleRemoveCounselor(c.id, c.name)}
+                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                      title="Remove counselor from tracking"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
 
                   {/* Metrics Grid */}
                   <div className="grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-xl text-center">
                     <div>
-                      <div className="text-[10px] uppercase font-bold text-slate-400">Total Cases</div>
-                      <div className="text-lg font-black text-slate-800">{c.total}</div>
+                      <div className="text-[9px] uppercase font-bold text-slate-400">Cases Closed</div>
+                      <div className="text-base font-black text-indigo-700">{c.totalBookings}</div>
+                      <div className="text-[8px] text-slate-400">Bookings</div>
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase font-bold text-slate-400">In Pipeline</div>
-                      <div className="text-lg font-black text-amber-600">{c.inProgress}</div>
+                      <div className="text-[9px] uppercase font-bold text-slate-400">Under Process</div>
+                      <div className="text-base font-black text-amber-600">{c.underProcess}</div>
+                      <div className="text-[8px] text-slate-400">Active</div>
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase font-bold text-slate-400">Closed (Visa)</div>
-                      <div className="text-lg font-black text-emerald-600">{c.closed}</div>
+                      <div className="text-[9px] uppercase font-bold text-slate-400">Reached MY</div>
+                      <div className="text-base font-black text-emerald-600">{c.reachedMalaysia}</div>
+                      <div className="text-[8px] text-slate-400">Completed</div>
                     </div>
                   </div>
 
@@ -1188,16 +1307,12 @@ export function AdminTeamManagementClient({
                       <span>VAL Advanced (&ge;35%):</span>
                       <span className="font-bold text-slate-900">{c.valCount}</span>
                     </div>
-                    <div className="flex justify-between pt-1 border-t border-slate-100 font-bold">
-                      <span>Conversion Ratio:</span>
-                      <span className="text-emerald-700">{conversionRate}%</span>
-                    </div>
                   </div>
 
                   {/* Action filter */}
                   <button
                     onClick={() => {
-                      setFilterCounselor(c.id);
+                      setFilterCounselor(c.name);
                       setActiveTab('cases');
                     }}
                     className="w-full text-center py-2 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 rounded-xl transition-colors"
@@ -1205,9 +1320,9 @@ export function AdminTeamManagementClient({
                     View {c.name}&apos;s Cases &rarr;
                   </button>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1302,6 +1417,96 @@ export function AdminTeamManagementClient({
       )}
 
       {/* ========================================================================= */}
+      {/* MODAL: ADD COUNSELOR TO TRACKING (ADMIN DECIDES WHO TO ADD) */}
+      {/* ========================================================================= */}
+      {isAddCounselorModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden my-8">
+            <div className="bg-[#08182b] px-6 py-4 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2 font-bold text-sm">
+                <UserPlus className="w-4 h-4 text-amber-400" />
+                <span>Add Counselor to Team Management</span>
+              </div>
+              <button
+                onClick={() => setIsAddCounselorModalOpen(false)}
+                className="text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCounselor} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Counselor Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={newCounselorData.name}
+                  onChange={(e) => setNewCounselorData({ ...newCounselorData, name: e.target.value })}
+                  placeholder="e.g. Sir Asim, Miss Sana, Usman Ali"
+                  className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 font-bold focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Branch Location *</label>
+                <select
+                  value={newCounselorData.branch}
+                  onChange={(e) => setNewCounselorData({ ...newCounselorData, branch: e.target.value })}
+                  className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 bg-white font-bold"
+                >
+                  {PAKISTAN_BRANCHES.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Phone / WhatsApp (Optional)</label>
+                <input
+                  type="text"
+                  value={newCounselorData.phone}
+                  onChange={(e) => setNewCounselorData({ ...newCounselorData, phone: e.target.value })}
+                  placeholder="e.g. 03001234567"
+                  className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Email (Optional)</label>
+                <input
+                  type="email"
+                  value={newCounselorData.email}
+                  onChange={(e) => setNewCounselorData({ ...newCounselorData, email: e.target.value })}
+                  placeholder="e.g. counselor@meezab.com"
+                  className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddCounselorModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Adding...' : 'Add Counselor'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
       {/* MODAL 1: REGISTER NEW STUDENT CASE */}
       {/* ========================================================================= */}
       {isNewCaseModalOpen && (
@@ -1368,20 +1573,34 @@ export function AdminTeamManagementClient({
                   />
                 </div>
 
+                {/* Counselor Selection (Choose from Tracked OR Type Own) */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Assigned Counselor *</label>
-                  <select
-                    value={newCaseData.counselorId}
-                    onChange={(e) => setNewCaseData({ ...newCaseData, counselorId: e.target.value })}
-                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 bg-white font-bold text-slate-800 focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
-                  >
-                    <option value="">Select Counselor</option>
-                    {counselors.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} ({c.email})
-                      </option>
-                    ))}
-                  </select>
+                  <div className="space-y-1.5">
+                    {counselors.length > 0 && (
+                      <select
+                        onChange={(e) => {
+                          if (e.target.value) setNewCaseData({ ...newCaseData, counselorName: e.target.value });
+                        }}
+                        className="w-full text-xs border border-slate-200 rounded-xl px-3 py-1.5 bg-slate-50 font-medium"
+                      >
+                        <option value="">-- Select from Tracked Counselors --</option>
+                        {counselors.map((c) => (
+                          <option key={c.id} value={c.name}>
+                            {c.name} ({c.branch})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <input
+                      type="text"
+                      required
+                      value={newCaseData.counselorName}
+                      onChange={(e) => setNewCaseData({ ...newCaseData, counselorName: e.target.value })}
+                      placeholder="Or enter counselor name..."
+                      className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-600 focus:outline-hidden font-bold"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -1512,7 +1731,7 @@ export function AdminTeamManagementClient({
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 2: UPDATE CASE STAGE / EMGS / VAL / VISA */}
+      {/* MODAL 2: UPDATE CASE STAGE / EMGS / VAL / REACHED MALAYSIA */}
       {/* ========================================================================= */}
       {isUpdateModalOpen && selectedCase && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
@@ -1552,6 +1771,35 @@ export function AdminTeamManagementClient({
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Status Toggles: Case Closed (Booking Confirmed) & Reached Malaysia */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <label className="flex items-center gap-2.5 cursor-pointer bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                  <input
+                    type="checkbox"
+                    checked={updateFormData.bookingDone}
+                    onChange={(e) => setUpdateFormData({ ...updateFormData, bookingDone: e.target.checked })}
+                    className="w-4 h-4 text-indigo-600 rounded"
+                  />
+                  <div>
+                    <span className="block text-xs font-extrabold text-slate-900">Case Closed (Booking Done)</span>
+                    <span className="block text-[10px] text-slate-500">Counselor has closed deal &amp; processing started</span>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-2.5 cursor-pointer bg-white p-3 rounded-xl border border-emerald-200 shadow-2xs">
+                  <input
+                    type="checkbox"
+                    checked={updateFormData.reachedMalaysia}
+                    onChange={(e) => setUpdateFormData({ ...updateFormData, reachedMalaysia: e.target.checked, status: e.target.checked ? 'PROCESS_COMPLETED' : updateFormData.status })}
+                    className="w-4 h-4 text-emerald-600 rounded"
+                  />
+                  <div>
+                    <span className="block text-xs font-extrabold text-emerald-900">Reached Malaysia</span>
+                    <span className="block text-[10px] text-emerald-600 font-medium">Final process completed / enrolled in Malaysia</span>
+                  </div>
+                </label>
               </div>
 
               {/* Offer Letter & EMGS Section */}

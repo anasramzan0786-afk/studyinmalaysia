@@ -139,7 +139,9 @@ export async function POST(request: Request) {
         visaStatus: visaStatus || 'NOT_APPLIED',
         visaDate: visaDate ? new Date(visaDate) : null,
         travelDate: travelDate ? new Date(travelDate) : null,
-        caseClosedDate: status === 'CASE_CLOSED' ? (caseClosedDate ? new Date(caseClosedDate) : new Date()) : null,
+        caseClosedDate: status === 'PROCESS_COMPLETED' ? (caseClosedDate ? new Date(caseClosedDate) : new Date()) : null,
+        bookingDone: body.bookingDone !== undefined ? Boolean(body.bookingDone) : true,
+        reachedMalaysia: Boolean(body.reachedMalaysia || status === 'PROCESS_COMPLETED'),
         notes: notes || null,
       },
     });
@@ -227,8 +229,17 @@ export async function PATCH(request: Request) {
     // Milestones
     if (updates.status !== undefined) {
       patchData.status = updates.status;
-      if (updates.status === 'CASE_CLOSED' && !currentCase.caseClosedDate) {
-        patchData.caseClosedDate = new Date();
+      if (updates.status === 'PROCESS_COMPLETED') {
+        patchData.reachedMalaysia = true;
+        if (!currentCase.caseClosedDate) patchData.caseClosedDate = new Date();
+      }
+    }
+    if (updates.bookingDone !== undefined) patchData.bookingDone = Boolean(updates.bookingDone);
+    if (updates.reachedMalaysia !== undefined) {
+      patchData.reachedMalaysia = Boolean(updates.reachedMalaysia);
+      if (updates.reachedMalaysia) {
+        patchData.status = 'PROCESS_COMPLETED';
+        if (!currentCase.caseClosedDate) patchData.caseClosedDate = new Date();
       }
     }
     if (updates.offerLetterStatus !== undefined) patchData.offerLetterStatus = updates.offerLetterStatus;

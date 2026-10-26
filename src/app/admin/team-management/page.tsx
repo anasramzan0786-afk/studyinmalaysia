@@ -30,15 +30,8 @@ export default async function AdminTeamManagementPage() {
     });
   }
 
-  // 3. Fetch Team Counselors
-  const counselors = await db.user.findMany({
-    where: { role: 'COUNSELOR', active: true },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-    },
+  // 3. Fetch Tracked Counselors (Admin-managed custom list)
+  const counselors = await db.trackedCounselor.findMany({
     orderBy: { name: 'asc' },
   });
 

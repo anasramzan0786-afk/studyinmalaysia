@@ -172,6 +172,8 @@ model StudentCase {
   
   travelDate        DateTime?
   caseClosedDate    DateTime?
+  bookingDone       Boolean           @default(true) // Case closed / booking started by counselor
+  reachedMalaysia   Boolean           @default(false) // Final process completed / reached Malaysia
   
   notes             String?
   
@@ -180,6 +182,17 @@ model StudentCase {
   
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
+}
+
+model TrackedCounselor {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  email     String?
+  phone     String?
+  branch    String   @default("Lahore (Head Office)")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model BranchReferral {
@@ -225,5 +238,6 @@ model DirectPanelUniversity {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
+
 
 
