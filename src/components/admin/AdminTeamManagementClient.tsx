@@ -72,6 +72,7 @@ interface ReferralItem {
     targetProgram: string;
     status: string;
     counselorName: string | null;
+    bookingDone: boolean;
   };
 }
 
@@ -153,12 +154,14 @@ export function AdminTeamManagementClient({
   // Modals state
   const [isNewCaseModalOpen, setIsNewCaseModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isEditCaseModalOpen, setIsEditCaseModalOpen] = useState(false);
   const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
   const [isPanelModalOpen, setIsPanelModalOpen] = useState(false);
+  const [isEditPanelModalOpen, setIsEditPanelModalOpen] = useState(false);
   const [isAddCounselorModalOpen, setIsAddCounselorModalOpen] = useState(false);
   const [selectedCase, setSelectedCase] = useState<StudentCaseItem | null>(null);
 
-  // Form states for New Case
+  // Form states for New Case (Simplified student details: passport/EMGS optional)
   const [newCaseData, setNewCaseData] = useState({
     studentName: '',
     passportNumber: '',
@@ -175,12 +178,29 @@ export function AdminTeamManagementClient({
     bookingDone: true,
     offerLetterStatus: 'PENDING',
     emgsPaid: false,
-    emgsRefNumber: '',
     valPercentage: 0,
     notes: '',
   });
 
-  // Form states for Updating Case
+  // Form states for Editing Full Case Details (Editable afterwards!)
+  const [editingCaseData, setEditingCaseData] = useState({
+    id: '',
+    studentName: '',
+    passportNumber: '',
+    phone: '',
+    email: '',
+    city: '',
+    counselorName: '',
+    branch: 'Lahore (Head Office)',
+    targetUniversity: '',
+    targetProgram: '',
+    intake: 'September 2025',
+    degreeLevel: "Bachelor's Degree",
+    bookingDone: true,
+    notes: '',
+  });
+
+  // Form states for Updating Case Progress (Milestones)
   const [updateFormData, setUpdateFormData] = useState({
     status: '',
     counselorName: '',
@@ -198,9 +218,26 @@ export function AdminTeamManagementClient({
     timelineNote: '',
   });
 
-  // Form states for Branch Referral
+  // Form states for Branch Referral (Supports both Existing Case AND Direct Student Referral)
+  const [referralMode, setReferralMode] = useState<'case' | 'direct'>('direct');
   const [referralFormData, setReferralFormData] = useState({
     caseId: '',
+    fromBranch: 'Lahore (Head Office)',
+    toBranch: 'Islamabad',
+    referredBy: '',
+    handledBy: '',
+    reason: '',
+    notes: '',
+  });
+
+  const [directReferralData, setDirectReferralData] = useState({
+    studentName: '',
+    phone: '',
+    email: '',
+    city: '',
+    targetUniversity: '',
+    targetProgram: '',
+    intake: 'September 2025',
     fromBranch: 'Lahore (Head Office)',
     toBranch: 'Islamabad',
     referredBy: '',
@@ -217,7 +254,8 @@ export function AdminTeamManagementClient({
     email: '',
   });
 
-  // Form states for Panel University
+  // Form states for Panel University (Add & Edit)
+  const [panelSearchQuery, setPanelSearchQuery] = useState('');
   const [newUniData, setNewUniData] = useState({
     name: '',
     shortName: '',
@@ -230,6 +268,8 @@ export function AdminTeamManagementClient({
     supportedIntakes: '',
     specialNotes: '',
   });
+
+  const [editingUniData, setEditingUniData] = useState<DirectPanelUniItem | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -426,7 +466,6 @@ export function AdminTeamManagementClient({
         bookingDone: true,
         offerLetterStatus: 'PENDING',
         emgsPaid: false,
-        emgsRefNumber: '',
         valPercentage: 0,
         notes: '',
       });
@@ -437,7 +476,84 @@ export function AdminTeamManagementClient({
     }
   };
 
-  // Open Update Modal for a case
+  // Open Edit Details Modal for a student case (Editable afterwards!)
+  const openEditCaseDetailsModal = (item: StudentCaseItem) => {
+    setSelectedCase(item);
+    setEditingCaseData({
+      id: item.id,
+      studentName: item.studentName,
+      passportNumber: item.passportNumber || '',
+      phone: item.phone,
+      email: item.email || '',
+      city: item.city || '',
+      counselorName: item.counselorName || '',
+      branch: item.branch,
+      targetUniversity: item.targetUniversity,
+      targetProgram: item.targetProgram,
+      intake: item.intake,
+      degreeLevel: item.degreeLevel || "Bachelor's Degree",
+      bookingDone: item.bookingDone !== false,
+      notes: item.notes || '',
+    });
+    setIsEditCaseModalOpen(true);
+  };
+
+  // Handle Save Case Details (Full student details editing)
+  const handleSaveCaseDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCaseData.id) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/admin/cases', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingCaseData.id,
+          studentName: editingCaseData.studentName.trim(),
+          phone: editingCaseData.phone.trim(),
+          email: editingCaseData.email ? editingCaseData.email.trim().toLowerCase() : null,
+          passportNumber: editingCaseData.passportNumber ? editingCaseData.passportNumber.trim().toUpperCase() : null,
+          city: editingCaseData.city ? editingCaseData.city.trim() : null,
+          counselorName: editingCaseData.counselorName ? editingCaseData.counselorName.trim() : null,
+          branch: editingCaseData.branch,
+          targetUniversity: editingCaseData.targetUniversity.trim(),
+          targetProgram: editingCaseData.targetProgram.trim(),
+          intake: editingCaseData.intake.trim(),
+          degreeLevel: editingCaseData.degreeLevel,
+          bookingDone: editingCaseData.bookingDone,
+          notes: editingCaseData.notes || null,
+          timelineNote: 'Student details & academic program edited by Admin',
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update case details');
+
+      setCases((prev) => prev.map((c) => (c.id === editingCaseData.id ? data.case : c)));
+      notify(`Case details updated for ${data.case.studentName}`);
+      setIsEditCaseModalOpen(false);
+    } catch (err: any) {
+      notify(err.message, 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle Delete Case
+  const handleDeleteCase = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete the student case for "${name}"? This action cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/admin/cases?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setCases((prev) => prev.filter((c) => c.id !== id));
+        notify(`Case for "${name}" deleted successfully`);
+      }
+    } catch {
+      notify('Failed to delete student case', 'error');
+    }
+  };
+
+  // Open Update Modal for a case (milestones & stages)
   const openUpdateModal = (item: StudentCaseItem) => {
     setSelectedCase(item);
     setUpdateFormData({
@@ -524,28 +640,52 @@ export function AdminTeamManagementClient({
     }
   };
 
-  // Handle Branch Referral Submit
+  // Handle Branch Referral Submit (Existing Case OR Direct Student Referral)
   const handleCreateReferral = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      const payload = referralMode === 'case' ? referralFormData : directReferralData;
       const res = await fetch('/api/admin/referrals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(referralFormData),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create branch referral');
 
       setReferrals((prev) => [data.referral, ...prev]);
-      setCases((prev) =>
-        prev.map((c) => (c.id === referralFormData.caseId ? { ...c, branch: referralFormData.toBranch } : c))
-      );
-      notify(`Case successfully referred to ${referralFormData.toBranch}`);
+
+      if (data.newCase) {
+        setCases((prev) => [data.newCase, ...prev]);
+      } else if (referralFormData.caseId) {
+        setCases((prev) =>
+          prev.map((c) => (c.id === referralFormData.caseId ? { ...c, branch: referralFormData.toBranch } : c))
+        );
+      }
+
+      notify(`Student successfully referred to ${payload.toBranch}!`);
       setIsReferralModalOpen(false);
+
+      // Reset referral forms
       setReferralFormData({
         caseId: '',
+        fromBranch: 'Lahore (Head Office)',
+        toBranch: 'Islamabad',
+        referredBy: '',
+        handledBy: '',
+        reason: '',
+        notes: '',
+      });
+      setDirectReferralData({
+        studentName: '',
+        phone: '',
+        email: '',
+        city: '',
+        targetUniversity: '',
+        targetProgram: '',
+        intake: 'September 2025',
         fromBranch: 'Lahore (Head Office)',
         toBranch: 'Islamabad',
         referredBy: '',
@@ -557,6 +697,78 @@ export function AdminTeamManagementClient({
       notify(err.message, 'error');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Handle Delete Referral
+  const handleDeleteReferral = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this referral record?')) return;
+    try {
+      const res = await fetch(`/api/admin/referrals?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setReferrals((prev) => prev.filter((r) => r.id !== id));
+        notify('Referral record deleted');
+      }
+    } catch {
+      notify('Failed to delete referral', 'error');
+    }
+  };
+
+  // Open Edit Panel University Modal
+  const openEditUniModal = (uni: DirectPanelUniItem) => {
+    setEditingUniData({ ...uni });
+    setIsEditPanelModalOpen(true);
+  };
+
+  // Handle Update Panel University Submit
+  const handleUpdatePanelUni = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUniData) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/admin/panel-universities', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingUniData.id,
+          name: editingUniData.name.trim(),
+          shortName: editingUniData.shortName ? editingUniData.shortName.trim() : null,
+          contractType: editingUniData.contractType,
+          contractStatus: editingUniData.contractStatus,
+          directPortalUrl: editingUniData.directPortalUrl ? editingUniData.directPortalUrl.trim() : null,
+          supportedIntakes: editingUniData.supportedIntakes ? editingUniData.supportedIntakes.trim() : null,
+          focalPersonName: editingUniData.focalPersonName ? editingUniData.focalPersonName.trim() : null,
+          focalPersonEmail: editingUniData.focalPersonEmail ? editingUniData.focalPersonEmail.trim() : null,
+          focalPersonPhone: editingUniData.focalPersonPhone ? editingUniData.focalPersonPhone.trim() : null,
+          specialNotes: editingUniData.specialNotes || null,
+          active: editingUniData.active,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update panel university');
+
+      setPanelUnis((prev) => prev.map((u) => (u.id === editingUniData.id ? data.university : u)));
+      notify(`${data.university.name} updated successfully!`);
+      setIsEditPanelModalOpen(false);
+    } catch (err: any) {
+      notify(err.message, 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle Delete Panel University
+  const handleDeletePanelUni = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to remove "${name}" from Direct Panel Universities?`)) return;
+    try {
+      const res = await fetch(`/api/admin/panel-universities?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setPanelUnis((prev) => prev.filter((u) => u.id !== id));
+        notify(`Removed "${name}" from panel universities`);
+      }
+    } catch {
+      notify('Failed to delete university', 'error');
     }
   };
 
@@ -990,14 +1202,15 @@ export function AdminTeamManagementClient({
                         {/* Student */}
                         <td className="p-3.5">
                           <div className="font-bold text-slate-900 text-sm">{item.studentName}</div>
-                          <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
+                          <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-[11px] text-slate-500">
                             <span>{item.phone}</span>
-                            {item.passportNumber && (
-                              <span className="font-mono bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded text-[10px] font-bold">
-                                {item.passportNumber}
-                              </span>
-                            )}
+                            {item.email && <span className="text-slate-400">&bull; {item.email}</span>}
                           </div>
+                          {item.passportNumber && (
+                            <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                              Passport: {item.passportNumber}
+                            </div>
+                          )}
                           {item.city && (
                             <div className="text-[10px] text-slate-400 mt-0.5">{item.city}</div>
                           )}
@@ -1062,7 +1275,7 @@ export function AdminTeamManagementClient({
                             type="button"
                             onClick={() => handleToggleEmgs(item)}
                             title="Click to toggle EMGS payment"
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold transition-all ${
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold transition-all cursor-pointer ${
                               item.emgsPaid
                                 ? 'bg-cyan-100 text-cyan-800 hover:bg-cyan-200'
                                 : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
@@ -1071,11 +1284,6 @@ export function AdminTeamManagementClient({
                             <CheckCircle2 className="w-3 h-3" />
                             <span>{item.emgsPaid ? 'Paid' : 'Pending'}</span>
                           </button>
-                          {item.emgsRefNumber && (
-                            <div className="text-[9px] text-slate-400 mt-0.5 font-mono">
-                              Ref: {item.emgsRefNumber}
-                            </div>
-                          )}
                         </td>
 
                         {/* VAL Progress */}
@@ -1115,13 +1323,33 @@ export function AdminTeamManagementClient({
                             <Phone className="w-4 h-4" />
                           </a>
 
-                          {/* Update Modal */}
+                          {/* Edit Full Case Details Modal (Editable afterwards!) */}
+                          <button
+                            onClick={() => openEditCaseDetailsModal(item)}
+                            className="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-blue-200 transition-all active:scale-95"
+                            title="Edit Student Name, Phone, Target Uni, Program, Intake, Counselor..."
+                          >
+                            <Edit3 className="w-3 h-3 text-blue-600" />
+                            <span>Edit Case</span>
+                          </button>
+
+                          {/* Stage Progress Modal */}
                           <button
                             onClick={() => openUpdateModal(item)}
-                            className="inline-flex items-center gap-1 bg-[#08182b] hover:bg-blue-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg shadow-2xs transition-all active:scale-95"
+                            className="inline-flex items-center gap-1 bg-[#08182b] hover:bg-[#143d6b] text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg shadow-2xs transition-all active:scale-95"
+                            title="Update Milestones, VAL %, EMGS, Stage"
                           >
-                            <Edit3 className="w-3 h-3" />
-                            <span>Update</span>
+                            <Clock className="w-3 h-3 text-cyan-400" />
+                            <span>Progress</span>
+                          </button>
+
+                          {/* Delete Case */}
+                          <button
+                            onClick={() => handleDeleteCase(item.id, item.studentName)}
+                            className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg inline-flex items-center transition-colors"
+                            title="Delete this student case"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </td>
                       </tr>
@@ -1168,23 +1396,39 @@ export function AdminTeamManagementClient({
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
                     <tr>
-                      <th className="p-3.5">Student</th>
+                      <th className="p-3.5">Student &amp; Target</th>
+                      <th className="p-3.5">Type</th>
                       <th className="p-3.5">Referred From</th>
                       <th className="p-3.5">Destination Branch</th>
                       <th className="p-3.5">Referred By</th>
                       <th className="p-3.5">Handled At Destination</th>
                       <th className="p-3.5">Reason &amp; Notes</th>
                       <th className="p-3.5">Status</th>
+                      <th className="p-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {referrals.map((ref) => (
                       <tr key={ref.id} className="hover:bg-slate-50/80">
                         <td className="p-3.5 font-bold text-slate-900">
-                          {ref.studentCase?.studentName || 'Student Case'}
+                          <div>{ref.studentCase?.studentName || 'Student Case'}</div>
+                          <div className="text-[11px] text-slate-500 font-normal">
+                            {ref.studentCase?.phone}
+                          </div>
                           <div className="text-[10px] text-slate-400 font-normal">
                             {ref.studentCase?.targetUniversity}
                           </div>
+                        </td>
+                        <td className="p-3.5">
+                          {ref.studentCase?.bookingDone === false ? (
+                            <span className="bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-extrabold px-2 py-0.5 rounded-md">
+                              Walk-in / Inquiry
+                            </span>
+                          ) : (
+                            <span className="bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-extrabold px-2 py-0.5 rounded-md">
+                              Active Case
+                            </span>
+                          )}
                         </td>
                         <td className="p-3.5 text-slate-700 font-medium">{ref.fromBranch}</td>
                         <td className="p-3.5 font-bold text-blue-700">{ref.toBranch}</td>
@@ -1195,6 +1439,15 @@ export function AdminTeamManagementClient({
                           <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">
                             {ref.status}
                           </span>
+                        </td>
+                        <td className="p-3.5 text-right">
+                          <button
+                            onClick={() => handleDeleteReferral(ref.id)}
+                            className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg inline-flex items-center transition-colors"
+                            title="Delete this referral"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -1327,31 +1580,53 @@ export function AdminTeamManagementClient({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 4: DIRECT PANEL UNIVERSITIES */}
+      {/* TAB 4: DIRECT PANEL UNIVERSITIES (EDITABLE & MANAGEABLE) */}
       {/* ========================================================================= */}
       {activeTab === 'panel' && (
         <div className="space-y-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-cyan-600" />
                 Direct Panel Universities (Official Representations)
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Malaysian universities with direct institutional agreements, representative codes, and dedicated admission desks.
+                Malaysian universities with direct institutional agreements. Click &quot;Edit&quot; on any university to update its details, contacts, or status.
               </p>
             </div>
-            <button
-              onClick={() => setIsPanelModalOpen(true)}
-              className="inline-flex items-center gap-1.5 bg-[#08182b] hover:bg-[#143d6b] text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs"
-            >
-              <Plus className="w-4 h-4 text-cyan-400" />
-              <span>Add Direct University</span>
-            </button>
+            <div className="flex items-center gap-2.5">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search universities..."
+                  value={panelSearchQuery}
+                  onChange={(e) => setPanelSearchQuery(e.target.value)}
+                  className="text-xs pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-600 w-44 md:w-56"
+                />
+              </div>
+              <button
+                onClick={() => setIsPanelModalOpen(true)}
+                className="inline-flex items-center gap-1.5 bg-[#08182b] hover:bg-[#143d6b] text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs shrink-0 cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-cyan-400" />
+                <span>Add University</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {panelUnis.map((uni) => (
+            {panelUnis
+              .filter((uni) => {
+                if (!panelSearchQuery.trim()) return true;
+                const q = panelSearchQuery.toLowerCase();
+                return (
+                  uni.name.toLowerCase().includes(q) ||
+                  (uni.shortName && uni.shortName.toLowerCase().includes(q)) ||
+                  (uni.contractType && uni.contractType.toLowerCase().includes(q))
+                );
+              })
+              .map((uni) => (
               <div key={uni.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-3 flex flex-col justify-between">
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
@@ -1397,19 +1672,44 @@ export function AdminTeamManagementClient({
                   )}
                 </div>
 
-                {uni.directPortalUrl && (
-                  <div className="pt-3 border-t border-slate-100">
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  {uni.directPortalUrl ? (
                     <a
                       href={uni.directPortalUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800"
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 truncate"
                     >
-                      <span>Open Direct Admissions Portal</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Admissions Portal</span>
+                      <ExternalLink className="w-3 h-3 shrink-0" />
                     </a>
+                  ) : (
+                    <span className="text-[11px] text-slate-400">Direct Portal N/A</span>
+                  )}
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Edit University Button */}
+                    <button
+                      type="button"
+                      onClick={() => openEditUniModal(uni)}
+                      className="inline-flex items-center gap-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+                      title="Edit University Details"
+                    >
+                      <Edit3 className="w-3 h-3 text-blue-600" />
+                      <span>Edit</span>
+                    </button>
+
+                    {/* Delete University Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePanelUni(uni.id, uni.name)}
+                      className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                      title="Delete this university from list"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                )}
+                </div>
               </div>
             ))}
           </div>
@@ -1540,17 +1840,6 @@ export function AdminTeamManagementClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Passport Number</label>
-                  <input
-                    type="text"
-                    value={newCaseData.passportNumber}
-                    onChange={(e) => setNewCaseData({ ...newCaseData, passportNumber: e.target.value })}
-                    placeholder="e.g. AB1234567"
-                    className="w-full text-xs font-mono border border-slate-300 rounded-xl px-3 py-2.5 uppercase focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
-                  />
-                </div>
-
-                <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">WhatsApp / Phone *</label>
                   <input
                     type="text"
@@ -1563,7 +1852,7 @@ export function AdminTeamManagementClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Email Address (Optional)</label>
                   <input
                     type="email"
                     value={newCaseData.email}
@@ -1573,18 +1862,33 @@ export function AdminTeamManagementClient({
                   />
                 </div>
 
-                {/* Counselor Selection (Choose from Tracked OR Type Own) */}
                 <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Origin Branch *</label>
+                  <select
+                    value={newCaseData.branch}
+                    onChange={(e) => setNewCaseData({ ...newCaseData, branch: e.target.value })}
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 bg-white font-bold text-slate-800 focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+                  >
+                    {PAKISTAN_BRANCHES.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Counselor Selection */}
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 mb-1">Assigned Counselor *</label>
-                  <div className="space-y-1.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {counselors.length > 0 && (
                       <select
                         onChange={(e) => {
                           if (e.target.value) setNewCaseData({ ...newCaseData, counselorName: e.target.value });
                         }}
-                        className="w-full text-xs border border-slate-200 rounded-xl px-3 py-1.5 bg-slate-50 font-medium"
+                        className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-medium"
                       >
-                        <option value="">-- Select from Tracked Counselors --</option>
+                        <option value="">-- Select Tracked Counselor --</option>
                         {counselors.map((c) => (
                           <option key={c.id} value={c.name}>
                             {c.name} ({c.branch})
@@ -1601,21 +1905,6 @@ export function AdminTeamManagementClient({
                       className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-600 focus:outline-hidden font-bold"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Origin Branch *</label>
-                  <select
-                    value={newCaseData.branch}
-                    onChange={(e) => setNewCaseData({ ...newCaseData, branch: e.target.value })}
-                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 bg-white font-bold text-slate-800 focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
-                  >
-                    {PAKISTAN_BRANCHES.map((b) => (
-                      <option key={b} value={b}>
-                        {b}
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
                 <div className="sm:col-span-2">
@@ -1672,28 +1961,24 @@ export function AdminTeamManagementClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Initial Process Stage</label>
-                  <select
-                    value={newCaseData.status}
-                    onChange={(e) => setNewCaseData({ ...newCaseData, status: e.target.value })}
-                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 bg-white font-bold focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
-                  >
-                    {CASE_STAGES.map((s) => (
-                      <option key={s.value} value={s.value}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Passport Number (Optional)</label>
+                  <input
+                    type="text"
+                    value={newCaseData.passportNumber}
+                    onChange={(e) => setNewCaseData({ ...newCaseData, passportNumber: e.target.value })}
+                    placeholder="Optional (can be added later)"
+                    className="w-full text-xs font-mono border border-slate-300 rounded-xl px-3 py-2 uppercase focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">City / Region</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">City / Region (Optional)</label>
                   <input
                     type="text"
                     value={newCaseData.city}
                     onChange={(e) => setNewCaseData({ ...newCaseData, city: e.target.value })}
                     placeholder="e.g. Lahore, Rawalpindi"
-                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
                   />
                 </div>
               </div>
@@ -1958,7 +2243,7 @@ export function AdminTeamManagementClient({
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 3: INITIATE BRANCH REFERRAL */}
+      {/* MODAL 3: INITIATE BRANCH REFERRAL (SUPPORTS DIRECT STUDENT & EXISTING CASES) */}
       {/* ========================================================================= */}
       {isReferralModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
@@ -1966,7 +2251,7 @@ export function AdminTeamManagementClient({
             <div className="bg-[#08182b] px-6 py-4 text-white flex items-center justify-between">
               <div className="flex items-center gap-2 font-bold text-sm">
                 <ArrowRightLeft className="w-4 h-4 text-amber-400" />
-                <span>Refer Student Case to Another Branch</span>
+                <span>Refer Student to Another Branch</span>
               </div>
               <button
                 onClick={() => setIsReferralModalOpen(false)}
@@ -1976,38 +2261,177 @@ export function AdminTeamManagementClient({
               </button>
             </div>
 
-            <form onSubmit={handleCreateReferral} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Select Student Case *</label>
-                <select
-                  required
-                  value={referralFormData.caseId}
-                  onChange={(e) => {
-                    const c = cases.find((item) => item.id === e.target.value);
-                    setReferralFormData({
-                      ...referralFormData,
-                      caseId: e.target.value,
-                      fromBranch: c ? c.branch : 'Lahore (Head Office)',
-                      referredBy: c ? c.counselorName || 'Head Office Admin' : 'Admin',
-                    });
-                  }}
-                  className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 bg-white font-bold"
+            {/* Referral Mode Tabs */}
+            <div className="p-6 pb-0">
+              <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setReferralMode('direct')}
+                  className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    referralMode === 'direct'
+                      ? 'bg-white text-blue-800 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
                 >
-                  <option value="">-- Choose Student Case --</option>
-                  {cases.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.studentName} ({c.targetUniversity} - Currently at: {c.branch})
-                    </option>
-                  ))}
-                </select>
+                  Direct / Walk-in Referral
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReferralMode('case')}
+                  className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    referralMode === 'case'
+                      ? 'bg-white text-blue-800 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Refer from Existing Cases
+                </button>
               </div>
+            </div>
+
+            <form onSubmit={handleCreateReferral} className="p-6 space-y-4">
+              {referralMode === 'direct' ? (
+                <>
+                  <div className="p-3 bg-amber-50/60 border border-amber-200/60 rounded-xl text-[11px] text-amber-900">
+                    Aap direct kisi bhi student ya walk-in inquiry ko doosri branch refer kar sakty hyn, chahay unhon ne case start na bhi karwaya ho.
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Student Full Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={directReferralData.studentName}
+                        onChange={(e) => setDirectReferralData({ ...directReferralData, studentName: e.target.value })}
+                        placeholder="e.g. Ali Raza"
+                        className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Phone / WhatsApp *</label>
+                      <input
+                        type="text"
+                        required
+                        value={directReferralData.phone}
+                        onChange={(e) => setDirectReferralData({ ...directReferralData, phone: e.target.value })}
+                        placeholder="e.g. 03211234567"
+                        className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Email Address (Optional)</label>
+                      <input
+                        type="email"
+                        value={directReferralData.email}
+                        onChange={(e) => setDirectReferralData({ ...directReferralData, email: e.target.value })}
+                        placeholder="e.g. ali@gmail.com"
+                        className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">City / Region (Optional)</label>
+                      <input
+                        type="text"
+                        value={directReferralData.city}
+                        onChange={(e) => setDirectReferralData({ ...directReferralData, city: e.target.value })}
+                        placeholder="e.g. Gujranwala"
+                        className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Target University (Optional)</label>
+                    <div className="space-y-1.5">
+                      <select
+                        onChange={(e) => {
+                          if (e.target.value) setDirectReferralData({ ...directReferralData, targetUniversity: e.target.value });
+                        }}
+                        className="w-full text-xs border border-slate-200 rounded-xl px-3 py-1.5 bg-slate-50 font-medium"
+                      >
+                        <option value="">-- Choose from Direct Panel Unis --</option>
+                        {panelUnis.map((u) => (
+                          <option key={u.id} value={u.name}>
+                            {u.name}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        value={directReferralData.targetUniversity}
+                        onChange={(e) => setDirectReferralData({ ...directReferralData, targetUniversity: e.target.value })}
+                        placeholder="Or enter target university..."
+                        className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Target Program (Optional)</label>
+                      <input
+                        type="text"
+                        value={directReferralData.targetProgram}
+                        onChange={(e) => setDirectReferralData({ ...directReferralData, targetProgram: e.target.value })}
+                        placeholder="e.g. BBA, Computer Science"
+                        className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Target Intake (Optional)</label>
+                      <input
+                        type="text"
+                        value={directReferralData.intake}
+                        onChange={(e) => setDirectReferralData({ ...directReferralData, intake: e.target.value })}
+                        placeholder="e.g. September 2025"
+                        className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Select Student Case *</label>
+                  <select
+                    required
+                    value={referralFormData.caseId}
+                    onChange={(e) => {
+                      const c = cases.find((item) => item.id === e.target.value);
+                      setReferralFormData({
+                        ...referralFormData,
+                        caseId: e.target.value,
+                        fromBranch: c ? c.branch : 'Lahore (Head Office)',
+                        referredBy: c ? c.counselorName || 'Head Office Admin' : 'Admin',
+                      });
+                    }}
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 bg-white font-bold"
+                  >
+                    <option value="">-- Choose Student Case --</option>
+                    {cases.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.studentName} ({c.targetUniversity} - Currently at: {c.branch})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Referring Branch *</label>
                   <select
-                    value={referralFormData.fromBranch}
-                    onChange={(e) => setReferralFormData({ ...referralFormData, fromBranch: e.target.value })}
+                    value={referralMode === 'case' ? referralFormData.fromBranch : directReferralData.fromBranch}
+                    onChange={(e) => {
+                      if (referralMode === 'case') {
+                        setReferralFormData({ ...referralFormData, fromBranch: e.target.value });
+                      } else {
+                        setDirectReferralData({ ...directReferralData, fromBranch: e.target.value });
+                      }
+                    }}
                     className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 bg-white"
                   >
                     {PAKISTAN_BRANCHES.map((b) => (
@@ -2021,8 +2445,14 @@ export function AdminTeamManagementClient({
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Destination Branch *</label>
                   <select
-                    value={referralFormData.toBranch}
-                    onChange={(e) => setReferralFormData({ ...referralFormData, toBranch: e.target.value })}
+                    value={referralMode === 'case' ? referralFormData.toBranch : directReferralData.toBranch}
+                    onChange={(e) => {
+                      if (referralMode === 'case') {
+                        setReferralFormData({ ...referralFormData, toBranch: e.target.value });
+                      } else {
+                        setDirectReferralData({ ...directReferralData, toBranch: e.target.value });
+                      }
+                    }}
                     className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 bg-white font-bold text-blue-700"
                   >
                     {PAKISTAN_BRANCHES.map((b) => (
@@ -2039,8 +2469,14 @@ export function AdminTeamManagementClient({
                 <input
                   type="text"
                   required
-                  value={referralFormData.referredBy}
-                  onChange={(e) => setReferralFormData({ ...referralFormData, referredBy: e.target.value })}
+                  value={referralMode === 'case' ? referralFormData.referredBy : directReferralData.referredBy}
+                  onChange={(e) => {
+                    if (referralMode === 'case') {
+                      setReferralFormData({ ...referralFormData, referredBy: e.target.value });
+                    } else {
+                      setDirectReferralData({ ...directReferralData, referredBy: e.target.value });
+                    }
+                  }}
                   placeholder="e.g. Sir Asim / Lahore Admin"
                   className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
                 />
@@ -2050,8 +2486,14 @@ export function AdminTeamManagementClient({
                 <label className="block text-xs font-bold text-slate-700 mb-1">Receiving Staff at Destination</label>
                 <input
                   type="text"
-                  value={referralFormData.handledBy}
-                  onChange={(e) => setReferralFormData({ ...referralFormData, handledBy: e.target.value })}
+                  value={referralMode === 'case' ? referralFormData.handledBy : directReferralData.handledBy}
+                  onChange={(e) => {
+                    if (referralMode === 'case') {
+                      setReferralFormData({ ...referralFormData, handledBy: e.target.value });
+                    } else {
+                      setDirectReferralData({ ...directReferralData, handledBy: e.target.value });
+                    }
+                  }}
                   placeholder="e.g. Miss Sana (Islamabad Desk)"
                   className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
                 />
@@ -2061,9 +2503,15 @@ export function AdminTeamManagementClient({
                 <label className="block text-xs font-bold text-slate-700 mb-1">Referral Reason &amp; Notes</label>
                 <textarea
                   rows={2}
-                  value={referralFormData.reason}
-                  onChange={(e) => setReferralFormData({ ...referralFormData, reason: e.target.value })}
-                  placeholder="e.g. Student relocated to Islamabad for physical document submission..."
+                  value={referralMode === 'case' ? referralFormData.reason : directReferralData.reason}
+                  onChange={(e) => {
+                    if (referralMode === 'case') {
+                      setReferralFormData({ ...referralFormData, reason: e.target.value, notes: e.target.value });
+                    } else {
+                      setDirectReferralData({ ...directReferralData, reason: e.target.value, notes: e.target.value });
+                    }
+                  }}
+                  placeholder="e.g. Student walked into Lahore branch, needs physical counseling at Islamabad..."
                   className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
                 />
               </div>
@@ -2072,14 +2520,14 @@ export function AdminTeamManagementClient({
                 <button
                   type="button"
                   onClick={() => setIsReferralModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs disabled:opacity-50"
+                  className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? 'Transferring...' : 'Transfer to Branch'}
                 </button>
@@ -2217,6 +2665,373 @@ export function AdminTeamManagementClient({
                   className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs disabled:opacity-50"
                 >
                   {isSubmitting ? 'Adding...' : 'Add to Direct Panel'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 5: EDIT DIRECT PANEL UNIVERSITY */}
+      {/* ========================================================================= */}
+      {isEditPanelModalOpen && editingUniData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden my-8">
+            <div className="bg-[#08182b] px-6 py-4 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2 font-bold text-sm">
+                <Edit3 className="w-4 h-4 text-cyan-400" />
+                <span>Edit University: {editingUniData.name}</span>
+              </div>
+              <button
+                onClick={() => setIsEditPanelModalOpen(false)}
+                className="text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdatePanelUni} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">University Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={editingUniData.name}
+                  onChange={(e) => setEditingUniData({ ...editingUniData, name: e.target.value })}
+                  className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 font-bold focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Short Name / Code</label>
+                  <input
+                    type="text"
+                    value={editingUniData.shortName || ''}
+                    onChange={(e) => setEditingUniData({ ...editingUniData, shortName: e.target.value })}
+                    placeholder="e.g. APU, Taylors"
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Contract Status</label>
+                  <select
+                    value={editingUniData.contractStatus}
+                    onChange={(e) => setEditingUniData({ ...editingUniData, contractStatus: e.target.value })}
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 bg-white font-bold"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Under Renewal">Under Renewal</option>
+                    <option value="Review">Under Review</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Contract Type</label>
+                  <select
+                    value={editingUniData.contractType}
+                    onChange={(e) => setEditingUniData({ ...editingUniData, contractType: e.target.value })}
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 bg-white"
+                  >
+                    <option value="Direct Agreement">Direct Agreement</option>
+                    <option value="Preferred Tier-1">Preferred Tier-1</option>
+                    <option value="Official Representative">Official Representative</option>
+                    <option value="Govt MoA">Government MoA</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Supported Intakes</label>
+                  <input
+                    type="text"
+                    value={editingUniData.supportedIntakes || ''}
+                    onChange={(e) => setEditingUniData({ ...editingUniData, supportedIntakes: e.target.value })}
+                    placeholder="e.g. Feb, July, Sept"
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Direct Admission Portal URL</label>
+                <input
+                  type="url"
+                  value={editingUniData.directPortalUrl || ''}
+                  onChange={(e) => setEditingUniData({ ...editingUniData, directPortalUrl: e.target.value })}
+                  placeholder="https://..."
+                  className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 font-mono"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Focal Person Name</label>
+                  <input
+                    type="text"
+                    value={editingUniData.focalPersonName || ''}
+                    onChange={(e) => setEditingUniData({ ...editingUniData, focalPersonName: e.target.value })}
+                    placeholder="Representative Name"
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Focal Email</label>
+                  <input
+                    type="email"
+                    value={editingUniData.focalPersonEmail || ''}
+                    onChange={(e) => setEditingUniData({ ...editingUniData, focalPersonEmail: e.target.value })}
+                    placeholder="email@uni.edu.my"
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Focal Phone</label>
+                  <input
+                    type="text"
+                    value={editingUniData.focalPersonPhone || ''}
+                    onChange={(e) => setEditingUniData({ ...editingUniData, focalPersonPhone: e.target.value })}
+                    placeholder="+60..."
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Direct Panel Notes</label>
+                <textarea
+                  rows={2}
+                  value={editingUniData.specialNotes || ''}
+                  onChange={(e) => setEditingUniData({ ...editingUniData, specialNotes: e.target.value })}
+                  placeholder="Special instructions or notes..."
+                  className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditPanelModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs disabled:opacity-50 cursor-pointer"
+                >
+                  {isSubmitting ? 'Updating...' : 'Save University Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 6: EDIT FULL STUDENT CASE DETAILS (EDITABLE AFTERWARDS) */}
+      {/* ========================================================================= */}
+      {isEditCaseModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden my-8">
+            <div className="bg-[#08182b] px-6 py-4 text-white flex items-center justify-between">
+              <div>
+                <h3 className="font-extrabold text-sm flex items-center gap-2">
+                  <Edit3 className="w-4 h-4 text-blue-400" />
+                  <span>Edit Student Case Details</span>
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Update student name, phone, academic target, counselor, branch, or notes
+                </p>
+              </div>
+              <button
+                onClick={() => setIsEditCaseModalOpen(false)}
+                className="text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCaseDetails} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Student Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingCaseData.studentName}
+                    onChange={(e) => setEditingCaseData({ ...editingCaseData, studentName: e.target.value })}
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 font-bold focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">WhatsApp / Phone *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingCaseData.phone}
+                    onChange={(e) => setEditingCaseData({ ...editingCaseData, phone: e.target.value })}
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-blue-600 focus:outline-hidden font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Email Address (Optional)</label>
+                  <input
+                    type="email"
+                    value={editingCaseData.email}
+                    onChange={(e) => setEditingCaseData({ ...editingCaseData, email: e.target.value })}
+                    placeholder="e.g. hamza@gmail.com"
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Handling Branch *</label>
+                  <select
+                    value={editingCaseData.branch}
+                    onChange={(e) => setEditingCaseData({ ...editingCaseData, branch: e.target.value })}
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 bg-white font-bold text-slate-800 focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+                  >
+                    {PAKISTAN_BRANCHES.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Counselor Selection */}
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Assigned Counselor</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {counselors.length > 0 && (
+                      <select
+                        onChange={(e) => {
+                          if (e.target.value) setEditingCaseData({ ...editingCaseData, counselorName: e.target.value });
+                        }}
+                        className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-medium"
+                      >
+                        <option value="">-- Choose Tracked Counselor --</option>
+                        {counselors.map((c) => (
+                          <option key={c.id} value={c.name}>
+                            {c.name} ({c.branch})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <input
+                      type="text"
+                      value={editingCaseData.counselorName}
+                      onChange={(e) => setEditingCaseData({ ...editingCaseData, counselorName: e.target.value })}
+                      placeholder="Or counselor name..."
+                      className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-600 focus:outline-hidden font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Target University in Malaysia *</label>
+                  <div className="space-y-1.5">
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) setEditingCaseData({ ...editingCaseData, targetUniversity: e.target.value });
+                      }}
+                      className="w-full text-xs border border-slate-200 rounded-xl px-3 py-1.5 bg-slate-50 font-medium"
+                    >
+                      <option value="">-- Select from Direct Panel Unis --</option>
+                      {panelUnis.map((u) => (
+                        <option key={u.id} value={u.name}>
+                          {u.name} (Direct Panel)
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      required
+                      value={editingCaseData.targetUniversity}
+                      onChange={(e) => setEditingCaseData({ ...editingCaseData, targetUniversity: e.target.value })}
+                      placeholder="e.g. Asia Pacific University (APU)"
+                      className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 font-bold focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Target Program / Degree *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingCaseData.targetProgram}
+                    onChange={(e) => setEditingCaseData({ ...editingCaseData, targetProgram: e.target.value })}
+                    placeholder="e.g. BSc (Hons) in Software Engineering"
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Target Intake *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingCaseData.intake}
+                    onChange={(e) => setEditingCaseData({ ...editingCaseData, intake: e.target.value })}
+                    placeholder="e.g. September 2025"
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Passport Number (Optional)</label>
+                  <input
+                    type="text"
+                    value={editingCaseData.passportNumber}
+                    onChange={(e) => setEditingCaseData({ ...editingCaseData, passportNumber: e.target.value })}
+                    placeholder="Optional (can be added later)"
+                    className="w-full text-xs font-mono border border-slate-300 rounded-xl px-3 py-2 uppercase focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">City / Region (Optional)</label>
+                  <input
+                    type="text"
+                    value={editingCaseData.city}
+                    onChange={(e) => setEditingCaseData({ ...editingCaseData, city: e.target.value })}
+                    placeholder="e.g. Lahore, Islamabad"
+                    className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Case Notes / Special Instructions</label>
+                <textarea
+                  rows={2}
+                  value={editingCaseData.notes}
+                  onChange={(e) => setEditingCaseData({ ...editingCaseData, notes: e.target.value })}
+                  placeholder="Case notes, remarks, student background..."
+                  className="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-600 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditCaseModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs disabled:opacity-50 cursor-pointer"
+                >
+                  {isSubmitting ? 'Saving...' : 'Save Case Details'}
                 </button>
               </div>
             </form>

@@ -224,6 +224,9 @@ export async function PATCH(request: Request) {
       } else {
         patchData.counselorName = null;
       }
+    } else if (updates.counselorName !== undefined) {
+      // Direct counselor name update (from Edit Case Details modal, no counselorId required)
+      patchData.counselorName = updates.counselorName || null;
     }
 
     // Milestones
