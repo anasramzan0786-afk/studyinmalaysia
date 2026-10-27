@@ -3,7 +3,6 @@ import { getAuthSession } from '@/lib/auth';
 import { GoogleGenAI } from '@google/genai';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60; // Allow sufficient time for multi-page PDF processing
 
 interface ExtractedProgram {
   title: string;

@@ -617,10 +617,21 @@ export default function BulkUploadPage() {
         body: formData,
       });
 
-      const data = await res.json();
+      let data: any = null;
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const rawText = await res.text();
+        throw new Error(
+          rawText.length > 250
+            ? `Server returned ${res.status}: ${rawText.slice(0, 250)}...`
+            : rawText || `Server returned error (${res.status})`
+        );
+      }
 
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to extract programs from document');
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || `Failed to extract programs from document (Status ${res.status})`);
       }
 
       setAnalyzingStep('Validating and populating programs into preview table...');
