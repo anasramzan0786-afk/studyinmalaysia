@@ -135,64 +135,75 @@ Example structure:
 
     let rawResponseText = '';
 
-    // Initialize Google GenAI client
+    // Preferred models for multimodal document extraction
+    const modelsToTry = [
+      'gemini-3.5-flash',
+      'gemini-3.8-flash',
+      'gemini-flash-latest',
+      'gemini-3.5-flash-lite',
+    ];
+    let lastErr: any = null;
+
     try {
-      const ai = new GoogleGenAI({ apiKey });
-
-      // Preferred models for multimodal document extraction
-      const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash'];
-      let lastErr: any = null;
-
+      // 1. First try Direct REST call with official X-goog-api-key header
       for (const modelName of modelsToTry) {
         try {
-          const response = await ai.models.generateContent({
-            model: modelName,
-            contents: [
-              {
-                inlineData: {
-                  mimeType: effectiveMimeType,
-                  data: base64Data,
-                },
-              },
-              {
-                text: promptText,
-              },
-            ],
-            config: {
-              temperature: 0.1, // Low temperature for high accuracy on numbers
+          const restUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
+          const restRes = await fetch(restUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-goog-api-key': apiKey,
             },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    {
+                      inline_data: {
+                        mime_type: effectiveMimeType,
+                        data: base64Data,
+                      },
+                    },
+                    {
+                      text: promptText,
+                    },
+                  ],
+                },
+              ],
+              generationConfig: {
+                temperature: 0.1,
+              },
+            }),
           });
 
-          if (response && response.text) {
-            rawResponseText = response.text;
-            break;
+          if (restRes.ok) {
+            const restData = await restRes.json();
+            rawResponseText = restData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            if (rawResponseText) break;
+          } else {
+            const errText = await restRes.text();
+            console.warn(`Model ${modelName} returned status ${restRes.status}:`, errText.slice(0, 200));
+            lastErr = new Error(`Gemini API returned ${restRes.status}: ${errText}`);
           }
         } catch (err: any) {
           lastErr = err;
-          // If model doesn't exist, try next
           continue;
         }
       }
 
-      if (!rawResponseText && lastErr) {
-        throw lastErr;
-      }
-    } catch (genAiError: any) {
-      console.error('Gemini SDK Error, attempting direct REST fallback:', genAiError);
-      
-      // Fallback: direct REST API call in case SDK auth differences
-      try {
-        const restUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
-        const restRes = await fetch(restUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
+      // 2. Fallback to @google/genai SDK if REST did not populate rawResponseText
+      if (!rawResponseText) {
+        try {
+          const ai = new GoogleGenAI({ apiKey });
+          for (const modelName of modelsToTry) {
+            try {
+              const response = await ai.models.generateContent({
+                model: modelName,
+                contents: [
                   {
-                    inline_data: {
-                      mime_type: effectiveMimeType,
+                    inlineData: {
+                      mimeType: effectiveMimeType,
                       data: base64Data,
                     },
                   },
@@ -200,30 +211,36 @@ Example structure:
                     text: promptText,
                   },
                 ],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.1,
-            },
-          }),
-        });
+                config: {
+                  temperature: 0.1,
+                },
+              });
 
-        if (!restRes.ok) {
-          const errBody = await restRes.text();
-          throw new Error(`Gemini API returned ${restRes.status}: ${errBody}`);
+              if (response && response.text) {
+                rawResponseText = response.text;
+                break;
+              }
+            } catch (sdkErr: any) {
+              lastErr = sdkErr;
+              continue;
+            }
+          }
+        } catch (sdkInitErr: any) {
+          console.error('SDK fallback error:', sdkInitErr);
         }
-
-        const restData = await restRes.json();
-        rawResponseText = restData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      } catch (fallbackError: any) {
-        return NextResponse.json(
-          {
-            error: `Failed to process document with Gemini AI: ${genAiError.message || fallbackError.message}`,
-            details: genAiError.message || String(genAiError),
-          },
-          { status: 500 }
-        );
       }
+
+      if (!rawResponseText && lastErr) {
+        throw lastErr;
+      }
+    } catch (fallbackError: any) {
+      return NextResponse.json(
+        {
+          error: `Failed to process document with Gemini AI: ${fallbackError.message}`,
+          details: fallbackError.message || String(fallbackError),
+        },
+        { status: 500 }
+      );
     }
 
     if (!rawResponseText) {
