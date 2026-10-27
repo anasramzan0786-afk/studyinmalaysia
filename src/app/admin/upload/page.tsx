@@ -20,7 +20,11 @@ import {
   AlertTriangle,
   Info,
   ChevronDown,
-  Search
+  Search,
+  Image as ImageIcon,
+  Loader2,
+  X,
+  FileCheck
 } from 'lucide-react';
 import { formatMYR, normalizeDegreeLevel } from '@/lib/utils';
 
@@ -72,7 +76,19 @@ export default function BulkUploadPage() {
   } | null>(null);
   const [rawText, setRawText] = useState('');
   const [activeTab, setActiveTab] = useState<'import' | 'export'>('import');
-  const [uploadMode, setUploadMode] = useState<'file' | 'text'>('file');
+  const [uploadMode, setUploadMode] = useState<'ai' | 'file' | 'text'>('ai');
+
+  // AI Document Upload State (PDF & Pictures)
+  const docFileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedDocFile, setSelectedDocFile] = useState<File | null>(null);
+  const [docPreviewUrl, setDocPreviewUrl] = useState<string | null>(null);
+  const [isAnalyzingDoc, setIsAnalyzingDoc] = useState(false);
+  const [analyzingStep, setAnalyzingStep] = useState('');
+  const [aiTargetUniId, setAiTargetUniId] = useState<string>('');
+  const [aiCustomInstructions, setAiCustomInstructions] = useState('');
+  const [aiExtractError, setAiExtractError] = useState<string | null>(null);
+  const [aiExtractSuccessMsg, setAiExtractSuccessMsg] = useState<string | null>(null);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   // Universities list for resolution & dropdown selection
   const [universities, setUniversities] = useState<UniversityOption[]>([]);
@@ -540,6 +556,102 @@ export default function BulkUploadPage() {
     });
   };
 
+  // AI Document (PDF / Image) handling
+  const handleDocFileSelect = (file: File | undefined) => {
+    if (!file) return;
+    setSelectedDocFile(file);
+    setAiExtractError(null);
+    setAiExtractSuccessMsg(null);
+    setImportResult(null);
+
+    if (file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file);
+      setDocPreviewUrl(url);
+    } else {
+      setDocPreviewUrl(null);
+    }
+  };
+
+  const clearSelectedDoc = () => {
+    if (docPreviewUrl) {
+      URL.revokeObjectURL(docPreviewUrl);
+    }
+    setSelectedDocFile(null);
+    setDocPreviewUrl(null);
+    setAiExtractError(null);
+    setAiExtractSuccessMsg(null);
+    if (docFileInputRef.current) {
+      docFileInputRef.current.value = '';
+    }
+  };
+
+  const handleDocAnalyze = async (overrideFile?: File) => {
+    const file = overrideFile || selectedDocFile;
+    if (!file) {
+      setAiExtractError('Please select or drop a PDF or image file first.');
+      return;
+    }
+
+    setIsAnalyzingDoc(true);
+    setAiExtractError(null);
+    setAiExtractSuccessMsg(null);
+    setImportResult(null);
+    setAnalyzingStep('Uploading document to Gemini AI Engine...');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const targetUni = universities.find((u) => u.id === aiTargetUniId);
+      if (targetUni) {
+        formData.append('universityName', targetUni.name);
+      }
+      if (aiCustomInstructions.trim()) {
+        formData.append('customInstructions', aiCustomInstructions.trim());
+      }
+
+      setAnalyzingStep('Reading tables, mixed orientations & fee structures with Gemini AI...');
+
+      const res = await fetch('/api/admin/programs/parse-document', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to extract programs from document');
+      }
+
+      setAnalyzingStep('Validating and populating programs into preview table...');
+
+      if (!Array.isArray(data.programs) || data.programs.length === 0) {
+        throw new Error('No programs were found in this document. Please ensure the document contains a clear fee structure.');
+      }
+
+      setFileName(file.name);
+      processParsedRows(data.programs);
+
+      setAiExtractSuccessMsg(
+        `Extracted ${data.programs.length} programs from "${file.name}"! Verify the details and fees below, make any edits, and confirm upload to database.`
+      );
+
+      // Auto-scroll down to review table smoothly
+      setTimeout(() => {
+        const previewEl = document.getElementById('programs-preview-table');
+        if (previewEl) {
+          previewEl.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 350);
+    } catch (err: any) {
+      console.error('AI Document extract error:', err);
+      setAiExtractError(err.message || 'An error occurred during AI extraction.');
+    } finally {
+      setIsAnalyzingDoc(false);
+      setAnalyzingStep('');
+    }
+  };
+
   // Update a single cell in the preview
   const updateRowField = <K extends keyof ParsedRow>(id: string, field: K, value: ParsedRow[K]) => {
     setParsedData((prev) => {
@@ -864,10 +976,25 @@ export default function BulkUploadPage() {
 
           {/* Upload Method Box */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-4">
+            <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-4">
+              <button
+                onClick={() => setUploadMode('ai')}
+                className={`relative inline-flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${
+                  uploadMode === 'ai'
+                    ? 'bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 text-white shadow-md shadow-blue-500/20'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-spin-slow" />
+                <span>AI Smart Extract (PDF &amp; Pictures)</span>
+                <span className="bg-amber-400 text-slate-950 font-black text-[9px] px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                  Direct
+                </span>
+              </button>
+
               <button
                 onClick={() => setUploadMode('file')}
-                className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
+                className={`text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${
                   uploadMode === 'file'
                     ? 'bg-blue-700 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -875,19 +1002,231 @@ export default function BulkUploadPage() {
               >
                 Upload CSV File
               </button>
+
               <button
                 onClick={() => setUploadMode('text')}
-                className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
+                className={`text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${
                   uploadMode === 'text'
                     ? 'bg-blue-700 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                Paste Raw Text
+                Paste Raw CSV Text
               </button>
             </div>
 
-            {uploadMode === 'file' ? (
+            {uploadMode === 'ai' && (
+              <div className="space-y-5">
+                {/* AI Configuration Options */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Target University <span className="text-slate-400 font-normal">(Optional - AI will auto-detect if blank)</span>
+                    </label>
+                    <select
+                      value={aiTargetUniId}
+                      onChange={(e) => setAiTargetUniId(e.target.value)}
+                      disabled={isAnalyzingDoc}
+                      className="w-full text-xs bg-white border border-slate-200 rounded-lg p-2.5 text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                    >
+                      <option value="">Auto-Detect University from Document</option>
+                      {universities.map((uni) => (
+                        <option key={uni.id} value={uni.id}>
+                          {uni.name} ({uni.shortName})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Custom Extraction Hint <span className="text-slate-400 font-normal">(e.g. &quot;Use International fees only&quot;)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={aiCustomInstructions}
+                      onChange={(e) => setAiCustomInstructions(e.target.value)}
+                      disabled={isAnalyzingDoc}
+                      placeholder="e.g. Extract 2026 intake, prices in MYR Ringgit..."
+                      className="w-full text-xs bg-white border border-slate-200 rounded-lg p-2.5 text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+
+                {/* Drag and Drop Zone */}
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDraggingOver(true);
+                  }}
+                  onDragLeave={() => setIsDraggingOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDraggingOver(false);
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) {
+                      handleDocFileSelect(file);
+                    }
+                  }}
+                  onClick={() => {
+                    if (!isAnalyzingDoc && !selectedDocFile) {
+                      docFileInputRef.current?.click();
+                    }
+                  }}
+                  className={`border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center transition-all ${
+                    isDraggingOver
+                      ? 'border-blue-600 bg-blue-50/50 scale-[1.01]'
+                      : selectedDocFile
+                      ? 'border-indigo-300 bg-indigo-50/30'
+                      : 'border-slate-300 hover:border-blue-500 bg-slate-50/40 hover:bg-blue-50/20 cursor-pointer'
+                  }`}
+                >
+                  <input
+                    ref={docFileInputRef}
+                    type="file"
+                    accept=".pdf, image/png, image/jpeg, image/jpg, image/webp"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleDocFileSelect(file);
+                    }}
+                    className="hidden"
+                  />
+
+                  {selectedDocFile ? (
+                    <div className="space-y-4 max-w-lg mx-auto">
+                      <div className="flex items-center gap-3 p-3.5 bg-white rounded-xl border border-slate-200 shadow-xs text-left">
+                        {docPreviewUrl ? (
+                          <img
+                            src={docPreviewUrl}
+                            alt="Fee Structure Preview"
+                            className="w-14 h-14 object-cover rounded-lg border border-slate-200 shrink-0"
+                          />
+                        ) : (
+                          <div className="w-14 h-14 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0 border border-red-100">
+                            <FileText className="w-7 h-7" />
+                          </div>
+                        )}
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-slate-800 truncate">
+                            {selectedDocFile.name}
+                          </p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            {(selectedDocFile.size / (1024 * 1024)).toFixed(2)} MB •{' '}
+                            {selectedDocFile.type.startsWith('image/') ? 'Picture / Screenshot' : 'PDF Document'}
+                          </p>
+                        </div>
+
+                        {!isAnalyzingDoc && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              clearSelectedDoc();
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Remove file"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Action Button / Progress */}
+                      {isAnalyzingDoc ? (
+                        <div className="space-y-3 py-2">
+                          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold">
+                            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                            <span>{analyzingStep || 'Gemini AI is analyzing fee tables...'}</span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 h-1.5 rounded-full animate-pulse w-3/4" />
+                          </div>
+                          <p className="text-[11px] text-slate-400">
+                            Reading multi-column orientations, calculating year-wise sums, and extracting degrees...
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDocAnalyze();
+                            }}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 hover:from-blue-800 hover:to-violet-800 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+                          >
+                            <Sparkles className="w-4 h-4 text-amber-300" />
+                            <span>Extract Programs via Gemini AI</span>
+                          </button>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              docFileInputRef.current?.click();
+                            }}
+                            className="px-3.5 py-2.5 text-xs text-slate-600 hover:text-slate-800 bg-white border border-slate-200 hover:bg-slate-50 font-bold rounded-xl transition-all"
+                          >
+                            Choose Different File
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-100 via-indigo-100 to-violet-100 text-blue-700 flex items-center justify-center shadow-inner">
+                        <UploadCloud className="w-8 h-8" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="font-bold text-slate-800 text-sm">
+                          Click to browse or drag &amp; drop Fee Structure (PDF or Picture)
+                        </p>
+                        <p className="text-xs text-slate-500 max-w-md mx-auto">
+                          Directly supports <strong>PDF Documents</strong> and <strong>Pictures (PNG, JPG, Screenshots)</strong>.
+                          Gemini AI handles rotated columns, landscape tables, and multi-page layouts automatically.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-1">
+                        <span className="inline-flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md text-slate-600 font-mono">
+                          .pdf
+                        </span>
+                        <span className="inline-flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md text-slate-600 font-mono">
+                          .png
+                        </span>
+                        <span className="inline-flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md text-slate-600 font-mono">
+                          .jpg
+                        </span>
+                        <span className="inline-flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md text-slate-600 font-mono">
+                          .webp
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* AI Error Alert */}
+                {aiExtractError && (
+                  <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-900 text-xs flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1 flex-1">
+                      <p className="font-bold">Extraction Issue</p>
+                      <p className="text-red-700">{aiExtractError}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* AI Success Alert */}
+                {aiExtractSuccessMsg && (
+                  <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1 flex-1">
+                      <p className="font-bold">Extraction Successful</p>
+                      <p className="text-emerald-700">{aiExtractSuccessMsg}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {uploadMode === 'file' && (
               <div
                 onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-8 sm:p-12 text-center cursor-pointer transition-colors bg-slate-50/50 hover:bg-blue-50/20 flex flex-col items-center justify-center space-y-3"
@@ -911,7 +1250,9 @@ export default function BulkUploadPage() {
                   </p>
                 </div>
               </div>
-            ) : (
+            )}
+
+            {uploadMode === 'text' && (
               <div className="space-y-3">
                 <textarea
                   rows={6}
@@ -994,7 +1335,7 @@ export default function BulkUploadPage() {
 
           {/* Interactive Pre-Import Preview & Editor */}
           {parsedData.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
+            <div id="programs-preview-table" className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
               {/* Toolbar */}
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                 <div>
