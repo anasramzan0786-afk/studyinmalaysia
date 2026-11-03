@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Calculator, 
-  Sparkles, 
   ChevronRight, 
   Building2, 
   ShieldCheck, 

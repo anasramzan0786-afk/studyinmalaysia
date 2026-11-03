@@ -163,17 +163,21 @@ export function Footer() {
         {/* Bottom Accreditation Badges & Copyright */}
         <div className="mt-14 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-300">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="bg-white/10 px-3 py-1 rounded-md text-white font-semibold border border-white/15">
-              🇲🇾 MOHE Approved
+            <span className="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-md text-white font-semibold border border-white/15">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-300" />
+              <span>MOHE Approved</span>
             </span>
-            <span className="bg-white/10 px-3 py-1 rounded-md text-white font-semibold border border-white/15">
-              🏛️ MQA Accredited
+            <span className="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-md text-white font-semibold border border-white/15">
+              <Award className="w-3.5 h-3.5 text-amber-300" />
+              <span>MQA Accredited</span>
             </span>
-            <span className="bg-white/10 px-3 py-1 rounded-md text-white font-semibold border border-white/15">
-              🛂 EMGS STARS Direct
+            <span className="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-md text-white font-semibold border border-white/15">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>EMGS STARS Direct</span>
             </span>
-            <span className="bg-white/10 px-3 py-1 rounded-md text-white font-semibold border border-white/15">
-              🇵🇰 PMDC &amp; HEC Listed
+            <span className="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-md text-white font-semibold border border-white/15">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-300" />
+              <span>PMDC &amp; HEC Listed</span>
             </span>
           </div>
           <p className="text-slate-400">

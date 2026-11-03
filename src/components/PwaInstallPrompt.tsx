@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Download, X, Smartphone, Sparkles } from 'lucide-react';
+import { Download, X, Smartphone, ArrowDownToLine } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -78,10 +78,9 @@ export function PwaInstallPrompt() {
 
         <div className="flex-1 min-w-0 pr-1">
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-amber-400">
-              Mobile App Available
+            <span className="text-[10px] uppercase font-bold tracking-wider text-blue-300">
+              Desktop &amp; Mobile Web App
             </span>
-            <Sparkles className="w-3 h-3 text-amber-400" />
           </div>
           <h4 className="text-sm font-bold text-white leading-snug mt-0.5">
             Install Meezab Staff Portal App

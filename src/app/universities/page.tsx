@@ -102,13 +102,15 @@ export default async function UniversitiesPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0B2553]/85 via-transparent to-transparent" />
                   
-                  <span className="absolute bottom-3 left-3 text-xs font-semibold text-white bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-lg border border-white/20">
-                    📍 {uni.location}
+                  <span className="absolute bottom-3 left-3 text-xs font-semibold text-white bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-lg border border-white/20 inline-flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-blue-300" />
+                    <span>{uni.location}</span>
                   </span>
 
                   {uni.qsRank && (
-                    <span className="absolute top-3 right-3 text-[11px] font-bold text-slate-950 bg-[#FFA300] backdrop-blur-xs px-2.5 py-1 rounded-md shadow-xs">
-                      🏆 {uni.qsRank}
+                    <span className="absolute top-3 right-3 text-[11px] font-bold text-slate-950 bg-[#FFA300] backdrop-blur-xs px-2.5 py-1 rounded-md shadow-xs inline-flex items-center gap-1">
+                      <Award className="w-3.5 h-3.5 text-slate-950" />
+                      <span>{uni.qsRank}</span>
                     </span>
                   )}
                 </div>

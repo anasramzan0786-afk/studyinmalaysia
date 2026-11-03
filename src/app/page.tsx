@@ -15,8 +15,7 @@ import {
   Clock,
   MapPin,
   ExternalLink,
-  BookOpen,
-  Sparkles
+  BookOpen
 } from 'lucide-react';
 import { ApplyButton } from '@/components/programs/ApplyButton';
 import { UNIVERSITIES_DATA } from '@/data/universitiesData';
@@ -127,7 +126,7 @@ export default async function HomePage() {
             Study In Malaysia By Meezab
           </h1>
           <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
-            Official higher education admissions and verified EMGS fee portal by <strong className="text-[#0B2553] font-bold">Meezab Future Consulting</strong>. Explore 1,200+ accredited degrees across premier Malaysian campuses with authentic upfront statutory visa packages and <strong className="text-[#BA2E34] font-bold">zero consultant markup</strong>.
+            Official admissions directory for Malaysian universities. Explore 1,200+ accredited degrees with authentic EMGS fee breakdowns and zero consultant markup.
           </p>
         </div>
 

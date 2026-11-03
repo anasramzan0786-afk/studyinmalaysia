@@ -73,10 +73,10 @@ export default async function AdminDashboardPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-          Admissions Administration Overview
+          Admissions Overview
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          Control your live database, upload fee schedules in bulk, and manage counseling inquiries.
+          Program directory, inquiries, and team case tracker.
         </p>
       </div>
 
@@ -212,24 +212,20 @@ export default async function AdminDashboardPage() {
 
       {/* Featured Bulk Upload Banner (User's primary requirement) */}
       <div className="bg-gradient-to-r from-[#0a2540] to-[#1a3d66] text-white rounded-2xl p-6 sm:p-8 shadow-md flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div className="space-y-2 text-center sm:text-left">
-          <div className="inline-flex items-center gap-2 bg-amber-400/20 text-amber-300 px-3 py-1 rounded-full text-xs font-bold border border-amber-400/30">
-            <UploadCloud className="w-4 h-4" />
-            <span>Fast Data Management</span>
-          </div>
+        <div className="space-y-1.5 text-center sm:text-left">
           <h2 className="text-xl sm:text-2xl font-bold">
-            Need to Upload Hundreds of Programs at Once?
+            Bulk Program &amp; Fee Importer
           </h2>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
-            Use our built-in Bulk Data Importer. Download our preformatted CSV spreadsheet, paste your fee structures, and upload everything directly into the live database.
+          <p className="text-xs sm:text-sm text-slate-300">
+            Import or update courses via CSV template or prospectus document scan.
           </p>
         </div>
         <Link
           href="/admin/upload"
-          className="shrink-0 bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-6 py-3.5 rounded-xl text-sm shadow-md transition-all active:scale-95 flex items-center gap-2"
+          className="shrink-0 bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-6 py-3 rounded-xl text-xs sm:text-sm shadow-md transition-all active:scale-95 flex items-center gap-2"
         >
           <UploadCloud className="w-4 h-4" />
-          <span>Launch Bulk Importer</span>
+          <span>Open Importer</span>
         </Link>
       </div>
 

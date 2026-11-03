@@ -12,7 +12,8 @@ import {
   ShieldCheck, 
   GraduationCap, 
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  Award
 } from 'lucide-react';
 import { ApplyButton } from '@/components/programs/ApplyButton';
 
@@ -125,8 +126,9 @@ export default async function UniversityDetailPage({ params }: UniversityDetailP
                     {university.type}
                   </span>
                   {university.qsRank && (
-                    <span className="bg-amber-400 text-slate-950 text-xs font-bold px-2.5 py-1 rounded-md">
-                      🏆 {university.qsRank}
+                    <span className="bg-amber-400 text-slate-950 text-xs font-bold px-2.5 py-1 rounded-md inline-flex items-center gap-1">
+                      <Award className="w-3.5 h-3.5 text-slate-950" />
+                      <span>{university.qsRank}</span>
                     </span>
                   )}
                 </div>

@@ -8,7 +8,6 @@ import {
   CheckCircle2, 
   AlertCircle, 
   PhoneCall, 
-  Sparkles,
   Building2,
   FileText,
   BadgeCheck,

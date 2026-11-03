@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Gemini API key is not configured in .env. Please set GEMINI_API_KEY.' },
+        { error: 'Document parser service is not configured. Please verify environment settings.' },
         { status: 500 }
       );
     }
@@ -235,7 +235,7 @@ Example structure:
     } catch (fallbackError: any) {
       return NextResponse.json(
         {
-          error: `Failed to process document with Gemini AI: ${fallbackError.message}`,
+          error: `Document parsing error: ${fallbackError.message}`,
           details: fallbackError.message || String(fallbackError),
         },
         { status: 500 }
@@ -244,7 +244,7 @@ Example structure:
 
     if (!rawResponseText) {
       return NextResponse.json(
-        { error: 'Gemini AI returned an empty response. Please check document clarity or try another file.' },
+        { error: 'Document parser returned an empty response. Please verify document clarity or file resolution.' },
         { status: 500 }
       );
     }
@@ -266,13 +266,13 @@ Example structure:
       } else if (parsed && Array.isArray(parsed.programs)) {
         extractedPrograms = parsed.programs;
       } else {
-        throw new Error('AI output was not an array of programs.');
+        throw new Error('Parser output was not an array of programs.');
       }
     } catch (parseError: any) {
-      console.error('Failed to parse AI JSON:', parseError, cleanedJson.slice(0, 500));
+      console.error('Failed to parse parser JSON:', parseError, cleanedJson.slice(0, 500));
       return NextResponse.json(
         {
-          error: 'AI generated response could not be parsed as structured JSON. Please try again.',
+          error: 'Document extraction output could not be parsed as structured data. Please try again with a clearer file.',
           rawOutput: cleanedJson.slice(0, 1000),
         },
         { status: 500 }

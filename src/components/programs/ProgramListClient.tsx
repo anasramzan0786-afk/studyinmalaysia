@@ -16,7 +16,8 @@ import {
   CheckCircle2, 
   ArrowUpDown, 
   BookOpen,
-  Sparkles,
+  Award,
+  BadgePercent,
   ShieldCheck,
   ArrowUpRight
 } from 'lucide-react';
@@ -610,7 +611,7 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
 
                     {program.badgeText ? (
                       <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#9A6700] bg-gradient-to-r from-amber-50 to-amber-100/70 px-2.5 py-1 rounded-full border border-amber-300/80 shadow-2xs">
-                        <Sparkles className="w-3 h-3 text-[#E8A300]" />
+                        <Award className="w-3.5 h-3.5 text-[#E8A300]" />
                         <span>{program.badgeText}</span>
                       </span>
                     ) : (
@@ -710,7 +711,7 @@ export function ProgramListClient({ initialPrograms, universities }: ProgramList
                     {/* Scholarship / Rebate Banner */}
                     {program.scholarship && (
                       <div className="mt-2.5 pt-2 border-t border-amber-200/50 flex items-center gap-1.5 text-[11px] text-[#9A6700] font-semibold bg-amber-50/80 -mx-1 p-1.5 rounded-lg border border-amber-200/70">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <BadgePercent className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                         <span className="truncate">{program.scholarship}</span>
                       </div>
                     )}

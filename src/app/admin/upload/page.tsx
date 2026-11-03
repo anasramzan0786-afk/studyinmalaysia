@@ -12,7 +12,8 @@ import {
   Trash2, 
   ArrowRight,
   Database,
-  Sparkles,
+  ScanLine,
+  Layers,
   RefreshCw,
   HelpCircle,
   Filter,
@@ -596,7 +597,7 @@ export default function BulkUploadPage() {
     setAiExtractError(null);
     setAiExtractSuccessMsg(null);
     setImportResult(null);
-    setAnalyzingStep('Uploading document to Gemini AI Engine...');
+    setAnalyzingStep('Uploading document for digital ingestion...');
 
     try {
       const formData = new FormData();
@@ -610,7 +611,7 @@ export default function BulkUploadPage() {
         formData.append('customInstructions', aiCustomInstructions.trim());
       }
 
-      setAnalyzingStep('Reading tables, mixed orientations & fee structures with Gemini AI...');
+      setAnalyzingStep('Parsing multi-column layout, curriculum structures & tuition schedules...');
 
       const res = await fetch('/api/admin/programs/parse-document', {
         method: 'POST',
@@ -655,8 +656,8 @@ export default function BulkUploadPage() {
         }
       }, 350);
     } catch (err: any) {
-      console.error('AI Document extract error:', err);
-      setAiExtractError(err.message || 'An error occurred during AI extraction.');
+      console.error('Document extract error:', err);
+      setAiExtractError(err.message || 'An error occurred during document parsing.');
     } finally {
       setIsAnalyzingDoc(false);
       setAnalyzingStep('');
@@ -852,7 +853,7 @@ export default function BulkUploadPage() {
             Bulk Data Manager
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Seamlessly import, validate, and export courses &amp; fee structures.
+            Import, update, and export university programs.
           </p>
         </div>
 
@@ -866,7 +867,7 @@ export default function BulkUploadPage() {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Import Data (CSV)
+            Import Data
           </button>
           <button
             onClick={() => setActiveTab('export')}
@@ -876,7 +877,7 @@ export default function BulkUploadPage() {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Export Programs
+            Export CSV
           </button>
         </div>
       </div>
@@ -887,10 +888,10 @@ export default function BulkUploadPage() {
           <div className="max-w-2xl">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <Download className="w-5 h-5 text-blue-700" />
-              <span>Export Database Records to CSV</span>
+              <span>Export Records to CSV</span>
             </h3>
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-              Export existing programs into a ready-to-edit spreadsheet. You can update fee figures or requirements in Microsoft Excel / Google Sheets and re-upload the same file anytime.
+            <p className="text-xs text-slate-500 mt-1">
+              Download current database records as a CSV spreadsheet.
             </p>
           </div>
 
@@ -956,13 +957,13 @@ export default function BulkUploadPage() {
         <div className="space-y-6">
           {/* Action Helper Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-blue-900 to-indigo-950 p-5 rounded-2xl text-white shadow-sm">
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <h2 className="text-sm font-bold flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>Smart Importer with Auto-Validation</span>
+                <Layers className="w-4 h-4 text-blue-300" />
+                <span>Program &amp; Fee Importer</span>
               </h2>
               <p className="text-xs text-blue-200">
-                Supports fuzzy university name matching, auto-calculates totals, and lets you fix mistakes directly in the preview table.
+                Upload CSV or document scan with live preview validation.
               </p>
             </div>
 
@@ -971,7 +972,7 @@ export default function BulkUploadPage() {
                 onClick={downloadSampleTemplate}
                 className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 active:scale-95 text-white border border-white/20 font-bold px-3.5 py-2 rounded-xl text-xs transition-all"
               >
-                <Download className="w-3.5 h-3.5 text-amber-300" />
+                <Download className="w-3.5 h-3.5 text-blue-200" />
                 <span>Download Sample CSV</span>
               </button>
 
@@ -992,14 +993,14 @@ export default function BulkUploadPage() {
                 onClick={() => setUploadMode('ai')}
                 className={`relative inline-flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl transition-all ${
                   uploadMode === 'ai'
-                    ? 'bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 text-white shadow-md shadow-blue-500/20'
+                    ? 'bg-[#0B2553] text-white shadow-sm'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-spin-slow" />
-                <span>AI Smart Extract (PDF &amp; Pictures)</span>
-                <span className="bg-amber-400 text-slate-950 font-black text-[9px] px-1.5 py-0.5 rounded-full uppercase tracking-wider">
-                  Direct
+                <ScanLine className="w-3.5 h-3.5 text-blue-300" />
+                <span>Automated Document OCR (PDF &amp; Scans)</span>
+                <span className="bg-[#BA2E34] text-white font-bold text-[9px] px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                  Fast OCR
                 </span>
               </button>
 
@@ -1032,7 +1033,7 @@ export default function BulkUploadPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200">
                   <div className="space-y-1.5">
                     <label className="block text-xs font-bold text-slate-700">
-                      Target University <span className="text-slate-400 font-normal">(Optional - AI will auto-detect if blank)</span>
+                      Target University <span className="text-slate-400 font-normal">(Optional - OCR will auto-detect institution if left blank)</span>
                     </label>
                     <select
                       value={aiTargetUniId}
@@ -1145,15 +1146,15 @@ export default function BulkUploadPage() {
                       {/* Action Button / Progress */}
                       {isAnalyzingDoc ? (
                         <div className="space-y-3 py-2">
-                          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold">
+                          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-blue-50 text-blue-900 border border-blue-200 text-xs font-bold">
                             <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                            <span>{analyzingStep || 'Gemini AI is analyzing fee tables...'}</span>
+                            <span>{analyzingStep || 'Processing document...'}</span>
                           </div>
                           <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 h-1.5 rounded-full animate-pulse w-3/4" />
+                            <div className="bg-[#0B2553] h-1.5 rounded-full animate-pulse w-3/4" />
                           </div>
-                          <p className="text-[11px] text-slate-400">
-                            Reading multi-column orientations, calculating year-wise sums, and extracting degrees...
+                          <p className="text-[11px] text-slate-500 font-medium">
+                            Extracting courses and fee schedules...
                           </p>
                         </div>
                       ) : (
@@ -1163,10 +1164,10 @@ export default function BulkUploadPage() {
                               e.stopPropagation();
                               handleDocAnalyze();
                             }}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 hover:from-blue-800 hover:to-violet-800 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0B2553] hover:bg-[#1E3A8A] text-white font-bold text-xs rounded-xl shadow-xs active:scale-95 transition-all"
                           >
-                            <Sparkles className="w-4 h-4 text-amber-300" />
-                            <span>Extract Programs via Gemini AI</span>
+                            <ScanLine className="w-4 h-4 text-blue-200" />
+                            <span>Parse Document &amp; Ingest Programs</span>
                           </button>
 
                           <button
@@ -1174,7 +1175,7 @@ export default function BulkUploadPage() {
                               e.stopPropagation();
                               docFileInputRef.current?.click();
                             }}
-                            className="px-3.5 py-2.5 text-xs text-slate-600 hover:text-slate-800 bg-white border border-slate-200 hover:bg-slate-50 font-bold rounded-xl transition-all"
+                            className="px-3.5 py-2.5 text-xs text-slate-700 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 font-bold rounded-xl transition-all"
                           >
                             Choose Different File
                           </button>
@@ -1183,16 +1184,15 @@ export default function BulkUploadPage() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center space-y-3">
-                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-100 via-indigo-100 to-violet-100 text-blue-700 flex items-center justify-center shadow-inner">
+                      <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 text-[#0B2553] flex items-center justify-center">
                         <UploadCloud className="w-8 h-8" />
                       </div>
                       <div className="space-y-1">
                         <p className="font-bold text-slate-800 text-sm">
-                          Click to browse or drag &amp; drop Fee Structure (PDF or Picture)
+                          Click to browse or drop fee prospectus (PDF, PNG, JPG)
                         </p>
-                        <p className="text-xs text-slate-500 max-w-md mx-auto">
-                          Directly supports <strong>PDF Documents</strong> and <strong>Pictures (PNG, JPG, Screenshots)</strong>.
-                          Gemini AI handles rotated columns, landscape tables, and multi-page layouts automatically.
+                        <p className="text-xs text-slate-500">
+                          Supports multi-page catalogs, fee tables, and course schedules.
                         </p>
                       </div>
                       <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-1">

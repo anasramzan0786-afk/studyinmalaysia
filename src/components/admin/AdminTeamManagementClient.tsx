@@ -25,13 +25,13 @@ import {
   Download,
   Building,
   GraduationCap,
-  Sparkles,
   MapPin,
   TrendingUp,
   History,
   ShieldCheck,
   Award,
-  UserPlus
+  UserPlus,
+  Info
 } from 'lucide-react';
 import { PAKISTAN_BRANCHES, CASE_STAGES } from '@/lib/team-config';
 
@@ -914,8 +914,8 @@ export function AdminTeamManagementClient({
             <Briefcase className="w-6 h-6 text-amber-400" />
             Team Management &amp; Case Tracking System
           </h1>
-          <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-            Monitor cases under process, bookings closed by counselors, students reached Malaysia, EMGS &amp; VAL milestones, and regional branch referrals.
+          <p className="text-xs text-slate-300 mt-1">
+            Track student pipelines, counselor metrics, and regional branch referrals.
           </p>
         </div>
 
@@ -1168,10 +1168,10 @@ export function AdminTeamManagementClient({
                   <FileText className="w-6 h-6" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-700">No student cases found</h3>
-                <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                <p className="text-xs text-slate-400">
                   {searchQuery || filterStage !== 'ALL' || filterBranch !== 'ALL' || filterCounselor !== 'ALL'
-                    ? 'Try adjusting your filters or search keywords.'
-                    : 'Click "New Student Case" to register your first case into the pipeline.'}
+                    ? 'No matching records for current filters.'
+                    : 'Add a new case to start tracking.'}
                 </p>
                 <button
                   onClick={() => setIsNewCaseModalOpen(true)}
@@ -1490,16 +1490,13 @@ export function AdminTeamManagementClient({
               <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
                 <Users className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-bold text-slate-800">No counselors added to tracking yet</h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                Aap apni marzi se jin counselors ko track karna chahein, unko yahan add karein.
-              </p>
+              <h3 className="text-sm font-bold text-slate-800">No counselors added yet</h3>
               <button
                 onClick={() => setIsAddCounselorModalOpen(true)}
                 className="mt-2 inline-flex items-center gap-1.5 bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-xl"
               >
                 <UserPlus className="w-4 h-4" />
-                <span>Add Counselor Now</span>
+                <span>Add Counselor</span>
               </button>
             </div>
           ) : (
@@ -2292,10 +2289,6 @@ export function AdminTeamManagementClient({
             <form onSubmit={handleCreateReferral} className="p-6 space-y-4">
               {referralMode === 'direct' ? (
                 <>
-                  <div className="p-3 bg-amber-50/60 border border-amber-200/60 rounded-xl text-[11px] text-amber-900">
-                    Aap direct kisi bhi student ya walk-in inquiry ko doosri branch refer kar sakty hyn, chahay unhon ne case start na bhi karwaya ho.
-                  </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">Student Full Name *</label>

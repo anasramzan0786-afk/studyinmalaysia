@@ -17,8 +17,8 @@ import {
   MapPin,
   DollarSign,
   Award,
-  Sparkles,
-  Layers
+  Layers,
+  Image as ImageIcon
 } from 'lucide-react';
 import { formatMYR } from '@/lib/utils';
 
@@ -820,8 +820,8 @@ export function AdminUniversitiesClient({
               {/* Section 5: Media & Description */}
               <div className="space-y-3">
                 <h4 className="font-bold text-slate-900 flex items-center gap-1.5 border-b pb-1.5 text-xs uppercase tracking-wider text-[#0B2553]">
-                  <Sparkles className="w-4 h-4 text-indigo-600" />
-                  <span>5. Branding &amp; Campus Narrative</span>
+                  <Layers className="w-4 h-4 text-[#0B2553]" />
+                  <span>5. Campus Profile &amp; Narrative</span>
                 </h4>
 
                 <div>

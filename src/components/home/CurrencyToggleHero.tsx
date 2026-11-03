@@ -29,7 +29,7 @@ export function CurrencyToggleHero() {
           currency === 'USD' ? 'bg-white text-blue-900 shadow-xs' : 'text-slate-300 hover:text-white'
         }`}
       >
-        💵 USD
+        🇺🇸 USD
       </button>
     </div>
   );

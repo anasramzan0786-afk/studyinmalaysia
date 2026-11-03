@@ -38,9 +38,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const allLinks = [
     { href: '/admin', label: 'Overview', icon: LayoutDashboard },
-    { href: '/admin/team-management', label: '💼 Team & Case Tracker', icon: Briefcase, adminOnly: true, highlight: true },
-    { href: '/admin/inquiries', label: '📩 Student Inquiries', icon: Users },
-    { href: '/admin/users', label: '👥 Team Accounts', icon: ShieldCheck, adminOnly: true },
+    { href: '/admin/team-management', label: 'Team & Case Tracker', icon: Briefcase, adminOnly: true, highlight: true },
+    { href: '/admin/inquiries', label: 'Student Inquiries', icon: Users },
+    { href: '/admin/users', label: 'Team Accounts', icon: ShieldCheck, adminOnly: true },
     { href: '/admin/universities', label: 'Manage Universities', icon: Building2 },
     { href: '/admin/programs', label: 'Manage Programs', icon: GraduationCap },
     { href: '/admin/upload', label: 'Bulk Import & Export', icon: UploadCloud, adminOnly: true },

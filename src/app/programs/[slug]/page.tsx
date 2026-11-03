@@ -15,7 +15,9 @@ import {
   Share2,
   ExternalLink,
   ChevronRight,
-  AlertCircle
+  AlertCircle,
+  Award,
+  Info
 } from 'lucide-react';
 import { BackButton } from '@/components/programs/BackButton';
 import { ApplyButton } from '@/components/programs/ApplyButton';
@@ -126,8 +128,9 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
               {program.faculty}
             </span>
             {program.badgeText && (
-              <span className="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
-                ⭐ {program.badgeText}
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
+                <Award className="w-3.5 h-3.5 text-amber-600" />
+                <span>{program.badgeText}</span>
               </span>
             )}
           </div>
@@ -335,9 +338,10 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
               </div>
 
               {program.miscBreakdown && (
-                <p className="text-xs text-slate-600 italic bg-amber-50/70 p-3 rounded-xl border border-amber-200/70">
-                  ℹ️ {program.miscBreakdown}
-                </p>
+                <div className="text-xs text-slate-700 bg-amber-50/70 p-3 rounded-xl border border-amber-200/70 flex items-start gap-2">
+                  <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <span>{program.miscBreakdown}</span>
+                </div>
               )}
             </div>
 
